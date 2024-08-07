@@ -52,17 +52,26 @@ all_sprites.add(player_think)
 clock = pygame.time.Clock()
 
 
+def exit_game():
+    pygame.quit()
+    sys.exit()
+
+
 async def main_loop():
     lg.info("Starting game loop")
-    player_task = asyncio.create_task(async_player_action(player_idle, 1, 1, 0.3, 10))
+    player_task = asyncio.create_task(async_player_action(player_idle, 5, 5, 0.3, 10))
 
     # Main game loop
     while True:
         lg.info("Running game loop")
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+            match event.type:
+                case pygame.QUIT:
+                    exit_game()
+                case pygame.KEYDOWN:
+                    match event.key:
+                        case pygame.K_q:
+                            exit_game()
 
         # Fill the screen with a color (RGB)
         screen.fill((0, 0, 0))
