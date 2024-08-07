@@ -1,8 +1,27 @@
+import asyncio
 import sys
+import time
 
 import pygame
+from loguru import logger as lg
 
 from laife.agents.player import Player, PlayerState
+
+
+# Define an asynchronous function for player actions
+async def async_player_action(
+    player: Player,
+    dx: int,
+    dy: int,
+    delay: float,
+    movement_count: int,
+) -> None:
+    lg.info(f"Moving player {player.name} {movement_count} times")
+    for i in range(movement_count):
+        lg.debug(f"Moving player {player.name}, {i:3d} by {dx}, {dy}")
+        player.move(dx, dy)
+        await asyncio.sleep(delay)
+
 
 # Initialize Pygame
 pygame.init()
@@ -29,18 +48,37 @@ all_sprites = pygame.sprite.Group()
 all_sprites.add(player_idle)
 all_sprites.add(player_think)
 
-# Main game loop
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+# Throttle the loop
+clock = pygame.time.Clock()
 
-    # Fill the screen with a color (RGB)
-    screen.fill((0, 0, 0))
 
-    # Draw the players
-    all_sprites.draw(screen)
+async def main_loop():
+    lg.info("Starting game loop")
+    player_task = asyncio.create_task(async_player_action(player_idle, 1, 1, 0.3, 10))
 
-    # Update the display
-    pygame.display.flip()
+    # Main game loop
+    while True:
+        lg.info("Running game loop")
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        # Fill the screen with a color (RGB)
+        screen.fill((0, 0, 0))
+
+        # Draw the players
+        all_sprites.draw(screen)
+
+        # Update the display
+        pygame.display.flip()
+
+        # Throttle the loop
+        clock.tick(5)
+
+        # Yield control to the event loop
+        await asyncio.sleep(0)
+
+
+# Run the main loop
+asyncio.run(main_loop())
