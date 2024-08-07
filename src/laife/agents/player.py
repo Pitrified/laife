@@ -1,8 +1,10 @@
 import asyncio
 from enum import Enum
 
+from loguru import logger as lg
 from pygame.sprite import Sprite
 
+from laife.llm.brain import Brain
 from laife.ui.sprites import SpriteSheet
 
 
@@ -31,6 +33,11 @@ class Player(Sprite):
 
         self.score: int = 0
 
+        self.brain = Brain()
+
+        self.dying = False
+        self.input_data: str | None = None
+
     def move(self, dx: int, dy: int) -> None:
         new_position = (self.position[0] + dx, self.position[1] + dy)
         self.set_position(new_position)
@@ -40,7 +47,10 @@ class Player(Sprite):
 
     async def think(self) -> None:
         self.state = PlayerState.THINKING
-        await asyncio.sleep(5)  # Simulate a long thinking operation
+        lg.info(f"{self.name} is thinking")
+        res = await self.brain.achat("english", "german", self.input_data)
+        lg.info(f"{self.name} thought: {res}")
+        self.increase_score(10)
         self.state = PlayerState.IDLE
 
     def set_position(self, position: tuple[int, int]) -> None:

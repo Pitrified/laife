@@ -2,10 +2,11 @@ import asyncio
 import sys
 import time
 
-import pygame
 from loguru import logger as lg
+import pygame
 
 from laife.agents.player import Player, PlayerState
+from laife.llm.brain import Brain
 
 
 # Define an asynchronous function for player actions
@@ -21,6 +22,18 @@ async def async_player_action(
         lg.debug(f"Moving player {player.name}, {i:3d} by {dx}, {dy}")
         player.move(dx, dy)
         await asyncio.sleep(delay)
+
+
+async def player_poll(player: Player) -> None:
+    """Poll the player for input."""
+    lg.info(f"Polling player {player.name}")
+    while not player.dying:
+        if player.input_data is not None:
+            lg.info(f"Player {player.name} received input: {player.input_data}")
+            await player.think()
+            player.input_data = None
+        await asyncio.sleep(0.25)
+    lg.info(f"Player {player.name} is dying")
 
 
 # Initialize Pygame
@@ -42,6 +55,11 @@ player_think = Player(
     player_type="inu",
     state=PlayerState.THINKING,
 )
+player_poller = Player(
+    name="inu_poll",
+    position=(300, 100),
+    player_type="inu",
+)
 
 # Add the players to a sprite group
 all_sprites = pygame.sprite.Group()
@@ -59,7 +77,8 @@ def exit_game():
 
 async def main_loop():
     lg.info("Starting game loop")
-    player_task = asyncio.create_task(async_player_action(player_idle, 5, 5, 0.3, 10))
+    player_task = asyncio.create_task(async_player_action(player_idle, 5, 5, 0.7, 10))
+    poller_task = asyncio.create_task(player_poll(player_poller))
 
     # Main game loop
     while True:
@@ -73,6 +92,12 @@ async def main_loop():
                         case pygame.K_q:
                             exit_game()
 
+        # Can the poller receive input?
+        if player_poller.input_data is None:
+            lg.info("Sending input to player_poller")
+            player_poller.input_data = "I love programming."
+            lg.info("Sent input to player_poller")
+
         # Fill the screen with a color (RGB)
         screen.fill((0, 0, 0))
 
@@ -83,7 +108,7 @@ async def main_loop():
         pygame.display.flip()
 
         # Throttle the loop
-        clock.tick(5)
+        clock.tick(1)
 
         # Yield control to the event loop
         await asyncio.sleep(0)
