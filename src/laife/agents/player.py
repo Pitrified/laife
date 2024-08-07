@@ -32,7 +32,8 @@ class Player(Sprite):
         self.score: int = 0
 
     def move(self, dx: int, dy: int) -> None:
-        self.position = (self.position[0] + dx, self.position[1] + dy)
+        new_position = (self.position[0] + dx, self.position[1] + dy)
+        self.set_position(new_position)
 
     def increase_score(self, points: int) -> None:
         self.score += points
