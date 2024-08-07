@@ -27,7 +27,7 @@ prompt = ChatPromptTemplate.from_messages(
 
 
 chain = prompt | llm
-res = prompt.invoke(
+res = chain.invoke(
     {
         "input_language": "English",
         "output_language": "German",
