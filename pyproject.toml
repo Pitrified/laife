@@ -10,6 +10,8 @@ packages = [{include = "laife", from = "src"}]
 python = "~3.11"
 pygame = "^2.6.0"
 loguru = "^0.7.2"
+langchain = "^0.2.12"
+langchain-ollama = "^0.1.1"
 
 
 [tool.poetry.group.test.dependencies]
