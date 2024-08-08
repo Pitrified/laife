@@ -1,4 +1,5 @@
 import asyncio
+from asyncio.queues import Queue
 import sys
 import time
 
@@ -36,6 +37,20 @@ async def player_poll(player: Player) -> None:
     lg.info(f"Player {player.name} is dying")
 
 
+async def player_queue(player: Player, queue: Queue) -> None:
+    while True:
+        lg.info("Waiting for input in player_queue")
+        input_data = await queue.get()
+        lg.info(f"Received {input_data=} in player_queue")
+        if input_data is None:
+            lg.info("Exiting player_queue")
+            break
+        player.input_data = input_data
+        lg.info("Sent input to player, awaiting think")
+        await player.think()
+        lg.info("Processed input in player_queue")
+
+
 # Initialize Pygame
 pygame.init()
 
@@ -60,11 +75,18 @@ player_poller = Player(
     position=(300, 100),
     player_type="inu",
 )
+player_queuer = Player(
+    name="inu_queue",
+    position=(400, 100),
+    player_type="inu",
+)
 
 # Add the players to a sprite group
 all_sprites = pygame.sprite.Group()
 all_sprites.add(player_idle)
 all_sprites.add(player_think)
+all_sprites.add(player_poller)
+all_sprites.add(player_queuer)
 
 # Throttle the loop
 clock = pygame.time.Clock()
@@ -77,8 +99,10 @@ def exit_game():
 
 async def main_loop():
     lg.info("Starting game loop")
-    player_task = asyncio.create_task(async_player_action(player_idle, 5, 5, 0.7, 10))
+    mover_task = asyncio.create_task(async_player_action(player_idle, 5, 5, 0.7, 10))
     poller_task = asyncio.create_task(player_poll(player_poller))
+    input_queue = Queue()
+    queuer_task = asyncio.create_task(player_queue(player_queuer, input_queue))
 
     # Main game loop
     while True:
@@ -97,6 +121,12 @@ async def main_loop():
             lg.info("Sending input to player_poller")
             player_poller.input_data = "I love programming."
             lg.info("Sent input to player_poller")
+
+        # Can the queuer receive input?
+        if player_queuer.input_data is None:
+            lg.info("Sending input to player_queuer")
+            await input_queue.put("I think, therefore I am.")
+            lg.info("Sent input to player_queuer")
 
         # Fill the screen with a color (RGB)
         screen.fill((0, 0, 0))
