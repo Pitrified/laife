@@ -17,6 +17,7 @@ class Brain:
         self.llm = ChatOllama(
             model="llama3.1",
             temperature=0,
+            # base_url="http://localhost:11434",
         )
         self.prompt = ChatPromptTemplate.from_messages(
             [
