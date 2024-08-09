@@ -10,6 +10,16 @@ Let's make AI rule the world!
 poetry install
 ```
 
+### Openai key
+
+place the openai key in `src/laife/config/credentials.py`:
+
+```python
+from pydantic.v1 import SecretStr
+
+OPENAI_API_KEY = SecretStr("your-openai-api-key")
+```
+
 ### Run the game
 
 ```bash
