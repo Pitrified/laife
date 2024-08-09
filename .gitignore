@@ -10,6 +10,11 @@ scratch_space/dump/*
 
 .vscode
 
+credentials.py
+credentials.*
+credential.py
+credential.*
+
 ########################## node ##########################
 
 # Logs
