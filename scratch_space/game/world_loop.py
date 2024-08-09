@@ -6,6 +6,8 @@ from typing import NoReturn
 
 import pygame
 
+from laife.ui.alog import alg
+
 
 class Player:
     """A player class."""
@@ -20,23 +22,23 @@ class Player:
     async def think(self) -> None:
         """Think about the next move."""
         self.state = "thinking"
-        print(f"PLAYER.think: {self.name} is thinking")
+        alg.log(f"PLAYER.think: {self.name} is thinking")
         start_think = time.time()
         await asyncio.sleep(3.5)
         end_think = time.time()
-        print(f"PLAYER.think: {self.name} thought in {end_think-start_think:.2f}s")
+        alg.log(f"PLAYER.think: {self.name} thought in {end_think-start_think:.2f}s")
         # randomly select a mission
         if random.randint(0, 1):
-            print(f"PLAYER.think: {self.name} decided to move")
+            alg.log(f"PLAYER.think: {self.name} decided to move")
             self.mission = "move"
         self.state = "idle"
 
     async def move(self) -> None:
         """Move the player."""
         self.state = "moving"
-        print(f"PLAYER.move {self.name}: is moving")
+        alg.log(f"PLAYER.move {self.name}: is moving")
         await asyncio.sleep(1)
-        print(f"PLAYER.move {self.name}: moved")
+        alg.log(f"PLAYER.move {self.name}: moved")
         self.state = "idle"
         self.mission = "rest"
 
@@ -46,14 +48,14 @@ class Player:
             case "move":
                 await self.move()
             case _:
-                print(f"PLAYER.execute_mission {self.name}: doing {self.mission}")
+                alg.log(f"PLAYER.execute_mission {self.name}: doing {self.mission}")
 
     async def play(self) -> None:
         """Play the game."""
         while True:
-            print(f"PLAYER.play {self.name}: awaiting input")
+            alg.log(f"PLAYER.play {self.name}: awaiting input")
             input_cmd = await self.input_queue.get()
-            print(f"PLAYER.play {self.name}: received input {input_cmd}")
+            alg.log(f"PLAYER.play {self.name}: received input {input_cmd}")
             match input_cmd:
                 case "execute":
                     await self.execute_mission()
@@ -71,26 +73,26 @@ class World:
         self.players = []
         self.player_tasks = []
         self.add_player()
-        self.add_prob = 0.001
+        self.add_prob = 0.01
 
     async def simulate(self) -> None:
         """Simulate the world."""
         while True:
-            # print("SIMULATE: Simulating the world")
+            # alg.log("SIMULATE: Simulating the world")
             for player in self.players:
                 if player.state == "idle":
                     if not player.input_queue.empty():
-                        print(f"SIMULATE: {player.name} is idle but has input")
+                        alg.log(f"SIMULATE: {player.name} is idle but has input")
                         continue
                     # this would be the place where the WORLD decides what to do
                     if random.randint(0, 1):
-                        print(f"SIMULATE: Adding think to {player.name}")
+                        alg.log(f"SIMULATE: Adding think to {player.name}")
                         await player.input_queue.put("think")
                     else:
-                        print(f"SIMULATE: Adding execute to {player.name}")
+                        alg.log(f"SIMULATE: Adding execute to {player.name}")
                         await player.input_queue.put("execute")
             if random.random() < self.add_prob:
-                print(f"SIMULATE: Adding a player {self.add_prob}")
+                alg.log(f"SIMULATE: Adding a player {self.add_prob}")
                 self.add_player()
                 self.add_prob /= 2
             await asyncio.sleep(0)
@@ -109,12 +111,12 @@ clock = pygame.time.Clock()
 
 
 async def main_loop() -> NoReturn:
-    print("MAIN: Starting game loop")
+    alg.log("MAIN: Starting game loop")
     world = World()
     asyncio.create_task(world.simulate())
 
     while True:
-        # print("MAIN: Running game loop")
+        alg.log("MAIN: Running game loop")
 
         # check for events
         for event in pygame.event.get():
