@@ -4,8 +4,10 @@ import sys
 import time
 from typing import NoReturn
 
+from langchain_openai import ChatOpenAI
 import pygame
 
+from laife.config.credentials import OPENAI_API_KEY
 from laife.ui.alog import alg
 
 
@@ -14,14 +16,33 @@ class Brain:
 
     def __init__(self) -> None:
         """Initialize the brain."""
+        self.llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0,
+            max_tokens=30,
+            timeout=None,
+            max_retries=2,
+            api_key=OPENAI_API_KEY,
+        )
 
-    async def think(self) -> str:
-        """Think about the next move."""
+    async def think(self, query: str) -> str:
+        # return await self.naive_think(query)
+        return await self.llm_think(query)
+
+    async def naive_think(self, query: str) -> str:
+        """Randomly think about the next move."""
         await asyncio.sleep(2.5)
-        # randomly select a mission
         if random.randint(0, 1):
             return "move"
         return "rest"
+
+    async def llm_think(self, query: str) -> str:
+        """Use the language model to think about the next move."""
+        alg.log(f"BRAIN.llm_think: {query}")
+        res = await self.llm.ainvoke(query)
+        res_pretty = res.pretty_repr()
+        alg.log(f"BRAIN.llm_think: {res}")
+        return "move" if "move" in res_pretty else "rest"
 
 
 class Player:
@@ -40,7 +61,7 @@ class Player:
         self.state = "thinking"
         alg.log(f"PLAYER.think: {self.name} is thinking")
         start_think = time.time()
-        self.mission = await self.brain.think()
+        self.mission = await self.brain.think("Should I rest or move?")
         end_think = time.time()
         alg.log(
             f"PLAYER.think: {self.name} thought in {end_think-start_think:.2f}s"
@@ -106,7 +127,7 @@ class World:
                     else:
                         alg.log(f"SIMULATE: Adding execute to {player.name}")
                         await player.input_queue.put("execute")
-            if random.random() < self.add_prob:
+            if len(self.players) < 5 and random.random() < self.add_prob:
                 alg.log(f"SIMULATE: Adding a player {self.add_prob}")
                 self.add_player()
                 self.add_prob /= 2
