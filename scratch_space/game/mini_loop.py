@@ -40,11 +40,11 @@ clock = pygame.time.Clock()
 
 async def main_loop() -> NoReturn:
     print("MAIN: Starting game loop")
-    player1 = Player("inu")
-    player_task = asyncio.create_task(play(player1))
+    players = [Player(f"p{i}") for i in range(5)]
+    player_tasks = [asyncio.create_task(play(player)) for player in players]
 
     while True:
-        print("MAIN: Running game loop")
+        # print("MAIN: Running game loop")
 
         # check for events
         for event in pygame.event.get():
@@ -56,7 +56,8 @@ async def main_loop() -> NoReturn:
         # pygame update
         screen.fill((0, 0, 0))
         pygame.display.flip()
-        clock.tick(10)
+        # no need to limit the frame rate
+        # clock.tick(10)
 
         # yield control to the event loop
         await asyncio.sleep(0)
