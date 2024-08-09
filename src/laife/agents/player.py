@@ -1,5 +1,6 @@
 import asyncio
 from enum import Enum
+import time
 
 from loguru import logger as lg
 from pygame.sprite import Sprite
@@ -48,7 +49,11 @@ class Player(Sprite):
     async def think(self) -> None:
         self.state = PlayerState.THINKING
         lg.info(f"{self.name} is thinking")
+        think_start = time.time()
+        lg.debug(f"Think start: {think_start}")
         res = await self.brain.achat("english", "german", self.input_data)
+        think_end = time.time()
+        lg.debug(f"Brain think time: {think_end-think_start:.6f}")
         lg.info(f"{self.name} thought: {res}")
         self.increase_score(10)
         self.state = PlayerState.IDLE

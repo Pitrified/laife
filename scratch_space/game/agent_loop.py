@@ -100,13 +100,13 @@ def exit_game():
 async def main_loop():
     lg.info("Starting game loop")
     mover_task = asyncio.create_task(async_player_action(player_idle, 5, 5, 0.7, 10))
-    poller_task = asyncio.create_task(player_poll(player_poller))
+    # poller_task = asyncio.create_task(player_poll(player_poller))
     input_queue = Queue()
     queuer_task = asyncio.create_task(player_queue(player_queuer, input_queue))
 
     # Main game loop
     while True:
-        lg.info("Running game loop")
+        # lg.info("Running game loop")
         for event in pygame.event.get():
             match event.type:
                 case pygame.QUIT:
@@ -116,11 +116,11 @@ async def main_loop():
                         case pygame.K_q:
                             exit_game()
 
-        # Can the poller receive input?
-        if player_poller.input_data is None:
-            lg.info("Sending input to player_poller")
-            player_poller.input_data = "I love programming."
-            lg.info("Sent input to player_poller")
+        # # Can the poller receive input?
+        # if player_poller.input_data is None:
+        #     lg.info("Sending input to player_poller")
+        #     player_poller.input_data = "I love programming."
+        #     lg.info("Sent input to player_poller")
 
         # Can the queuer receive input?
         if player_queuer.input_data is None:
@@ -137,8 +137,8 @@ async def main_loop():
         # Update the display
         pygame.display.flip()
 
-        # Throttle the loop
-        clock.tick(1)
+        # # Throttle the loop
+        # clock.tick(20)
 
         # Yield control to the event loop
         await asyncio.sleep(0)
