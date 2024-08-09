@@ -17,7 +17,7 @@ class Player:
         self.name = name
         self.state = "idle"
         self.mission = "rest"
-        self.input_queue = asyncio.Queue()
+        self.input_queue = asyncio.Queue(1)
 
     async def think(self) -> None:
         """Think about the next move."""
