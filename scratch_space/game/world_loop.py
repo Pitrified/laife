@@ -4,6 +4,7 @@ import sys
 import time
 from typing import NoReturn
 
+from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 import pygame
 
@@ -16,13 +17,18 @@ class Brain:
 
     def __init__(self) -> None:
         """Initialize the brain."""
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini",
+        # self.llm = ChatOpenAI(
+        #     model="gpt-4o-mini",
+        #     temperature=0,
+        #     max_tokens=30,
+        #     timeout=None,
+        #     max_retries=2,
+        #     api_key=OPENAI_API_KEY,
+        # )
+        self.llm = ChatOllama(
+            model="phi3",
             temperature=0,
-            max_tokens=30,
-            timeout=None,
-            max_retries=2,
-            api_key=OPENAI_API_KEY,
+            num_predict=30,
         )
 
     async def think(self, query: str) -> str:
@@ -127,7 +133,7 @@ class World:
                     else:
                         alg.log(f"SIMULATE: Adding execute to {player.name}")
                         await player.input_queue.put("execute")
-            if len(self.players) < 5 and random.random() < self.add_prob:
+            if len(self.players) < 1 and random.random() < self.add_prob:
                 alg.log(f"SIMULATE: Adding a player {self.add_prob}")
                 self.add_player()
                 self.add_prob /= 2
@@ -151,6 +157,9 @@ async def main_loop() -> NoReturn:
     world = World()
     asyncio.create_task(world.simulate())
 
+    redraw_freq = 1
+    redraw_deadline = time.time() + redraw_freq
+
     while True:
         alg.log("MAIN: Running game loop")
 
@@ -162,11 +171,13 @@ async def main_loop() -> NoReturn:
                     sys.exit()
 
         # pygame update
-        screen.fill((0, 0, 0))
-        pygame.display.flip()
+        if time.time() > redraw_deadline:
+            redraw_deadline = time.time() + redraw_freq
+            screen.fill((0, 0, 0))
+            pygame.display.flip()
 
         # yield control to the event loop
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.1)
 
 
 # Run the main loop
