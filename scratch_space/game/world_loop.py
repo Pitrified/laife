@@ -9,6 +9,21 @@ import pygame
 from laife.ui.alog import alg
 
 
+class Brain:
+    """A brain class."""
+
+    def __init__(self) -> None:
+        """Initialize the brain."""
+
+    async def think(self) -> str:
+        """Think about the next move."""
+        await asyncio.sleep(2.5)
+        # randomly select a mission
+        if random.randint(0, 1):
+            return "move"
+        return "rest"
+
+
 class Player:
     """A player class."""
 
@@ -18,19 +33,19 @@ class Player:
         self.state = "idle"
         self.mission = "rest"
         self.input_queue = asyncio.Queue(1)
+        self.brain = Brain()
 
     async def think(self) -> None:
         """Think about the next move."""
         self.state = "thinking"
         alg.log(f"PLAYER.think: {self.name} is thinking")
         start_think = time.time()
-        await asyncio.sleep(3.5)
+        self.mission = await self.brain.think()
         end_think = time.time()
-        alg.log(f"PLAYER.think: {self.name} thought in {end_think-start_think:.2f}s")
-        # randomly select a mission
-        if random.randint(0, 1):
-            alg.log(f"PLAYER.think: {self.name} decided to move")
-            self.mission = "move"
+        alg.log(
+            f"PLAYER.think: {self.name} thought in {end_think-start_think:.2f}s"
+            f" and decided to {self.mission}"
+        )
         self.state = "idle"
 
     async def move(self) -> None:
