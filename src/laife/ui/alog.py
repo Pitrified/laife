@@ -1,21 +1,8 @@
 """Asynchronous logging."""
 
 import asyncio
-from typing import Any
 
-
-class Singleton(type):
-    """Singleton metaclass.
-
-    https://stackoverflow.com/questions/6760685/what-is-the-best-way-of-implementing-singleton-in-python
-    """
-
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs) -> Any:
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+from laife.meta.singleton import Singleton
 
 
 class Alog(metaclass=Singleton):
@@ -31,6 +18,7 @@ class Alog(metaclass=Singleton):
         """Log a message."""
         if not self.log_task:
             self.start_logging()
+            self.input_queue.put_nowait("ALOG: Starting alog")
         self.input_queue.put_nowait(msg)
 
     def start_logging(self) -> None:
