@@ -2,7 +2,7 @@
 
 import pytest
 
-from laife.constants import ROOT_FOL
+from laife.config.constants import ROOT_FOL
 
 
 def test_root_is_laife() -> None:

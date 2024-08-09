@@ -1,7 +1,7 @@
 import pygame
 from pygame.surface import Surface
 
-from laife.constants import SPRITES_FOL
+from laife.config.constants import SPRITES_FOL
 
 INU = {
     "idle": {
