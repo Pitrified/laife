@@ -44,3 +44,20 @@ A mission can be solved in several steps.
 
 If a tool is needed to solve a mission, the player has to find the tool first.
 If the tool does not exist, the player has to create it.
+
+New building blocks can be created by the players.
+
+### Features
+
+1. Map of the world with:
+    1. Different terrain
+    1. Different objects
+1. Translate the map into a prompt
+1. Assign a mission to a player based on the map
+    1. If a mission is too complex, break it down into sub-missions
+    1. Share the mission with the world: the player can ask for help
+1. Create a tool to solve the mission
+    1. If the tool does not exist, create it
+    1. Create an image of the tool
+1. Solve the mission
+1. The mission could be building a building
