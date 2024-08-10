@@ -151,39 +151,67 @@ class World:
         self.player_tasks.append(asyncio.create_task(player.play()))
 
 
-# initialize Pygame
-pygame.init()
-screen = pygame.display.set_mode((800, 600))
-clock = pygame.time.Clock()
+class WorldRenderer:
+    """A world renderer class."""
 
+    def __init__(self) -> None:
+        """Initialize the world renderer."""
 
-async def main_loop() -> NoReturn:
-    alg.log("MAIN: Starting game loop")
-    world = World()
-    asyncio.create_task(world.simulate())
+        # initialize Pygame
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
 
-    redraw_freq = 1
-    redraw_deadline = time.time() + redraw_freq
+        # set the redraw period to 1 second
+        self.redraw_period_sec = 1
+        # set the redraw deadline to now so that the world is drawn immediately
+        self.redraw_deadline = time.time()
 
-    while True:
-        alg.log("MAIN: Running game loop")
+        # initialize the world
+        self.world = World()
+        asyncio.create_task(self.world.simulate())
 
-        # check for events
+    def reset_deadline(self) -> None:
+        """Reset the redraw deadline."""
+        self.redraw_deadline = time.time() + self.redraw_period_sec
+
+    def should_redraw(self) -> bool:
+        """Check if the screen should be redrawn."""
+        return time.time() > self.redraw_deadline
+
+    def check_events(self) -> None:
+        """Check for events."""
         for event in pygame.event.get():
             match event.type:
                 case pygame.QUIT:
                     pygame.quit()
                     sys.exit()
 
-        # pygame update
-        if time.time() > redraw_deadline:
-            redraw_deadline = time.time() + redraw_freq
-            screen.fill((0, 0, 0))
-            pygame.display.flip()
+    def redraw(self) -> None:
+        """Draw the world."""
+        if not self.should_redraw():
+            return
+        self.screen.fill((0, 0, 0))
+        pygame.display.flip()
+        self.reset_deadline()
 
-        # yield control to the event loop
-        await asyncio.sleep(0.1)
+    async def main_loop(self) -> NoReturn:
+        """Run the main loop."""
+        alg.log("WR: Starting game loop")
+
+        while True:
+            alg.log("MAIN: Running game loop")
+            self.check_events()
+            self.redraw()
+            # yield control to the event loop
+            await asyncio.sleep(0.1)
 
 
-# Run the main loop
-asyncio.run(main_loop())
+async def main() -> NoReturn:
+    """Main function."""
+    world_renderer = WorldRenderer()
+    await world_renderer.main_loop()
+
+
+if __name__ == "__main__":
+    # Run the main loop
+    asyncio.run(main())
