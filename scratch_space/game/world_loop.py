@@ -4,12 +4,17 @@ import sys
 import time
 from typing import NoReturn
 
+from langchain.globals import set_llm_cache
+from langchain_community.cache import SQLiteCache
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 import pygame
 
+from laife.config.constants import LANGCHAIN_CACHE_DB
 from laife.config.credentials import OPENAI_API_KEY
 from laife.ui.alog import alg
+
+set_llm_cache(SQLiteCache(database_path=str(LANGCHAIN_CACHE_DB)))
 
 
 class Brain:
