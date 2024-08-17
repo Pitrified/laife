@@ -46,7 +46,7 @@ class Building(Sprite):
         bgcolor = (255, 100, 100)
 
         # render the name onto a surface
-        font = pygame.freetype.SysFont("Helvetica", 24)
+        font = pygame.freetype.SysFont("Helvetica", 16)
         surf, rect = font.render(
             self.name,
             fgcolor=(100, 255, 100),

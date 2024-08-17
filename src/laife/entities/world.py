@@ -77,12 +77,33 @@ class World:
 
     def add_buildings(self) -> None:
         """Add buildings to the world."""
+        # a house
         b = Building(
             "Alex's House",
             "house",
             "This house belongs to Alex.",
             (300, 100),
-            (150, 60),
+            (120, 40),
+        )
+        alg.log(f"W: Adding building >>>\n{b.to_prompt()}\n<<<")
+        self.buildings.add(b)
+        # a farm
+        b = Building(
+            "Big ol Farm",
+            "farm",
+            None,
+            (200, 400),
+            (120, 40),
+        )
+        alg.log(f"W: Adding building >>>\n{b.to_prompt()}\n<<<")
+        self.buildings.add(b)
+        # a factory
+        b = Building(
+            "Tool shop",
+            "factory",
+            None,
+            (500, 800),
+            (120, 40),
         )
         alg.log(f"W: Adding building >>>\n{b.to_prompt()}\n<<<")
         self.buildings.add(b)
@@ -91,7 +112,8 @@ class World:
         """Initialize the world renderer."""
         # initialize Pygame
         pygame.init()
-        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("lAIfe simulation")
+        self.screen = pygame.display.set_mode((1200, 900))
         # set the redraw period to 1 second
         self.redraw_period_sec = 1
         # set the redraw deadline to now so that the world is drawn immediately
