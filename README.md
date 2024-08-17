@@ -47,9 +47,18 @@ If the tool does not exist, the player has to create it.
 
 New building blocks can be created by the players.
 
+World entities:
+* Player
+* Building
+* Tool
+* Terrain
+
+Missions can be nested.
+
 ### Features
 
-1. Map of the world with:
+1. World with renderer
+1. Map of the world with entities:
     1. Different terrain
     1. Different objects
 1. Translate the map into a prompt
