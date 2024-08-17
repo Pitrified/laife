@@ -27,7 +27,7 @@ class SpriteSheet:
     def __init__(self, sprite_type: str) -> None:
         """Load the sprite sheet."""
         self.sprite_type = sprite_type
-        sprite_fp = SPRITES_FOL / f"{self.sprite_type}.png"
+        sprite_fp = SPRITES_FOL / f"{self.sprite_type}" / f"{self.sprite_type}.png"
         self.sprite_sheet = pygame.image.load(sprite_fp).convert_alpha()
 
     def get_sprite(self, x, y, width, height) -> Surface:
