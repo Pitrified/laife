@@ -1,3 +1,9 @@
+"""Test the agent loop with asyncio and Pygame.
+
+Last working commit:
+e033a973a352a5a6b004a45d27ffe09cc3c0425a
+"""
+
 import asyncio
 from asyncio.queues import Queue
 import sys
@@ -21,7 +27,7 @@ async def async_player_action(
     lg.info(f"Moving player {player.name} {movement_count} times")
     for i in range(movement_count):
         lg.debug(f"Moving player {player.name}, {i:3d} by {dx}, {dy}")
-        player.move(dx, dy)
+        player.move_delta(dx, dy)
         await asyncio.sleep(delay)
 
 
