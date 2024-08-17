@@ -14,6 +14,11 @@ class Alog(metaclass=Singleton):
         self.dup_count = 1
         self.log_task = None
 
+    def log_nowait(self, msg: str) -> None:
+        print(f"\n{msg}")
+        self.last_msg = msg
+        self.dup_count = 1
+
     def log(self, msg: str) -> None:
         """Log a message."""
         if not self.log_task:

@@ -93,8 +93,17 @@ class World:
         for event in pygame.event.get():
             match event.type:
                 case pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+                    self.quit()
+                case pygame.KEYDOWN:
+                    match event.key:
+                        case pygame.K_q:
+                            self.quit()
+
+    def quit(self) -> None:
+        """Quit the game."""
+        alg.log_nowait("Quitting the game\n")
+        pygame.quit()
+        sys.exit()
 
     def redraw(self) -> None:
         """Draw the world."""
