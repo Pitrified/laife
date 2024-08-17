@@ -7,6 +7,7 @@ import time
 
 import pygame
 
+from laife.entities.building import Building
 from laife.entities.player import Player
 from laife.entities.player_state import PlayerState
 from laife.ui.alog import alg
@@ -18,10 +19,14 @@ class World:
     def __init__(self) -> None:
         """Initialize the world."""
         self.init_renderer()
+
         self.players = pygame.sprite.Group()
-        self.add_player()
+        # self.add_player()
         self.add_prob = 0.01
-        self.max_players = 1
+        self.max_players = 0
+
+        self.buildings = pygame.sprite.Group()
+        self.add_buildings()
 
     async def main_loop(self) -> None:
         """Run the main loop."""
@@ -70,6 +75,18 @@ class World:
         self.players.add(player)
         asyncio.create_task(player.play())
 
+    def add_buildings(self) -> None:
+        """Add buildings to the world."""
+        b = Building(
+            "Alex's House",
+            "house",
+            "This house belongs to Alex.",
+            (300, 100),
+            (150, 60),
+        )
+        alg.log(f"W: Adding building >>>\n{b.to_prompt()}\n<<<")
+        self.buildings.add(b)
+
     def init_renderer(self) -> None:
         """Initialize the world renderer."""
         # initialize Pygame
@@ -101,7 +118,7 @@ class World:
 
     def quit(self) -> None:
         """Quit the game."""
-        alg.log_nowait("Quitting the game\n")
+        alg.log_nowait("W: Quitting the game\n")
         pygame.quit()
         sys.exit()
 
@@ -111,5 +128,6 @@ class World:
             return
         self.screen.fill((0, 0, 0))
         self.players.draw(self.screen)
+        self.buildings.draw(self.screen)
         pygame.display.flip()
         self.reset_deadline()

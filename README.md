@@ -59,6 +59,17 @@ given a mission, the player decides which tool to use, and where to go to use it
 The engine checks that the player has the tool,
 the LLM checks that the tool can be used in the location to solve the mission.
 
+A swap in control might happen:
+the player can send requests to the world to do some action,
+and the world answers with the result.
+The world never tells the player what to do.
+
+In `to_prompt` there could be a position parameter,
+so that in the prompt the location is dynamically converted to text eg "to the south".
+
+A player in the beginning does not know the world.
+One of the option is observe.
+
 ### Features
 
 - [x] : World with renderer
