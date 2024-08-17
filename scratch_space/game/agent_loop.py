@@ -6,7 +6,7 @@ import time
 from loguru import logger as lg
 import pygame
 
-from laife.agents.player import Player, PlayerState
+from laife.entities.player import Player, PlayerState
 from laife.llm.brain import Brain
 
 
