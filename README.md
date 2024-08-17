@@ -23,7 +23,7 @@ OPENAI_API_KEY = SecretStr("your-openai-api-key")
 ### Run the game
 
 ```bash
-poetry run python scratch_space/game/agent_loop.py
+poetry run python game/main.py
 ```
 
 ## Ideas

@@ -1,12 +1,18 @@
 """Brain of an agent."""
 
+import asyncio
+import random
+
 from langchain_core.prompts.chat import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
     SystemMessagePromptTemplate,
 )
 from langchain_ollama import ChatOllama
-from loguru import logger as lg
+from langchain_openai import ChatOpenAI
+
+from laife.config.credentials import OPENAI_API_KEY
+from laife.ui.alog import alg
 
 
 class Brain:
@@ -14,11 +20,21 @@ class Brain:
 
     def __init__(self):
         """Initialize the brain."""
+        # ollama_model="llama3.1"
+        ollama_model = "phi3"
         self.llm = ChatOllama(
-            model="llama3.1",
+            model=ollama_model,
             temperature=0,
             # base_url="http://localhost:11434",
         )
+        # self.llm = ChatOpenAI(
+        #     model="gpt-4o-mini",
+        #     temperature=0,
+        #     max_tokens=30,
+        #     timeout=None,
+        #     max_retries=2,
+        #     api_key=OPENAI_API_KEY,
+        # )
         self.prompt = ChatPromptTemplate.from_messages(
             [
                 SystemMessagePromptTemplate.from_template(
@@ -42,7 +58,7 @@ class Brain:
 
     async def achat(self, input_language, output_language, input_text):
         """Chat with the agent asynchronously."""
-        lg.debug(f"Brain.achat started")
+        alg.log(f"Brain.achat started")
         res = await self.chain.ainvoke(
             {
                 "input_language": input_language,
@@ -50,5 +66,25 @@ class Brain:
                 "input": input_text,
             }
         )
-        lg.debug(f"Brain.achat finished")
+        alg.log(f"Brain.achat finished")
         return res
+
+    async def think(self, query: str) -> str:
+        """Entry point for thinking."""
+        # return await self.naive_think(query)
+        return await self.llm_think(query)
+
+    async def naive_think(self, query: str) -> str:
+        """Randomly think about the next move."""
+        await asyncio.sleep(2.5)
+        if random.randint(0, 1):
+            return "move"
+        return "rest"
+
+    async def llm_think(self, query: str) -> str:
+        """Use the language model to think about the next move."""
+        alg.log(f"BRAIN.llm_think: {query}")
+        res = await self.llm.ainvoke(query)
+        res_pretty = res.pretty_repr()
+        alg.log(f"BRAIN.llm_think: {res}")
+        return "move" if "move" in res_pretty else "rest"
