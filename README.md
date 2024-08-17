@@ -41,6 +41,7 @@ If a player has nothing to do, it can interact with the environment to find a mi
 To complete the mission, the player has to interact with the environment.
 
 A mission can be solved in several steps.
+Missions can be nested.
 
 If a tool is needed to solve a mission, the player has to find the tool first.
 If the tool does not exist, the player has to create it.
@@ -53,20 +54,40 @@ World entities:
 * Tool
 * Terrain
 
-Missions can be nested.
+Game logic is dynamic:
+given a mission, the player decides which tool to use, and where to go to use it.
+The engine checks that the player has the tool,
+the LLM checks that the tool can be used in the location to solve the mission.
 
 ### Features
 
-1. World with renderer
-1. Map of the world with entities:
-    1. Different terrain
-    1. Different objects
-1. Translate the map into a prompt
-1. Assign a mission to a player based on the map
-    1. If a mission is too complex, break it down into sub-missions
-    1. Share the mission with the world: the player can ask for help
-1. Create a tool to solve the mission
-    1. If the tool does not exist, create it
-    1. Create an image of the tool
-1. Solve the mission
-1. The mission could be building a building
+- [x] : World with renderer
+- [ ] : Map of the world with entities:
+    - [ ] : Different terrain
+    - [ ] : Different objects
+- [ ] : Translate the map into a prompt
+- [ ] : Assign a mission to a player based on the map
+    - [ ] : If a mission is too complex, break it down into sub-missions
+    - [ ] : Share the mission with the world: the player can ask for help
+- [ ] : Create a tool to solve the mission
+    - [ ] : If the tool does not exist, create it
+    - [ ] : Create an image of the tool
+- [ ] : Solve the mission
+- [ ] : The mission could be building a building
+
+
+### Startup Entities
+
+- terrain:
+    - forest
+    - lake    
+    - fertile land
+- building:
+    - house - to rest
+    - factory - to create tools
+    - farm - to grow food
+- tools:
+    - bucket
+    - axe
+    - hammer
+    - hoe
