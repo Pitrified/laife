@@ -52,6 +52,12 @@ class World:
 
     def add_building(self, building: Building) -> WorldResponse:
         """Add a building to the world."""
+        # check that the building sprite is not colliding with any other building
+        if pygame.sprite.spritecollideany(building, self.buildings):  # type: ignore
+            wrsp = WorldResponse(
+                "error", {"message": "building collides with another building"}
+            )
+            return wrsp
         self.buildings.add(building)
         wrsp = WorldResponse("ok", {"message": "building added"})
         return wrsp

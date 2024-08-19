@@ -65,6 +65,17 @@ def setup_world(world: World) -> None:
     alg.log(f"W: Adding building >>>\n{b.to_prompt(player_pov)}\n<<<")
     world.add_building(b)
 
+    # add a building that collides with the house
+    b = Building(
+        "Colliding House",
+        "house",
+        None,
+        (300, 100),
+        (120, 40),
+    )
+    resp = world.add_building(b)
+    alg.log(f"W: Add colliding building response: {resp}")
+
 
 async def main() -> NoReturn:
     """Main function."""
