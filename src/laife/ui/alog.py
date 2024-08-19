@@ -36,10 +36,12 @@ class Alog(metaclass=Singleton):
             if self.is_duplicate(msg):
                 self.dup_count += 1
                 print(f"\r{msg} (x{self.dup_count})", end="")
+                self.input_queue.task_done()
                 continue
             print(f"\n{msg}", end="")
             self.last_msg = msg
             self.dup_count = 1
+            self.input_queue.task_done()
 
     def is_duplicate(self, msg: str) -> bool:
         """Check if the message is a duplicate."""
