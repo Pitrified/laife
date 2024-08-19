@@ -70,6 +70,16 @@ so that in the prompt the location is dynamically converted to text eg "to the s
 A player in the beginning does not know the world.
 One of the option is observe.
 
+A mission has an objective, a history of actions, and a status (done, failed, in progress).
+There can be sub-missions, and the nesting level is tracked.
+
+The chosen action is validated by the world, it must exist as an option, and be possible in the current state of the world.
+The world can answer with a feedback, which is placed in the history of the mission.
+The player LLM iterates on the mission with more history, and can pick a different action.
+One of the player LLM response option is to split the mission into sub-missions.
+
+The validation of whether an action actually solves the mission is done by the world LLM.
+
 ### Features
 
 - [x] : World with renderer
@@ -88,6 +98,7 @@ One of the option is observe.
 - [ ] : Vector db of the world entities
     - [ ] : Different tools
 - [ ] : Translate the map into a prompt
+- [ ] : Convert the prompts into langchain objects
 - [ ] : Assign a mission to a player based on the map
     - [ ] : If a mission is too complex, break it down into sub-missions
     - [ ] : Share the mission with the world: the player can ask for help
@@ -99,6 +110,7 @@ One of the option is observe.
 - [ ] : Add an alive parameter to the player,
         if the player is not alive, kill the async task
         by exiting the loop
+- [ ] : Add a player inventory
 
 
 ### Startup Entities
