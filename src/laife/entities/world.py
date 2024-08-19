@@ -8,6 +8,7 @@ import pygame
 
 from laife.entities.building import Building
 from laife.entities.player import Player
+from laife.entities.world_channel import WorldRequest, WorldResponse
 from laife.ui.alog import alg
 
 
@@ -18,8 +19,8 @@ class World:
         """Initialize the world."""
         self.init_renderer()
 
-        # setup the player input queue
-        self.input_queue = asyncio.Queue()
+        # setup the world queue where players will send their input
+        self.input_queue: asyncio.Queue[WorldRequest] = asyncio.Queue()
 
         # setup the player and entities groups
         self.players = pygame.sprite.Group()
@@ -33,20 +34,27 @@ class World:
             player_input = await self.input_queue.get()
             alg.log(f"W: Got player input: {player_input}")
             # execute the player input
-            await asyncio.sleep(1)
+            match player_input.request_type:
+                case "add_building":
+                    wrsp = self.add_building(**player_input.request_data)
+                case _:
+                    await asyncio.sleep(1)
+                    wrsp = WorldResponse("ok", {"message": "ack"})
             # mark the task as done
             self.input_queue.task_done()
             # pack the answer into an object and send it back to the player
-            await player_input["output_queue"].put("ack")
+            await player_input.response_queue.put(wrsp)
             alg.log("W: Sent ack to player")
 
     def add_player(self, player: Player) -> None:
         """Add a player to the world."""
         self.players.add(player)
 
-    def add_building(self, building: Building) -> None:
+    def add_building(self, building: Building) -> WorldResponse:
         """Add a building to the world."""
         self.buildings.add(building)
+        wrsp = WorldResponse("ok", {"message": "building added"})
+        return wrsp
 
     ## RENDER METHODS
 

@@ -6,6 +6,7 @@ import time
 from pygame.sprite import Sprite
 
 from laife.entities.player_state import PlayerState
+from laife.entities.world_channel import WorldRequest, WorldResponse
 from laife.llm.brain import Brain
 from laife.ui.alog import alg
 from laife.ui.sprites import SpriteLoader, SpriteSheet
@@ -17,7 +18,7 @@ class Player(Sprite):
         name: str,
         position: tuple[int, int],
         player_type: str,
-        world_input_queue: asyncio.Queue,
+        world_input_queue: asyncio.Queue[WorldRequest],
         state: PlayerState = PlayerState.IDLE,
     ) -> None:
         super().__init__()
@@ -30,7 +31,7 @@ class Player(Sprite):
         self.sprite_loader = SpriteLoader("player", self.player_type)
 
         # save the world input queue
-        self.world_input_queue = world_input_queue
+        self.world_input_queue: asyncio.Queue[WorldRequest] = world_input_queue
 
         # the state needs to know the position
         self.position = position
@@ -38,7 +39,7 @@ class Player(Sprite):
         self.set_position(position)
 
         # this is the queue where the player will receive input
-        self.input_queue = asyncio.Queue()
+        self.input_queue: asyncio.Queue[WorldResponse] = asyncio.Queue()
 
         # setup the player brain
         self.brain = Brain()
@@ -99,10 +100,14 @@ class Player(Sprite):
         """Request something from the world."""
         alg.log(f"PWR {self.name}: requesting")
         # send a request to the world
-        request = {"player.name": self.name, "output_queue": self.input_queue}
+        wreq = WorldRequest(
+            response_queue=self.input_queue,
+            request_type="test_request",
+            request_data={},
+        )
         request_start = time.time()
         alg.log(f"PWR: world input queue len: {self.world_input_queue.qsize()}")
-        await self.world_input_queue.put(request)
+        await self.world_input_queue.put(wreq)
         # wait for the answer
         answer = await self.input_queue.get()
         alg.log(f"PWR player input queue len: {self.input_queue.qsize()}")

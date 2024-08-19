@@ -77,9 +77,10 @@ One of the option is observe.
     - [ ] : Prettier terrain with tiled terrain types
     - [ ] : Prettier buildings with a big building in the center and a tiled garden
     - [ ] : Tools can be held by the player
-- [ ] : Swap player and world queue control,
+- [x] : Swap player and world queue control,
         the player sends requests to the world to do some action,
         and the world answers with the result
+    - [ ] : Formalize the player and world interaction
 - [ ] : Map of the world with entities:
     - [x] : Different buildings
     - [ ] : Different terrain
@@ -95,6 +96,9 @@ One of the option is observe.
     - [ ] : Create an image of the tool
 - [ ] : Solve the mission
 - [ ] : The mission could be building a building
+- [ ] : Add an alive parameter to the player,
+        if the player is not alive, kill the async task
+        by exiting the loop
 
 
 ### Startup Entities
