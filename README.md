@@ -73,9 +73,19 @@ One of the option is observe.
 ### Features
 
 - [x] : World with renderer
+    - [ ] : Prettier background with tiled grass
+    - [ ] : Prettier terrain with tiled terrain types
+    - [ ] : Prettier buildings with a big building in the center and a tiled garden
+    - [ ] : Tools can be held by the player
+- [ ] : Swap player and world queue control,
+        the player sends requests to the world to do some action,
+        and the world answers with the result
 - [ ] : Map of the world with entities:
+    - [x] : Different buildings
     - [ ] : Different terrain
-    - [ ] : Different objects
+    - [ ] : Make the map dynamic with dataclasses
+- [ ] : Vector db of the world entities
+    - [ ] : Different tools
 - [ ] : Translate the map into a prompt
 - [ ] : Assign a mission to a player based on the map
     - [ ] : If a mission is too complex, break it down into sub-missions
