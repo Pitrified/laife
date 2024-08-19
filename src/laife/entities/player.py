@@ -1,5 +1,6 @@
 import asyncio
 from enum import Enum
+import random
 import time
 
 from pygame.sprite import Sprite
@@ -16,24 +17,37 @@ class Player(Sprite):
         name: str,
         position: tuple[int, int],
         player_type: str,
+        world_input_queue: asyncio.Queue,
         state: PlayerState = PlayerState.IDLE,
     ) -> None:
         super().__init__()
 
+        # save info about the player
         self.name: str = name
 
+        # load the player sprite for this player type
         self.player_type = player_type
         self.sprite_loader = SpriteLoader("player", self.player_type)
+
+        # save the world input queue
+        self.world_input_queue = world_input_queue
 
         # the state needs to know the position
         self.position = position
         self.set_state(state)
         self.set_position(position)
 
-        self.input_queue = asyncio.Queue(1)
+        # this is the queue where the player will receive input
+        self.input_queue = asyncio.Queue()
+
+        # setup the player brain
         self.brain = Brain()
 
+        # the player mission
         self.mission = "rest"
+
+        # start the player loop
+        asyncio.create_task(self.play())
 
     def move_delta(self, dx: int, dy: int) -> None:
         new_position = (self.position[0] + dx, self.position[1] + dy)
@@ -81,12 +95,32 @@ class Player(Sprite):
             case _:
                 alg.log(f"PLAYER.execute_mission {self.name}: doing {self.mission}")
 
+    async def world_request(self) -> None:
+        """Request something from the world."""
+        alg.log(f"PWR {self.name}: requesting")
+        # send a request to the world
+        request = {"player.name": self.name, "output_queue": self.input_queue}
+        request_start = time.time()
+        alg.log(f"PWR: world input queue len: {self.world_input_queue.qsize()}")
+        await self.world_input_queue.put(request)
+        # wait for the answer
+        answer = await self.input_queue.get()
+        alg.log(f"PWR player input queue len: {self.input_queue.qsize()}")
+        request_end = time.time()
+        request_time = request_end - request_start
+        alg.log(f"PWR {self.name}: got answer {answer} in {request_time:.6f}s")
+        self.input_queue.task_done()
+
     async def play(self) -> None:
         """Play the game."""
         while True:
-            alg.log(f"PLAYER.play {self.name}: awaiting input")
-            input_cmd = await self.input_queue.get()
-            alg.log(f"PLAYER.play {self.name}: received input {input_cmd}")
+            alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
+            # think about the mission
+            # for now it's just a random decision
+            options = ["execute", "think", "move", "request"]
+            # input_cmd = random.choice(options)
+            input_cmd = "request"
+            alg.log(f"PLAYER.play {self.name}: picked {input_cmd}")
             match input_cmd:
                 case "execute":
                     await self.execute_mission()
@@ -94,6 +128,8 @@ class Player(Sprite):
                     await self.think()
                 case "move":
                     await self.move()
+                case "request":
+                    await self.world_request()
 
     def __str__(self) -> str:
         return f"Player {self.name} at {self.position} with state {self.state}"

@@ -1,7 +1,6 @@
 """A world class."""
 
 import asyncio
-import random
 import sys
 import time
 
@@ -9,7 +8,6 @@ import pygame
 
 from laife.entities.building import Building
 from laife.entities.player import Player
-from laife.entities.player_state import PlayerState
 from laife.ui.alog import alg
 
 
@@ -20,94 +18,37 @@ class World:
         """Initialize the world."""
         self.init_renderer()
 
+        # setup the player input queue
+        self.input_queue = asyncio.Queue()
+
+        # setup the player and entities groups
         self.players = pygame.sprite.Group()
-        # self.add_player()
-        self.add_prob = 0.01
-        self.max_players = 0
-
         self.buildings = pygame.sprite.Group()
-        self.add_buildings()
-
-    async def main_loop(self) -> None:
-        """Run the main loop."""
-        alg.log("W: Starting game loop")
-        while True:
-            alg.log("W: Running game loop")
-            await self.simulate()
-            self.render()
-            await asyncio.sleep(0.1)
 
     async def simulate(self) -> None:
         """Simulate the agents in the world."""
-        # alg.log("SIMULATE: Simulating the world")
-        for player in self.players:
-            # find an idle player
-            if player.state != PlayerState.IDLE:
-                continue
-            # an idle player should have no input in the queue
-            if not player.input_queue.empty():
-                alg.log(f"SIMULATE: {player.name} is idle but has input")
-                continue
-            # this would be the place where the WORLD decides what to do
-            if random.randint(0, 1):
-                alg.log(f"SIMULATE: Adding think to {player.name}")
-                await player.input_queue.put("think")
-            else:
-                alg.log(f"SIMULATE: Adding execute to {player.name}")
-                await player.input_queue.put("execute")
-        if len(self.players) < self.max_players and random.random() < self.add_prob:
-            alg.log(f"SIMULATE: Adding a player {self.add_prob}")
-            self.add_player()
-            self.add_prob /= 2
+        alg.log("W: Simulating the world")
+        while True:
+            alg.log("W: awaiting player input")
+            player_input = await self.input_queue.get()
+            alg.log(f"W: Got player input: {player_input}")
+            # execute the player input
+            await asyncio.sleep(1)
+            # mark the task as done
+            self.input_queue.task_done()
+            # pack the answer into an object and send it back to the player
+            await player_input["output_queue"].put("ack")
+            alg.log("W: Sent ack to player")
 
-    def render(self) -> None:
-        """Render the world."""
-        self.check_events()
-        self.redraw()
-
-    def add_player(self) -> None:
+    def add_player(self, player: Player) -> None:
         """Add a player to the world."""
-        player = Player(
-            f"p{len(self.players)}",
-            position=(random.randint(0, 800), random.randint(0, 600)),
-            player_type="inu",
-        )
         self.players.add(player)
-        asyncio.create_task(player.play())
 
-    def add_buildings(self) -> None:
-        """Add buildings to the world."""
-        player_pov = (500, 500)
-        # a house
-        b = Building(
-            "Alex's House",
-            "house",
-            "This house belongs to Alex.",
-            (300, 100),
-            (120, 40),
-        )
-        alg.log(f"W: Adding building >>>\n{b.to_prompt(player_pov)}\n<<<")
-        self.buildings.add(b)
-        # a farm
-        b = Building(
-            "Big ol Farm",
-            "farm",
-            None,
-            (200, 400),
-            (120, 40),
-        )
-        alg.log(f"W: Adding building >>>\n{b.to_prompt(player_pov)}\n<<<")
-        self.buildings.add(b)
-        # a factory
-        b = Building(
-            "Tool shop",
-            "factory",
-            None,
-            (500, 800),
-            (120, 40),
-        )
-        alg.log(f"W: Adding building >>>\n{b.to_prompt(player_pov)}\n<<<")
-        self.buildings.add(b)
+    def add_building(self, building: Building) -> None:
+        """Add a building to the world."""
+        self.buildings.add(building)
+
+    ## RENDER METHODS
 
     def init_renderer(self) -> None:
         """Initialize the world renderer."""
@@ -119,6 +60,16 @@ class World:
         self.redraw_period_sec = 1
         # set the redraw deadline to now so that the world is drawn immediately
         self.redraw_deadline = time.time()
+        # start rendering the world
+        asyncio.create_task(self.render())
+
+    async def render(self) -> None:
+        """Render the world."""
+        alg.log("W: Starting rendering loop")
+        while True:
+            self.check_events()
+            self.redraw()
+            await asyncio.sleep(0.1)
 
     def reset_deadline(self) -> None:
         """Reset the redraw deadline."""
