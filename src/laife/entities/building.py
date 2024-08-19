@@ -5,6 +5,7 @@ from pygame.sprite import Sprite
 
 from laife.config.types import Position, Size
 from laife.ui.alog import alg
+from laife.ui.directions import pospos2cardinal_direction
 
 BUILDING_TYPES = ["house", "farm", "factory"]
 BUILDING_DESCRIPTIONS = {
@@ -67,11 +68,15 @@ class Building(Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = self.position
 
-    def to_prompt(self) -> str:
+    def to_prompt(self, pov_pos: Position | None = None) -> str:
         """Return a prompt representation of the building."""
         gen_desc = BUILDING_DESCRIPTIONS[self.building_type]
         p = f"{self.name}: {gen_desc}"
         if self.description is not None:
             p += f"\nNote about this specific {self.building_type}: {self.description}"
-        p += f"\nIt is located at {self.position}."
+        if pov_pos is not None:
+            self_cardinal = pospos2cardinal_direction(pov_pos, self.position)
+            p += f"\nIt is located to the {self_cardinal.value}."
+        else:
+            p += f"\nIt is located at {self.position}."
         return p

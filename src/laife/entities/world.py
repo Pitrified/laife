@@ -77,6 +77,7 @@ class World:
 
     def add_buildings(self) -> None:
         """Add buildings to the world."""
+        player_pov = (500, 500)
         # a house
         b = Building(
             "Alex's House",
@@ -85,7 +86,7 @@ class World:
             (300, 100),
             (120, 40),
         )
-        alg.log(f"W: Adding building >>>\n{b.to_prompt()}\n<<<")
+        alg.log(f"W: Adding building >>>\n{b.to_prompt(player_pov)}\n<<<")
         self.buildings.add(b)
         # a farm
         b = Building(
@@ -95,7 +96,7 @@ class World:
             (200, 400),
             (120, 40),
         )
-        alg.log(f"W: Adding building >>>\n{b.to_prompt()}\n<<<")
+        alg.log(f"W: Adding building >>>\n{b.to_prompt(player_pov)}\n<<<")
         self.buildings.add(b)
         # a factory
         b = Building(
@@ -105,7 +106,7 @@ class World:
             (500, 800),
             (120, 40),
         )
-        alg.log(f"W: Adding building >>>\n{b.to_prompt()}\n<<<")
+        alg.log(f"W: Adding building >>>\n{b.to_prompt(player_pov)}\n<<<")
         self.buildings.add(b)
 
     def init_renderer(self) -> None:
