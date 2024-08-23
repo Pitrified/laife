@@ -53,6 +53,10 @@ World entities:
 * Building
 * Tool
 * Terrain
+    - A terrain is an entire section of map
+    - Default background is grass
+    - When building the prompt, the area of each type of terrain is calculated
+      and described
 
 Game logic is dynamic:
 given a mission, the player decides which tool to use, and where to go to use it.
@@ -95,6 +99,7 @@ The validation of whether an action actually solves the mission is done by the w
     - [x] : Different buildings
     - [ ] : Different terrain
     - [ ] : Make the map dynamic with dataclasses
+            or some kind of loader
 - [ ] : Vector db of the world entities
     - [ ] : Different tools
 - [ ] : Translate the map into a prompt
