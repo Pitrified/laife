@@ -11,3 +11,7 @@ LANGCHAIN_CACHE_DB = CACHE_FOL / ".langchain.db"
 
 DATA_FOL = ROOT_FOL / "data"
 VECTORSTORE_FOL = DATA_FOL / "vectorstore"
+
+EMBEDDING_MODEL = "text-embedding-3-small"
+
+TOOLS_COLLECTION = "tools"
