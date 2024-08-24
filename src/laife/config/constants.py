@@ -8,3 +8,6 @@ SPRITES_FOL = STATIC_FOL / "sprites"
 CACHE_FOL = ROOT_FOL / "cache"
 
 LANGCHAIN_CACHE_DB = CACHE_FOL / ".langchain.db"
+
+DATA_FOL = ROOT_FOL / "data"
+VECTORSTORE_FOL = DATA_FOL / "vectorstore"

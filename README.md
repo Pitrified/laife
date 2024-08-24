@@ -10,6 +10,18 @@ Let's make AI rule the world!
 poetry install
 ```
 
+edit the chromadb package to deal with the old sqlite3 version
+
+`~/.cache/pypoetry/virtualenvs/laife-IdkopDz3-py3.11/lib/python3.11/site-packages/chromadb/__init__.py`
+
+around line 86 where the import fails
+
+```
+            __import__("pysqlite3")
+            import sys
+            sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+```
+
 ### Openai key
 
 place the openai key in `src/laife/config/credentials.py`:
@@ -94,7 +106,8 @@ The validation of whether an action actually solves the mission is done by the w
 - [x] : Swap player and world queue control,
         the player sends requests to the world to do some action,
         and the world answers with the result
-    - [ ] : Formalize the player and world interaction
+    - [x] : Formalize the player and world interaction
+    - [ ] : Make the list of possible player actions
 - [ ] : Map of the world with entities:
     - [x] : Different buildings
     - [ ] : Different terrain
@@ -103,7 +116,7 @@ The validation of whether an action actually solves the mission is done by the w
 - [ ] : Vector db of the world entities
     - [ ] : Different tools
 - [ ] : Translate the map into a prompt
-- [ ] : Convert the prompts into langchain objects
+- [ ] : Convert the `to_prompts` into langchain objects
 - [ ] : Assign a mission to a player based on the map
     - [ ] : If a mission is too complex, break it down into sub-missions
     - [ ] : Share the mission with the world: the player can ask for help

@@ -16,6 +16,8 @@ credential.py
 credential.*
 
 cache/*
+data/*
+vectorstore/*
 
 ########################## node ##########################
 
