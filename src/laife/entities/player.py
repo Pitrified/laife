@@ -5,9 +5,11 @@ import time
 
 from pygame.sprite import Sprite
 
+from laife.config.types import Position
 from laife.entities.player_state import PlayerState
 from laife.entities.world_channel import WorldRequest, WorldResponse
 from laife.llm.brain import Brain
+from laife.llm.mission import Mission
 from laife.ui.alog import alg
 from laife.ui.sprites import SpriteLoader, SpriteSheet
 
@@ -16,7 +18,7 @@ class Player(Sprite):
     def __init__(
         self,
         name: str,
-        position: tuple[int, int],
+        position: Position,
         player_type: str,
         world_input_queue: asyncio.Queue[WorldRequest],
         state: PlayerState = PlayerState.IDLE,
@@ -45,40 +47,72 @@ class Player(Sprite):
         self.brain = Brain()
 
         # the player mission
-        self.mission = "rest"
+        self.mission = Mission("Build a house")
 
         # start the player loop
         asyncio.create_task(self.play())
+
+    async def play(self) -> None:
+        """Play the game."""
+        while True:
+            alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
+            # think about the mission
+            action = await self.think()
+            # execute the action
+            match action:
+                case "move":
+                    wrsp = await self.move()
+                case "request":
+                    wrsp = await self.world_request()
+                case _:
+                    alg.log(f"PLAYER.play {self.name}: unknown action {action}")
+                    await asyncio.sleep(1)
+                    wrsp = WorldResponse(
+                        "error", {"message": f"unknown action {action}"}
+                    )
+            # gather the feedback of what this action did
+            self.mission.add_history_entry(action, str(wrsp))
+
+    async def think(self) -> str:
+        """Examine the mission and decide what to do."""
+        self.set_state(PlayerState.THINKING)
+
+        alg.log(f"{self.name} is thinking")
+        think_start = time.time()
+        alg.log(f"Think start: {think_start}")
+        action = await self.brain.think("Should I rest or move?")
+        think_end = time.time()
+        alg.log(f"Brain think time: {think_end-think_start:.6f}")
+        alg.log(
+            f"PLAYER.think: {self.name} thought in {think_end-think_start:.2f}s"
+            f" and decided to {action}"
+        )
+
+        # for now it's just a random decision
+        # options = ["move", "request"]
+        # action = random.choice(options)
+        action = "request"
+        alg.log(f"PLAYER.play {self.name}: picked {action}")
+
+        self.set_state(PlayerState.IDLE)
+        return action
+
+    async def move(self) -> WorldResponse:
+        """Move the player."""
+        self.set_state(PlayerState.MOVING)
+        alg.log(f"PLAYER.move {self.name}: is moving")
+        # FIXME - replace with actual movement logic with move_delta loop
+        await asyncio.sleep(1)
+        alg.log(f"PLAYER.move {self.name}: moved")
+        self.set_state(PlayerState.IDLE)
+        wrsp = WorldResponse("ok", {"message": "You reached the destination."})
+        return wrsp
 
     def move_delta(self, dx: int, dy: int) -> None:
         new_position = (self.position[0] + dx, self.position[1] + dy)
         self.set_position(new_position)
 
-    async def move(self) -> None:
-        """Move the player."""
-        self.set_state(PlayerState.MOVING)
-        alg.log(f"PLAYER.move {self.name}: is moving")
-        # FIXME - replace with actual movement logic with move_delta
-        await asyncio.sleep(1)
-        alg.log(f"PLAYER.move {self.name}: moved")
-        self.set_state(PlayerState.IDLE)
-        self.mission = "rest"
-
-    async def think(self) -> None:
-        self.set_state(PlayerState.THINKING)
-        alg.log(f"{self.name} is thinking")
-        think_start = time.time()
-        alg.log(f"Think start: {think_start}")
-        self.mission = await self.brain.think("Should I rest or move?")
-        think_end = time.time()
-        alg.log(f"Brain think time: {think_end-think_start:.6f}")
-        alg.log(
-            f"PLAYER.think: {self.name} thought in {think_end-think_start:.2f}s"
-            f" and decided to {self.mission}"
-        )
-        self.set_state(PlayerState.IDLE)
-
-    def set_position(self, position: tuple[int, int]) -> None:
+    def set_position(self, position: Position) -> None:
         self.position = position
         self.rect.center = self.position
 
@@ -86,15 +120,8 @@ class Player(Sprite):
         self.state = state
         self.image = self.sprite_loader.load_sprite(self.state.value)
         self.rect = self.image.get_rect()
+        # call set_position to update the rect position
         self.set_position(self.position)
-
-    async def execute_mission(self) -> None:
-        """Execute the current mission."""
-        match self.mission:
-            case "move":
-                await self.move()
-            case _:
-                alg.log(f"PLAYER.execute_mission {self.name}: doing {self.mission}")
 
     async def world_request(self) -> None:
         """Request something from the world."""
@@ -115,26 +142,6 @@ class Player(Sprite):
         request_time = request_end - request_start
         alg.log(f"PWR {self.name}: got answer {answer} in {request_time:.6f}s")
         self.input_queue.task_done()
-
-    async def play(self) -> None:
-        """Play the game."""
-        while True:
-            alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
-            # think about the mission
-            # for now it's just a random decision
-            options = ["execute", "think", "move", "request"]
-            # input_cmd = random.choice(options)
-            input_cmd = "request"
-            alg.log(f"PLAYER.play {self.name}: picked {input_cmd}")
-            match input_cmd:
-                case "execute":
-                    await self.execute_mission()
-                case "think":
-                    await self.think()
-                case "move":
-                    await self.move()
-                case "request":
-                    await self.world_request()
 
     def __str__(self) -> str:
         return f"Player {self.name} at {self.position} with state {self.state}"

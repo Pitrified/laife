@@ -96,6 +96,10 @@ One of the player LLM response option is to split the mission into sub-missions.
 
 The validation of whether an action actually solves the mission is done by the world LLM.
 
+The `Brain` thinks about a `Mission` and generates an `Action`.
+All the action except `move` are done as world requests.
+The response of the world is set into the mission history.
+
 ### Features
 
 - [x] : World with renderer
@@ -114,9 +118,11 @@ The validation of whether an action actually solves the mission is done by the w
     - [ ] : Make the map dynamic with dataclasses
             or some kind of loader
 - [ ] : Vector db of the world entities
-    - [ ] : Different tools
+    - [x] : Different tools
+    - [ ] : Different buildings
+- [ ] : Action object as an output of the Brain
 - [ ] : Translate the map into a prompt
-- [ ] : Convert the `to_prompts` into langchain objects
+- [ ] : Convert the `to_prompts` into langchain objects using `PromptTemplate`s
 - [ ] : Assign a mission to a player based on the map
     - [ ] : If a mission is too complex, break it down into sub-missions
     - [ ] : Share the mission with the world: the player can ask for help
