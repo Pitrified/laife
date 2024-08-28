@@ -31,10 +31,23 @@ class Tool:
 
     def to_document(self) -> Document:
         """Convert the tool to a document."""
-        meta = {"name": self.name}
+        meta = {
+            "name": self.name,
+            "description": self.description,
+            "entity_type": "tool",
+        }
         return Document(
             page_content=self.to_prompt(),
             metadata=meta,
+        )
+
+    @classmethod
+    def from_document(cls, doc: Document, vector_db: VectorDB) -> "Tool":
+        """Create a tool from a document."""
+        return cls(
+            name=doc.metadata["name"],
+            description=doc.metadata["description"],
+            vector_db=vector_db,
         )
 
     def add_to_vdb(self) -> None:
