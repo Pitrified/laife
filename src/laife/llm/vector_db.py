@@ -4,7 +4,14 @@ from typing import Any
 
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain_openai import OpenAIEmbeddings
 
+from laife.config.lc_embeddings import (
+    LcEmbeddingsConfig,
+    OpenAIEmbeddingsConfig,
+    SentenceTransformerConfig,
+)
+from laife.embed.sentence_transformer_embeddings import SentenceTransformersEmbeddings
 from laife.llm.hasher import Hasher
 
 
@@ -35,8 +42,29 @@ def get_document_ids(
 class VectorDB(Chroma):
     """Custom vector db."""
 
-    def __init__(self, *args, **kwargs) -> None:
-        """Initialize the vector database."""
+    def __init__(
+        self,
+        embeddings_config: LcEmbeddingsConfig | None = None,
+        *args,
+        **kwargs,
+    ) -> None:
+        """Initialize the vector database.
+
+        This is unreadable just pass the embeddings_function as an argument.
+        """
+        match embeddings_config:
+            case OpenAIEmbeddingsConfig():
+                kwargs["embedding_function"] = OpenAIEmbeddings(
+                    **embeddings_config.to_dict(),
+                )
+            case SentenceTransformerConfig():
+                kwargs["embedding_function"] = SentenceTransformersEmbeddings(
+                    model_name=embeddings_config.model_name.value,
+                )
+            case None:
+                pass
+            case _:
+                raise ValueError(f"Invalid embeddings config {embeddings_config}")
         super().__init__(*args, **kwargs)
 
     def add_documents(
