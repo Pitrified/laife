@@ -46,3 +46,6 @@ documents = [
 vdb.add_documents(documents)
 
 # %%
+
+# adding the documents again will not add them
+vdb.add_documents(documents)
