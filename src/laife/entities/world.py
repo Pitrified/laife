@@ -8,7 +8,7 @@ import pygame
 
 from laife.entities.building import Building
 from laife.entities.player import Player
-from laife.entities.world_channel import WorldRequest, WorldResponse
+from laife.entities.world_channel import WorldRequest, WorldResponse, WRBuild
 from laife.ui.alog import alg
 
 
@@ -34,9 +34,11 @@ class World:
             player_input = await self.input_queue.get()
             alg.log(f"W: Got player input: {player_input}")
             # execute the player input
-            match player_input.request_type:
-                case "add_building":
-                    wrsp = self.add_building(**player_input.request_data)
+            # match on the player_input class
+            match player_input:
+                # case "add_building":
+                case WRBuild():
+                    wrsp = self.add_building(player_input.building)
                 case _:
                     await asyncio.sleep(1)
                     wrsp = WorldResponse("ok", {"message": "ack"})

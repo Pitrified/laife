@@ -114,6 +114,10 @@ class Player(Sprite):
 
     async def move(self) -> WorldResponse:
         """Move the player."""
+        # FIXME the move should also be delegated to the world
+        # the think method should return the WRMove object
+        # and the world should handle the move, so we can collision detect
+        # just package self into a WRMove object and send it to the world
         self.set_state(PlayerState.MOVING)
         alg.log(f"PLAYER.move {self.name}: is moving")
         # FIXME - replace with actual movement logic with move_delta loop
@@ -142,11 +146,7 @@ class Player(Sprite):
         """Request something from the world."""
         alg.log(f"PWR {self.name}: requesting")
         # send a request to the world
-        wreq = WorldRequest(
-            response_queue=self.input_queue,
-            request_type="test_request",
-            request_data={},
-        )
+        wreq = WorldRequest(response_queue=self.input_queue)
         request_start = time.time()
         alg.log(f"PWR: world input queue len: {self.world_input_queue.qsize()}")
         await self.world_input_queue.put(wreq)

@@ -2,6 +2,8 @@
 
 import asyncio
 
+from laife.entities.building import Building
+
 
 class WorldResponse:
     """A response from the world."""
@@ -28,14 +30,27 @@ class WorldRequest:
     def __init__(
         self,
         response_queue: asyncio.Queue[WorldResponse],
-        request_type: str,
-        request_data: dict,
     ) -> None:
         """Initialize the request."""
         self.response_queue = response_queue
-        self.request_type = request_type
-        self.request_data = request_data
 
     def __str__(self) -> str:
         """Return the string representation of the request."""
-        return f"WorldRequest(request_type={self.request_type}, request_data={self.request_data})"
+        return f"WorldRequest(id={id(self)}, response_queue={self.response_queue})"
+
+
+class WRBuild(WorldRequest):
+    """A building request."""
+
+    def __init__(
+        self,
+        response_queue: asyncio.Queue[WorldResponse],
+        building: Building,
+    ) -> None:
+        """Initialize the building request."""
+        super().__init__(response_queue)
+        self.building = building
+
+    def __str__(self) -> str:
+        """Return the string representation of the request."""
+        return f"WRBuild(id={id(self)}, response_queue={self.response_queue}, building={self.building})"
