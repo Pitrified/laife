@@ -1,23 +1,38 @@
 """Mission for the player to complete."""
 
 from enum import Enum
+from typing import Self
+
+from pydantic import BaseModel, Field
 
 
-class MissionHistoryEntry:
+class MissionHistoryEntry(BaseModel):
     """History entry of a mission."""
 
-    def __init__(
-        self,
-        action: str,
-        result: str,
-    ) -> None:
-        """Initialize the history entry."""
-        self.action = action
-        self.result = result
+    action: str
+    result: str
 
     def to_prompt(self) -> str:
         """Return the history entry as a prompt."""
         return f"You tried to {self.action} and the result was {self.result}"
+
+
+class MissionHistory(BaseModel):
+    history: list[MissionHistoryEntry] = Field(default_factory=list)
+
+    def add_history_entry(
+        self,
+        mission_history_entry: MissionHistoryEntry,
+    ) -> None:
+        """Add a history entry to the mission."""
+        self.history.append(mission_history_entry)
+
+    def to_prompt(self) -> str:
+        """Return the history as a prompt."""
+        p = ""
+        for entry in self.history:
+            p += entry.to_prompt() + "\n"
+        return p
 
 
 class MissionStatus(Enum):
@@ -29,48 +44,49 @@ class MissionStatus(Enum):
     COMPLETED = "completed"
 
 
-class Mission:
+class MissionType(Enum):
+    """Type of the mission."""
+
+    CRAFT = "craft"
+    BUILD = "build"
+    MOVE = "move"
+    THINK = "think"
+
+
+class MissionStep(BaseModel):
     """Mission for the player to complete."""
 
-    def __init__(
-        self,
-        objective: str,
-        sub_level: int = 0,
-    ) -> None:
-        """Initialize the mission."""
-        self.objective = objective
-        self.history: list[MissionHistoryEntry] = []
-        self.status = MissionStatus.PENDING
-        self.sub_missions: list[Mission] = []
-        self.sub_level = sub_level
-
-    def add_history_entry(
-        self,
-        action: str,
-        result: str,
-    ) -> None:
-        """Add a history entry to the mission."""
-        self.history.append(MissionHistoryEntry(action, result))
-
-    def add_sub_mission(
-        self,
-        mission: "Mission",
-    ) -> None:
-        """Add a sub mission to the mission."""
-        self.sub_missions.append(mission)
+    mission_type: MissionType
+    objective: str
+    status: MissionStatus = MissionStatus.PENDING
 
     def to_prompt(self) -> str:
         """Return the mission as a prompt."""
         p = f"The mission is '{self.objective}'"
         p += f"\nStatus: {self.status.value}"
-        if self.sub_level > 0:
-            p += f"\nSub mission level: {self.sub_level}"
-        if len(self.history) > 0:
-            p += f"\nFor now, the steps you took are:"
-            for h in self.history:
-                p += f"\n{h.to_prompt()}"
-        if len(self.sub_missions) > 0:
-            p += f"\nSub missions:"
-            for sm in self.sub_missions:
-                p += f"\n{sm.to_prompt()}"
+        return p
+
+
+class Mission(BaseModel):
+    steps: list[MissionStep] = Field(default_factory=list)
+
+    @classmethod
+    def from_step(cls, mission_step: MissionStep) -> Self:
+        """Create a mission from a step."""
+        return cls(steps=[mission_step])
+
+    @classmethod
+    def from_steps(cls, *mission_steps: MissionStep) -> Self:
+        """Create a mission from steps."""
+        return cls(steps=list(mission_steps))
+
+    def add_step(self, mission_step: MissionStep) -> None:
+        """Add a step to the mission."""
+        self.steps.append(mission_step)
+
+    def to_prompt(self) -> str:
+        """Return the mission as a prompt."""
+        p = ""
+        for step in self.steps:
+            p += step.to_prompt() + "\n"
         return p

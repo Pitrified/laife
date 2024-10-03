@@ -9,7 +9,14 @@ from laife.config.types import Position
 from laife.entities.player_state import PlayerState
 from laife.entities.world_channel import WorldRequest, WorldResponse
 from laife.llm.brain import Brain
-from laife.llm.mission import Mission
+from laife.llm.mission import (
+    Mission,
+    MissionHistory,
+    MissionHistoryEntry,
+    MissionStatus,
+    MissionStep,
+    MissionType,
+)
 from laife.ui.alog import alg
 from laife.ui.sprites import SpriteLoader, SpriteSheet
 
@@ -47,7 +54,14 @@ class Player(Sprite):
         self.brain = Brain()
 
         # the player mission
-        self.mission = Mission("Build a house")
+        ms = MissionStep(
+            mission_type=MissionType.BUILD,
+            objective="Build a house",
+            status=MissionStatus.ACTIVE,
+        )
+        self.mission = Mission.from_step(ms)
+        # the player history
+        self.history = MissionHistory()
 
         # start the player loop
         asyncio.create_task(self.play())
@@ -71,7 +85,8 @@ class Player(Sprite):
                         "error", {"message": f"unknown action {action}"}
                     )
             # gather the feedback of what this action did
-            self.mission.add_history_entry(action, str(wrsp))
+            he = MissionHistoryEntry(action=action, result=str(wrsp))
+            self.history.add_history_entry(he)
 
     async def think(self) -> str:
         """Examine the mission and decide what to do."""
