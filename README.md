@@ -100,6 +100,8 @@ The `Brain` thinks about a `Mission` and generates an `Action`.
 All the action except `move` are done as world requests.
 The response of the world is set into the mission history.
 
+Add a langchain `tool` to compute distance between two points on the map.
+
 ### Features
 
 - [x] : World with renderer
