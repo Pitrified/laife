@@ -102,6 +102,17 @@ The response of the world is set into the mission history.
 
 Add a langchain `tool` to compute distance between two points on the map.
 
+There are mission and actions.
+
+### Full loop
+
+1. Observe the world
+1. Think -> receive an Action
+1. Convert the action to a request
+1. Send the request to the world
+1. Receive the response
+1. Update the mission history
+
 ### Features
 
 - [x] : World with renderer
