@@ -50,7 +50,7 @@ class MissionType(Enum):
     CRAFT = "craft"
     BUILD = "build"
     MOVE = "move"
-    THINK = "think"
+    # THINK = "think"
 
 
 class MissionStep(BaseModel):
