@@ -6,6 +6,7 @@ import time
 from pygame.sprite import Sprite
 
 from laife.config.types import Position
+from laife.entities.action import ActionBuild, ActionCraft, ActionMove, ActionOption
 from laife.entities.player_state import PlayerState
 from laife.entities.world_channel import WorldRequest, WorldResponse
 from laife.llm.brain import Brain
@@ -18,6 +19,7 @@ from laife.llm.mission import (
     MissionType,
 )
 from laife.ui.alog import alg
+from laife.ui.directions import CardinalDirection
 from laife.ui.sprites import SpriteLoader, SpriteSheet
 
 
@@ -70,77 +72,101 @@ class Player(Sprite):
         """Play the game."""
         while True:
             alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
+            # TODO add exploration step
             # think about the mission
-            action = await self.think()
+            action_option = await self.think()
             # execute the action
-            match action:
-                case "move":
-                    wrsp = await self.move()
-                case "request":
-                    wrsp = await self.world_request()
+            match action_option:
+                case ActionMove():
+                    action_handler = self.move
+                case ActionBuild():
+                    action_handler = self.build
+                case ActionCraft():
+                    action_handler = self.craft
                 case _:
-                    alg.log(f"PLAYER.play {self.name}: unknown action {action}")
-                    await asyncio.sleep(1)
-                    wrsp = WorldResponse(
-                        "error", {"message": f"unknown action {action}"}
-                    )
-            # gather the feedback of what this action did
-            he = MissionHistoryEntry(action=action, result=str(wrsp))
+                    action_handler = self.action_error
+            wrsp = await action_handler(action_option)
+            # save the feedback of what this action did
+            he = MissionHistoryEntry(action=action_option, result=str(wrsp))
             self.history.add_history_entry(he)
 
-    async def think(self) -> str:
+    async def think(self) -> ActionOption:
         """Examine the mission and decide what to do."""
         self.set_state(PlayerState.THINKING)
-
         alg.log(f"{self.name} is thinking")
-        think_start = time.time()
-        alg.log(f"Think start: {think_start}")
-        action = await self.brain.think("Should I rest or move?")
-        think_end = time.time()
-        alg.log(f"Brain think time: {think_end-think_start:.6f}")
-        alg.log(
-            f"PLAYER.think: {self.name} thought in {think_end-think_start:.2f}s"
-            f" and decided to {action}"
-        )
+
+        # TODO - replace with actual thinking logic
+        # think_start = time.time()
+        # alg.log(f"Think start: {think_start}")
+        # action = await self.brain.think("Should I rest or move?")
+        # think_end = time.time()
+        # alg.log(f"Brain think time: {think_end-think_start:.6f}")
+        # alg.log(
+        #     f"PLAYER.think: {self.name} thought in {think_end-think_start:.2f}s"
+        #     f" and decided to {action}"
+        # )
 
         # for now it's just a random decision
         # options = ["move", "request"]
         # action = random.choice(options)
-        action = "request"
+
+        action = ActionMove(
+            direction=CardinalDirection.North,
+            distance=10,
+        )
+        action_option = ActionOption(
+            action=action,
+            reason="I need to move to complete the mission.",
+        )
+
         alg.log(f"PLAYER.play {self.name}: picked {action}")
-
         self.set_state(PlayerState.IDLE)
-        return action
+        return action_option
 
-    async def move(self) -> WorldResponse:
+    async def move(self, action_option: ActionOption) -> WorldResponse:
         """Move the player."""
-        # FIXME the move should also be delegated to the world
-        # the think method should return the WRMove object
-        # and the world should handle the move, so we can collision detect
-        # just package self into a WRMove object and send it to the world
         self.set_state(PlayerState.MOVING)
         alg.log(f"PLAYER.move {self.name}: is moving")
-        # FIXME - replace with actual movement logic with move_delta loop
+
+        # TODO the move should also be delegated to the world
+        # the think method should return an action
+        # here we package it into a WRMove object and send it to the world
+        # and the world should handle the move, so we can collision detect
+        # ? package self into a WRMove object and send it to the world,
+        #   and the world will progressively move the player
+        # ? or do we receive the step from the world and move the player here?
+
+        # TODO - replace with actual movement logic with move_delta loop
+        wrsp = WorldResponse("ok", {"message": "You reached the destination."})
         await asyncio.sleep(1)
+
         alg.log(f"PLAYER.move {self.name}: moved")
         self.set_state(PlayerState.IDLE)
-        wrsp = WorldResponse("ok", {"message": "You reached the destination."})
         return wrsp
 
     def move_delta(self, dx: int, dy: int) -> None:
         new_position = (self.position[0] + dx, self.position[1] + dy)
         self.set_position(new_position)
 
-    def set_position(self, position: Position) -> None:
-        self.position = position
-        self.rect.center = self.position
+    async def build(self, action_option: ActionOption) -> WorldResponse:
+        """Prepare the build request and send it to the world."""
+        wrsp = WorldResponse("ok", {"message": "You built the thing."})
+        await asyncio.sleep(1)
+        return wrsp
 
-    def set_state(self, state: PlayerState) -> None:
-        self.state = state
-        self.image = self.sprite_loader.load_sprite(self.state.value)
-        self.rect = self.image.get_rect()
-        # call set_position to update the rect position
-        self.set_position(self.position)
+    async def craft(self, action_option: ActionOption) -> WorldResponse:
+        """Prepare the craft request and send it to the world."""
+        wrsp = WorldResponse("ok", {"message": "You crafted the thing."})
+        await asyncio.sleep(1)
+        return wrsp
+
+    async def action_error(self, action_option: ActionOption) -> WorldResponse:
+        """Handle an unknown action."""
+        wrsp = await self.action_error(action_option)
+        alg.log(f"PLAYER.play {self.name}: unknown action {action_option}")
+        await asyncio.sleep(1)
+        wrsp = WorldResponse("error", {"message": f"unknown action {action_option}"})
+        return wrsp
 
     async def world_request(self) -> None:
         """Request something from the world."""
@@ -157,6 +183,19 @@ class Player(Sprite):
         request_time = request_end - request_start
         alg.log(f"PWR {self.name}: got answer {answer} in {request_time:.6f}s")
         self.input_queue.task_done()
+
+    ## RENDER METHODS
+
+    def set_position(self, position: Position) -> None:
+        self.position = position
+        self.rect.center = self.position
+
+    def set_state(self, state: PlayerState) -> None:
+        self.state = state
+        self.image = self.sprite_loader.load_sprite(self.state.value)
+        self.rect = self.image.get_rect()
+        # call set_position to update the rect position
+        self.set_position(self.position)
 
     def __str__(self) -> str:
         return f"Player {self.name} at {self.position} with state {self.state}"

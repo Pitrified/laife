@@ -41,12 +41,14 @@ class World:
                     wrsp = self.add_building(player_input.building)
                 case _:
                     await asyncio.sleep(1)
-                    wrsp = WorldResponse("ok", {"message": "ack"})
+                    wrsp = WorldResponse(
+                        "error", {"message": f"unknown request {player_input}"}
+                    )
             # mark the task as done
             self.input_queue.task_done()
             # pack the answer into an object and send it back to the player
             await player_input.response_queue.put(wrsp)
-            alg.log("W: Sent ack to player")
+            alg.log("W: Sent response to player")
 
     def add_player(self, player: Player) -> None:
         """Add a player to the world."""
@@ -63,6 +65,12 @@ class World:
         self.buildings.add(building)
         wrsp = WorldResponse("ok", {"message": "building added"})
         return wrsp
+
+    def move_player(self) -> None:
+        """Move the player."""
+
+    def craft(self) -> None:
+        """Craft something."""
 
     ## RENDER METHODS
 
