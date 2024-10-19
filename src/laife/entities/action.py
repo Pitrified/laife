@@ -5,18 +5,14 @@ from pydantic import BaseModel, Field
 from laife.ui.directions import CardinalDirection
 
 
-class Action(BaseModel):
-    """Action to solve a Mission."""
-
-
-class ActionMove(Action):
+class ActionMove(BaseModel):
     """Move towards a direction."""
 
     direction: CardinalDirection = Field(..., description="The direction to move.")
     distance: int = Field(..., description="The distance to move.")
 
 
-class ActionBuild(Action):
+class ActionBuild(BaseModel):
     """Build something."""
 
     building_type: str = Field(..., description="The building to build.")
@@ -24,7 +20,7 @@ class ActionBuild(Action):
     size: int = Field(..., description="The size of the building.")
 
 
-class ActionCraft(Action):
+class ActionCraft(BaseModel):
     """Craft something."""
 
     item: str = Field(..., description="The item to craft.")
@@ -34,7 +30,7 @@ class ActionCraft(Action):
 Actions = ActionMove | ActionBuild | ActionCraft
 
 
-class ActionOption(BaseModel):
+class Action(BaseModel):
     """An action to take."""
 
     action: Actions = Field(..., description="The action to take.")

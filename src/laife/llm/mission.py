@@ -5,13 +5,13 @@ from typing import Self
 
 from pydantic import BaseModel, Field
 
-from laife.entities.action import ActionOption
+from laife.entities.action import Action
 
 
 class MissionHistoryEntry(BaseModel):
     """History entry of a mission."""
 
-    action: ActionOption
+    action: Action
     result: str
 
     def to_prompt(self) -> str:

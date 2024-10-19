@@ -6,7 +6,7 @@ import time
 from pygame.sprite import Sprite
 
 from laife.config.types import Position
-from laife.entities.action import ActionBuild, ActionCraft, ActionMove, ActionOption
+from laife.entities.action import Action, ActionBuild, ActionCraft, ActionMove
 from laife.entities.player_state import PlayerState
 from laife.entities.world_channel import WorldRequest, WorldResponse
 from laife.llm.brain import Brain
@@ -74,9 +74,9 @@ class Player(Sprite):
             alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
             # TODO add exploration step
             # think about the mission
-            action_option = await self.think()
+            action = await self.think()
             # execute the action
-            match action_option:
+            match action:
                 case ActionMove():
                     action_handler = self.move
                 case ActionBuild():
@@ -85,12 +85,12 @@ class Player(Sprite):
                     action_handler = self.craft
                 case _:
                     action_handler = self.action_error
-            wrsp = await action_handler(action_option)
+            wrsp = await action_handler(action)
             # save the feedback of what this action did
-            he = MissionHistoryEntry(action=action_option, result=str(wrsp))
+            he = MissionHistoryEntry(action=action, result=str(wrsp))
             self.history.add_history_entry(he)
 
-    async def think(self) -> ActionOption:
+    async def think(self) -> Action:
         """Examine the mission and decide what to do."""
         self.set_state(PlayerState.THINKING)
         alg.log(f"{self.name} is thinking")
@@ -110,20 +110,20 @@ class Player(Sprite):
         # options = ["move", "request"]
         # action = random.choice(options)
 
-        action = ActionMove(
+        am = ActionMove(
             direction=CardinalDirection.North,
             distance=10,
         )
-        action_option = ActionOption(
-            action=action,
+        action = Action(
+            action=am,
             reason="I need to move to complete the mission.",
         )
 
         alg.log(f"PLAYER.play {self.name}: picked {action}")
         self.set_state(PlayerState.IDLE)
-        return action_option
+        return action
 
-    async def move(self, action_option: ActionOption) -> WorldResponse:
+    async def move(self, action: Action) -> WorldResponse:
         """Move the player."""
         self.set_state(PlayerState.MOVING)
         alg.log(f"PLAYER.move {self.name}: is moving")
@@ -148,24 +148,24 @@ class Player(Sprite):
         new_position = (self.position[0] + dx, self.position[1] + dy)
         self.set_position(new_position)
 
-    async def build(self, action_option: ActionOption) -> WorldResponse:
+    async def build(self, action: Action) -> WorldResponse:
         """Prepare the build request and send it to the world."""
         wrsp = WorldResponse("ok", {"message": "You built the thing."})
         await asyncio.sleep(1)
         return wrsp
 
-    async def craft(self, action_option: ActionOption) -> WorldResponse:
+    async def craft(self, action: Action) -> WorldResponse:
         """Prepare the craft request and send it to the world."""
         wrsp = WorldResponse("ok", {"message": "You crafted the thing."})
         await asyncio.sleep(1)
         return wrsp
 
-    async def action_error(self, action_option: ActionOption) -> WorldResponse:
+    async def action_error(self, action: Action) -> WorldResponse:
         """Handle an unknown action."""
-        wrsp = await self.action_error(action_option)
-        alg.log(f"PLAYER.play {self.name}: unknown action {action_option}")
+        wrsp = await self.action_error(action)
+        alg.log(f"PLAYER.play {self.name}: unknown action {action}")
         await asyncio.sleep(1)
-        wrsp = WorldResponse("error", {"message": f"unknown action {action_option}"})
+        wrsp = WorldResponse("error", {"message": f"unknown action {action}"})
         return wrsp
 
     async def world_request(self) -> None:
