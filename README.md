@@ -104,6 +104,17 @@ Add a langchain `tool` to compute distance between two points on the map.
 
 There are mission and actions.
 
+Add decorators to player functions to update the state of the player.
+
+The `Mission` do not need a `MissionType`, it has to be inferred from the mission description.
+
+We need an `ActionHistory` to keep track of the actions done by the player.
+Not a mission history for now.
+
+The `Brain` takes a `Mission` and generates an `Action`.
+
+The `Planner` breaks down the Mission into sub-missions.
+
 ### Full loop
 
 1. Observe the world
