@@ -1,7 +1,12 @@
 """Actions are something the Brain decides to do to solve a Mission."""
 
+from dataclasses import dataclass
+
+from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate
+from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
+from laife.config.chat_openai import CHAT_OPENAI_CONFIG, ChatOpenAIConfig
 from laife.ui.directions import CardinalDirection
 
 
@@ -21,17 +26,26 @@ class ActionBuild(BaseModel):
 
 
 class ActionCraft(BaseModel):
-    """Craft something."""
+    """Craft something, like an item or tool.
 
-    item: str = Field(..., description="The item to craft.")
-    description: str = Field(..., description="The description of the item.")
+    An item is a physical object that can be used to solve a mission.
+    A tool is a device that can be used to craft other items or tools.
+    """
+
+    object: str = Field(..., description="The item or tool to craft.")
+    description: str = Field(..., description="The description of the item or tool.")
 
 
 Actions = ActionMove | ActionBuild | ActionCraft
 
 
 class Action(BaseModel):
-    """An action to take."""
+    """An action to take.
+
+    The action does not necessarily have to solve the mission.
+    A good action is one that helps solve the mission, possibly by taking
+    other actions later.
+    """
 
     act: Actions = Field(..., description="The action to take.")
     reason: str = Field(..., description="The reason for the action.")
@@ -53,3 +67,35 @@ class Action(BaseModel):
         if not isinstance(self.act, ActionCraft):
             raise ValueError("Action is not an ActionCraft")
         return self.act
+
+
+action_template = """You are an agent in a virtual world. \
+You have a mission to complete. \
+You can take an action to solve the mission. \
+
+The mission is to: {mission}
+"""
+action_prompt = ChatPromptTemplate(
+    [SystemMessagePromptTemplate.from_template(action_template)]
+)
+
+
+@dataclass
+class ActionPicker:
+    """Pick an action to take."""
+
+    chat_openai_config: ChatOpenAIConfig
+
+    def __post_init__(self):
+        """Initialize the action picker."""
+        self.model = ChatOpenAI(**self.chat_openai_config.model_dump())
+        self.structured_llm = self.model.with_structured_output(Action)
+        self.chain = action_prompt | self.structured_llm
+
+    def invoke(self, mission: str) -> Action:
+        """Pick an action to take."""
+        # MAYBE the mission is of type Mission
+        output = self.chain.invoke({"mission": mission})
+        if not isinstance(output, Action):
+            raise ValueError(f"Unexpected output type: {type(output)}")
+        return output
