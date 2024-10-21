@@ -33,5 +33,23 @@ Actions = ActionMove | ActionBuild | ActionCraft
 class Action(BaseModel):
     """An action to take."""
 
-    action: Actions = Field(..., description="The action to take.")
+    act: Actions = Field(..., description="The action to take.")
     reason: str = Field(..., description="The reason for the action.")
+
+    def get_action_move(self) -> ActionMove:
+        """Get the ActionMove."""
+        if not isinstance(self.act, ActionMove):
+            raise ValueError("Action is not an ActionMove")
+        return self.act
+
+    def get_action_build(self) -> ActionBuild:
+        """Get the ActionBuild."""
+        if not isinstance(self.act, ActionBuild):
+            raise ValueError("Action is not an ActionBuild")
+        return self.act
+
+    def get_action_craft(self) -> ActionCraft:
+        """Get the ActionCraft."""
+        if not isinstance(self.act, ActionCraft):
+            raise ValueError("Action is not an ActionCraft")
+        return self.act

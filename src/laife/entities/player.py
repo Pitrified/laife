@@ -115,7 +115,7 @@ class Player(Sprite):
             distance=10,
         )
         action = Action(
-            action=am,
+            act=am,
             reason="I need to move to complete the mission.",
         )
 
@@ -127,6 +127,8 @@ class Player(Sprite):
         """Move the player."""
         self.set_state(PlayerState.MOVING)
         alg.log(f"PLAYER.move {self.name}: is moving")
+
+        am: ActionMove = action.get_action_move()
 
         # TODO the move should also be delegated to the world
         # the think method should return an action
