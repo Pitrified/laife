@@ -114,3 +114,6 @@ class ChatOpenAIConfig(BaseModel):
 #     invocation.
 #     """
 #     model_config = ConfigDict(populate_by_name=True)
+
+
+CHAT_OPENAI_CONFIG = ChatOpenAIConfig()
