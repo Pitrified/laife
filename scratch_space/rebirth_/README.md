@@ -5,7 +5,7 @@
 1. Poetry to uv
 1. ruff and linting
 1. params vs config
-1. all dependencies to update
+1. all dependencies to update (and python version to 3.14)
 
 ## Renderer
 
