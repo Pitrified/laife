@@ -9,9 +9,8 @@ from langchain_core.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 from langchain_ollama import ChatOllama
-from langchain_openai import ChatOpenAI
 
-from laife.config.credentials import OPENAI_API_KEY
+# from laife.config.credentials import OPENAI_API_KEY
 from laife.ui.alog import alg
 
 
@@ -58,7 +57,7 @@ class Brain:
 
     async def achat(self, input_language, output_language, input_text):
         """Chat with the agent asynchronously."""
-        alg.log(f"Brain.achat started")
+        alg.log("Brain.achat started")
         res = await self.chain.ainvoke(
             {
                 "input_language": input_language,
@@ -66,7 +65,7 @@ class Brain:
                 "input": input_text,
             }
         )
-        alg.log(f"Brain.achat finished")
+        alg.log("Brain.achat finished")
         return res
 
     async def think(self, query: str) -> str:
