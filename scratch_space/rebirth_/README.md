@@ -2,15 +2,16 @@
 
 ## Python
 
-1. Poetry to uv
+1. Poetry to uv -- DONE
 1. ruff and linting
 1. params vs config
-1. all dependencies to update (and python version to 3.14)
+1. all dependencies to update 
+1. python version to 3.14 -> need wheels for pygame, stay at 3.13 for now
 
 ## Renderer
 
 1. Runner with no pygame - text only
-1. Async logger is needed? can loguru handle that?
+1. Async logger is needed? can loguru handle that? -- no, ALog also skips repeated messages
 1. ipygame if needed
 
 ## LLM

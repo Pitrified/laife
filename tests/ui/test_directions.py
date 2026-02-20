@@ -3,11 +3,12 @@
 import pytest
 
 from laife.config.types import Position
-from laife.ui.directions import CardinalDirection, pospos2cardinal_direction
+from laife.ui.directions import CardinalDirection
+from laife.ui.directions import pospos2cardinal_direction
 
 
 @pytest.mark.parametrize(
-    "you, target, expected_direction",
+    ("you", "target", "expected_direction"),
     [
         ((0, 0), (0, -1), CardinalDirection.North),
         ((0, 0), (1, -1), CardinalDirection.NorthEast),
@@ -28,7 +29,7 @@ def test_pospos2cardinal_direction(
     assert pospos2cardinal_direction(you, target) == expected_direction
 
 
-def test_pospos2cardinal_direction_same():
+def test_pospos2cardinal_direction_same() -> None:
     """Test that pospos2cardinal_direction works when the positions are the same."""
     you = (0, 0)
     target = (0, 0)

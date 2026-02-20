@@ -8,7 +8,9 @@ import pygame
 
 from laife.entities.building import Building
 from laife.entities.player import Player
-from laife.entities.world_channel import WorldRequest, WorldResponse, WRBuild
+from laife.entities.world_channel import WorldRequest
+from laife.entities.world_channel import WorldResponse
+from laife.entities.world_channel import WRBuild
 from laife.ui.alog import alg
 
 
@@ -36,14 +38,11 @@ class World:
             # execute the player input
             # match on the player_input class
             match player_input:
-                # case "add_building":
                 case WRBuild():
                     wrsp = self.add_building(player_input.building)
                 case _:
                     await asyncio.sleep(1)
-                    wrsp = WorldResponse(
-                        "error", {"message": f"unknown request {player_input}"}
-                    )
+                    wrsp = WorldResponse("error", {"message": f"unknown request {player_input}"})
             # mark the task as done
             self.input_queue.task_done()
             # pack the answer into an object and send it back to the player
@@ -57,10 +56,8 @@ class World:
     def add_building(self, building: Building) -> WorldResponse:
         """Add a building to the world."""
         # check that the building sprite is not colliding with any other building
-        if pygame.sprite.spritecollideany(building, self.buildings):  # type: ignore
-            wrsp = WorldResponse(
-                "error", {"message": "building collides with another building"}
-            )
+        if pygame.sprite.spritecollideany(building, self.buildings):  # pyright: ignore[reportArgumentType]
+            wrsp = WorldResponse("error", {"message": "building collides with another building"})
             return wrsp
         self.buildings.add(building)
         wrsp = WorldResponse("ok", {"message": "building added"})
@@ -85,7 +82,8 @@ class World:
         # set the redraw deadline to now so that the world is drawn immediately
         self.redraw_deadline = time.time()
         # start rendering the world
-        asyncio.create_task(self.render())
+        # keep reference to avoid https://docs.astral.sh/ruff/rules/asyncio-dangling-task/
+        self.render_task = asyncio.create_task(self.render())
 
     async def render(self) -> None:
         """Render the world."""

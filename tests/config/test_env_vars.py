@@ -2,8 +2,6 @@
 
 import os
 
-import pytest
-
 
 def test_env_vars() -> None:
     """The environment var LAIFE_SAMPLE_ENV_VAR is available."""

@@ -1,16 +1,17 @@
+"""Test cond module."""
+
 import pytest
 
-from laife.llm.cond import (
-    CompCond,
-    CompOp,
-    InclusionCond,
-    InclusionOp,
-    LogicalCond,
-    LogicalOp,
-)
+from laife.llm.cond import CompCond
+from laife.llm.cond import CompOp
+from laife.llm.cond import InclusionCond
+from laife.llm.cond import InclusionOp
+from laife.llm.cond import LogicalCond
+from laife.llm.cond import LogicalOp
 
 
 def test_comp_cond() -> None:
+    """Verify CompCond outputs correct dicts for EQ and GT operators."""
     # Test equality condition
     cond = CompCond("age", CompOp.EQ, 30)
     assert cond.to_dict() == {"age": 30}
@@ -21,6 +22,7 @@ def test_comp_cond() -> None:
 
 
 def test_inclusion_cond() -> None:
+    """Check InclusionCond produces correct $in and $nin mappings."""
     # Test inclusion condition
     cond = InclusionCond("name", InclusionOp.IN, "John", "Jane")
     assert cond.to_dict() == {"name": {"$in": ["John", "Jane"]}}
@@ -31,6 +33,7 @@ def test_inclusion_cond() -> None:
 
 
 def test_logical_cond() -> None:
+    """Ensure LogicalCond composes sub-conditions with $and and $or."""
     # Test logical AND condition
     comp_cond1 = CompCond("age", CompOp.GT, 30)
     comp_cond2 = CompCond("name", CompOp.EQ, "John")
@@ -47,17 +50,22 @@ def test_logical_cond() -> None:
 
 
 def test_inclusion_cond_with_empty_values() -> None:
+    """Raise ValueError when InclusionCond is created without values."""
     # Test inclusion condition with empty values
-    with pytest.raises(ValueError):
-        cond = InclusionCond("name", InclusionOp.IN)
+    msg = "Values cannot be empty."
+    with pytest.raises(ValueError, match=msg):
+        _ = InclusionCond("name", InclusionOp.IN)
 
 
 def test_logical_cond_with_no_and_single_condition() -> None:
+    """Validate LogicalCond enforces minimum condition counts for operators."""
     # Test logical AND condition with a single condition
-    with pytest.raises(ValueError):
-        comp_cond = CompCond("age", CompOp.GT, 30)
-        logical_cond = LogicalCond(LogicalOp.AND, comp_cond)
+    comp_cond = CompCond("age", CompOp.GT, 30)
+    msg = "Conditions must be more than one."
+    with pytest.raises(ValueError, match=msg):
+        _ = LogicalCond(LogicalOp.AND, comp_cond)
 
     # Test logical OR condition with no conditions
-    with pytest.raises(ValueError):
-        logical_cond = LogicalCond(LogicalOp.OR)
+    msg = "Conditions cannot be empty."
+    with pytest.raises(ValueError, match=msg):
+        _ = LogicalCond(LogicalOp.OR)

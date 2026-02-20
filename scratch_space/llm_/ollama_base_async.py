@@ -1,4 +1,4 @@
-"""Test the vanilla Ollama chatbot with async calls"""
+"""Test the vanilla Ollama chatbot with async calls."""
 
 import asyncio
 
@@ -7,6 +7,7 @@ from ollama import AsyncClient
 
 
 async def main_loop() -> None:
+    """Run an async example using the vanilla Ollama AsyncClient."""
     lg.info("Starting game loop")
     ac = AsyncClient()
 

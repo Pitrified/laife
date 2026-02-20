@@ -3,48 +3,47 @@
 import asyncio
 import random
 
-from langchain_core.prompts.chat import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    SystemMessagePromptTemplate,
-)
+from langchain.messages import AIMessage
+from langchain_core.prompts.chat import ChatPromptTemplate
+from langchain_core.prompts.chat import HumanMessagePromptTemplate
+from langchain_core.prompts.chat import SystemMessagePromptTemplate
 from langchain_ollama import ChatOllama
 
-# from laife.config.credentials import OPENAI_API_KEY
 from laife.ui.alog import alg
 
 
 class Brain:
     """Brain of an agent."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the brain."""
-        # ollama_model="llama3.1"
+        # ? ollama_model="llama3.1" # TODO(pmn): make this configurable
         ollama_model = "phi3"
         self.llm = ChatOllama(
             model=ollama_model,
             temperature=0,
-            # base_url="http://localhost:11434",
+            # ? base_url="http://localhost:11434",
         )
-        # self.llm = ChatOpenAI(
-        #     model="gpt-4o-mini",
-        #     temperature=0,
-        #     max_tokens=30,
-        #     timeout=None,
-        #     max_retries=2,
-        #     api_key=OPENAI_API_KEY,
-        # )
+        # > self.llm = ChatOpenAI(
+        # >     model="gpt-4o-mini",
+        # >     temperature=0,
+        # >     max_tokens=30,
+        # >     timeout=None,
+        # >     max_retries=2,
+        # >     api_key=OPENAI_API_KEY,
+        # > )
         self.prompt = ChatPromptTemplate.from_messages(
             [
                 SystemMessagePromptTemplate.from_template(
-                    "You are a helpful assistant that translates {input_language} to {output_language}."
+                    "You are a helpful assistant that "
+                    "translates {input_language} to {output_language}."
                 ),
                 HumanMessagePromptTemplate.from_template("{input}"),
             ]
         )
         self.chain = self.prompt | self.llm
 
-    def chat(self, input_language, output_language, input_text):
+    def chat(self, input_language, output_language, input_text) -> AIMessage:  # noqa: ANN001
         """Chat with the agent."""
         res = self.chain.invoke(
             {
@@ -55,7 +54,7 @@ class Brain:
         )
         return res
 
-    async def achat(self, input_language, output_language, input_text):
+    async def achat(self, input_language, output_language, input_text) -> AIMessage:  # noqa: ANN001
         """Chat with the agent asynchronously."""
         alg.log("Brain.achat started")
         res = await self.chain.ainvoke(
@@ -70,13 +69,14 @@ class Brain:
 
     async def think(self, query: str) -> str:
         """Entry point for thinking."""
-        # return await self.naive_think(query)
+        # return await self.naive_think(query)  # noqa: ERA001
         return await self.llm_think(query)
 
     async def naive_think(self, query: str) -> str:
         """Randomly think about the next move."""
+        alg.log(f"BRAIN.naive_think: {query}")
         await asyncio.sleep(2.5)
-        if random.randint(0, 1):
+        if random.randint(0, 1):  # noqa: S311
             return "move"
         return "rest"
 

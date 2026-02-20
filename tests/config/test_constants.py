@@ -1,7 +1,5 @@
 """Test the constants file."""
 
-import pytest
-
 from laife.config.constants import ROOT_FOL
 
 

@@ -2,14 +2,12 @@
 
 # %% imports
 
-from laife.llm.mission import (
-    Mission,
-    MissionHistory,
-    MissionHistoryEntry,
-    MissionStatus,
-    MissionStep,
-    MissionType,
-)
+from laife.llm.mission import Mission
+from laife.llm.mission import MissionHistory
+from laife.llm.mission import MissionHistoryEntry
+from laife.llm.mission import MissionStatus
+from laife.llm.mission import MissionStep
+from laife.llm.mission import MissionType
 
 # %% simple mission
 

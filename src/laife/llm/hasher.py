@@ -2,7 +2,6 @@
 
 import hashlib
 import json
-from typing import Self
 
 # the chunk size for hashing the stringified content
 HASHER_CHUNK_SIZE = 4096

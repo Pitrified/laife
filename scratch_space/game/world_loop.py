@@ -1,20 +1,15 @@
+"""Simple world simulation loop for local testing with asyncio and pygame."""
+
 import asyncio
 import random
 import sys
 import time
-from typing import NoReturn
 
-from langchain.globals import set_llm_cache
-from langchain_community.cache import SQLiteCache
 from langchain_ollama import ChatOllama
-from langchain_openai import ChatOpenAI
 import pygame
 
-from laife.config.constants import LANGCHAIN_CACHE_DB, SPRITES_FOL
-from laife.config.credentials import OPENAI_API_KEY
+from laife.config.constants import SPRITES_FOL
 from laife.ui.alog import alg
-
-set_llm_cache(SQLiteCache(database_path=str(LANGCHAIN_CACHE_DB)))
 
 
 class Brain:
@@ -37,13 +32,14 @@ class Brain:
         )
 
     async def think(self, query: str) -> str:
+        """Process a query and return a short decision string."""
         # return await self.naive_think(query)
         return await self.llm_think(query)
 
-    async def naive_think(self, query: str) -> str:
+    async def naive_think(self, query: str) -> str:  # noqa: ARG002
         """Randomly think about the next move."""
         await asyncio.sleep(2.5)
-        if random.randint(0, 1):
+        if random.randint(0, 1):  # noqa: S311
             return "move"
         return "rest"
 
@@ -87,9 +83,7 @@ class SpriteLoader:
     def load_sprite(self, state: str) -> pygame.Surface:
         """Load a sprite for the requested entity state."""
         if state not in self.loaded_sprites:
-            self.loaded_sprites[state] = pygame.image.load(
-                self.sprite_paths[state]
-            ).convert_alpha()
+            self.loaded_sprites[state] = pygame.image.load(self.sprite_paths[state]).convert_alpha()
         return self.loaded_sprites[state]
 
 
@@ -114,7 +108,7 @@ class Player(pygame.sprite.Sprite):
         self.mission = await self.brain.think("Should I rest or move?")
         end_think = time.time()
         alg.log(
-            f"PLAYER.think: {self.name} thought in {end_think-start_think:.2f}s"
+            f"PLAYER.think: {self.name} thought in {end_think - start_think:.2f}s"
             f" and decided to {self.mission}"
         )
         self.set_state("idle")
@@ -133,8 +127,8 @@ class Player(pygame.sprite.Sprite):
         self.state = state
         self.image = self.sprite_loader.load_sprite(state)
         self.rect = self.image.get_rect()
-        # FIXME
-        self.rect.center = (random.randint(0, 800), random.randint(0, 600))
+        # FIXME: fix what lol  # noqa: FIX001, TD001
+        self.rect.center = (random.randint(0, 800), random.randint(0, 600))  # noqa: S311
 
     async def execute_mission(self) -> None:
         """Execute the current mission."""
@@ -191,13 +185,13 @@ class World:
                 alg.log(f"SIMULATE: {player.name} is idle but has input")
                 continue
             # this would be the place where the WORLD decides what to do
-            if random.randint(0, 1):
+            if random.randint(0, 1):  # noqa: S311
                 alg.log(f"SIMULATE: Adding think to {player.name}")
                 await player.input_queue.put("think")
             else:
                 alg.log(f"SIMULATE: Adding execute to {player.name}")
                 await player.input_queue.put("execute")
-        if len(self.players) < self.max_players and random.random() < self.add_prob:
+        if len(self.players) < self.max_players and random.random() < self.add_prob:  # noqa: S311
             alg.log(f"SIMULATE: Adding a player {self.add_prob}")
             self.add_player()
             self.add_prob /= 2
@@ -211,7 +205,7 @@ class World:
         """Add a player to the world."""
         player = Player(f"p{len(self.players)}")
         self.players.add(player)
-        asyncio.create_task(player.play())
+        self.play_task = asyncio.create_task(player.play())
 
     def init_renderer(self) -> None:
         """Initialize the world renderer."""
@@ -249,8 +243,8 @@ class World:
         self.reset_deadline()
 
 
-async def main() -> NoReturn:
-    """Main function."""
+async def main() -> None:
+    """Run the main function."""
     world = World()
     await world.main_loop()
 

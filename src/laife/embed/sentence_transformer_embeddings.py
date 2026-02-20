@@ -9,7 +9,9 @@ https://github.com/langchain-ai/langchain/blob/master/libs/partners/huggingface/
 from typing import Any
 
 from langchain_core.embeddings import Embeddings
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
+from pydantic import ConfigDict
+from pydantic import Field
 
 DEFAULT_MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
 
@@ -38,7 +40,7 @@ class SentenceTransformersEmbeddings(BaseModel, Embeddings):
     model_name: str = DEFAULT_MODEL_NAME
     """Model name to use."""
     cache_folder: str | None = None
-    """Path to store models. 
+    """Path to store models.
     Can be also set by SENTENCE_TRANSFORMERS_HOME environment variable."""
     model_kwargs: dict[str, Any] = Field(default_factory=dict)
     """Keyword arguments to pass to the Sentence Transformer model, such as `device`,
@@ -54,16 +56,17 @@ class SentenceTransformersEmbeddings(BaseModel, Embeddings):
     show_progress: bool = False
     """Whether to show a progress bar."""
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         """Initialize the sentence_transformer."""
         super().__init__(**kwargs)
         try:
-            import sentence_transformers  # type: ignore[import]
+            import sentence_transformers  # noqa: PLC0415
         except ImportError as exc:
-            raise ImportError(
+            msg = (
                 "Could not import sentence_transformers python package. "
                 "Please install it with `pip install sentence-transformers`."
-            ) from exc
+            )
+            raise ImportError(msg) from exc
 
         self.client = sentence_transformers.SentenceTransformer(
             self.model_name, cache_folder=self.cache_folder, **self.model_kwargs
@@ -83,13 +86,12 @@ class SentenceTransformersEmbeddings(BaseModel, Embeddings):
         Returns:
             List of embeddings, one for each text.
         """
-        import sentence_transformers  # type: ignore[import]
-
-        texts = list(map(lambda x: x.replace("\n", " "), texts))
+        texts = [x.replace("\n", " ") for x in texts]
         if self.multi_process:
             pool = self.client.start_multi_process_pool()
             embeddings = self.client.encode_multi_process(texts, pool)
-            sentence_transformers.SentenceTransformer.stop_multi_process_pool(pool)
+            # we import sentence_transformers locally in __init__, so pyright doesn't know about it
+            sentence_transformers.SentenceTransformer.stop_multi_process_pool(pool)  # pyright: ignore[reportUndefinedVariable]  # noqa: F821
         else:
             embeddings = self.client.encode(
                 texts, show_progress_bar=self.show_progress, **self.encode_kwargs

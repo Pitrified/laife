@@ -2,11 +2,13 @@
 
 from dataclasses import dataclass
 
-from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import SystemMessagePromptTemplate
 from langchain_openai import ChatOpenAI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from pydantic import Field
 
-from laife.config.chat_openai import CHAT_OPENAI_CONFIG, ChatOpenAIConfig
+from laife.config.chat_openai import ChatOpenAIConfig
 from laife.ui.directions import CardinalDirection
 
 
@@ -53,19 +55,22 @@ class Action(BaseModel):
     def get_action_move(self) -> ActionMove:
         """Get the ActionMove."""
         if not isinstance(self.act, ActionMove):
-            raise ValueError("Action is not an ActionMove")
+            msg = "Action is not an ActionMove"
+            raise TypeError(msg)
         return self.act
 
     def get_action_build(self) -> ActionBuild:
         """Get the ActionBuild."""
         if not isinstance(self.act, ActionBuild):
-            raise ValueError("Action is not an ActionBuild")
+            msg = "Action is not an ActionBuild"
+            raise TypeError(msg)
         return self.act
 
     def get_action_craft(self) -> ActionCraft:
         """Get the ActionCraft."""
         if not isinstance(self.act, ActionCraft):
-            raise ValueError("Action is not an ActionCraft")
+            msg = "Action is not an ActionCraft"
+            raise TypeError(msg)
         return self.act
 
 
@@ -75,9 +80,7 @@ You can take an action to solve the mission. \
 
 The mission is to: {mission}
 """
-action_prompt = ChatPromptTemplate(
-    [SystemMessagePromptTemplate.from_template(action_template)]
-)
+action_prompt = ChatPromptTemplate([SystemMessagePromptTemplate.from_template(action_template)])
 
 
 @dataclass
@@ -86,7 +89,7 @@ class ActionPicker:
 
     chat_openai_config: ChatOpenAIConfig
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize the action picker."""
         self.model = ChatOpenAI(**self.chat_openai_config.model_dump())
         self.structured_llm = self.model.with_structured_output(Action)
@@ -97,5 +100,6 @@ class ActionPicker:
         # MAYBE the mission is of type Mission
         output = self.chain.invoke({"mission": mission})
         if not isinstance(output, Action):
-            raise ValueError(f"Unexpected output type: {type(output)}")
+            msg = f"Unexpected output type: {type(output)}"
+            raise TypeError(msg)
         return output

@@ -7,6 +7,8 @@ from laife.config.types import Position
 
 
 class CardinalDirection(Enum):
+    """Cardinal directions."""
+
     North = "north"
     South = "south"
     East = "east"
@@ -17,7 +19,7 @@ class CardinalDirection(Enum):
     SouthWest = "southwest"
 
 
-def pospos2cardinal_direction(you: Position, target: Position) -> CardinalDirection:
+def pospos2cardinal_direction(you: Position, target: Position) -> CardinalDirection:  # noqa: PLR0911
     """Convert two positions to cardinal coordinates.
 
     The cardinal coordinates are based on the direction from you to the target.
@@ -25,20 +27,19 @@ def pospos2cardinal_direction(you: Position, target: Position) -> CardinalDirect
     cardinal_degrees = pospos2cardinal_degrees(you, target)
     if 0 * 45 + 22.5 <= cardinal_degrees < 1 * 45 + 22.5:
         return CardinalDirection.NorthEast
-    elif 1 * 45 + 22.5 <= cardinal_degrees < 2 * 45 + 22.5:
+    if 1 * 45 + 22.5 <= cardinal_degrees < 2 * 45 + 22.5:
         return CardinalDirection.East
-    elif 2 * 45 + 22.5 <= cardinal_degrees < 3 * 45 + 22.5:
+    if 2 * 45 + 22.5 <= cardinal_degrees < 3 * 45 + 22.5:
         return CardinalDirection.SouthEast
-    elif 3 * 45 + 22.5 <= cardinal_degrees < 4 * 45 + 22.5:
+    if 3 * 45 + 22.5 <= cardinal_degrees < 4 * 45 + 22.5:
         return CardinalDirection.South
-    elif 4 * 45 + 22.5 <= cardinal_degrees < 5 * 45 + 22.5:
+    if 4 * 45 + 22.5 <= cardinal_degrees < 5 * 45 + 22.5:
         return CardinalDirection.SouthWest
-    elif 5 * 45 + 22.5 <= cardinal_degrees < 6 * 45 + 22.5:
+    if 5 * 45 + 22.5 <= cardinal_degrees < 6 * 45 + 22.5:
         return CardinalDirection.West
-    elif 6 * 45 + 22.5 <= cardinal_degrees < 7 * 45 + 22.5:
+    if 6 * 45 + 22.5 <= cardinal_degrees < 7 * 45 + 22.5:
         return CardinalDirection.NorthWest
-    else:
-        return CardinalDirection.North
+    return CardinalDirection.North
 
 
 def pospos2cardinal_degrees(you: Position, target: Position) -> float:

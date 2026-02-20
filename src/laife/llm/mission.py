@@ -3,7 +3,8 @@
 from enum import Enum
 from typing import Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from pydantic import Field
 
 from laife.entities.action import Action
 
@@ -20,6 +21,8 @@ class MissionHistoryEntry(BaseModel):
 
 
 class MissionHistory(BaseModel):
+    """Collection of mission history entries."""
+
     history: list[MissionHistoryEntry] = Field(default_factory=list)
 
     def add_history_entry(
@@ -52,7 +55,7 @@ class MissionType(Enum):
     CRAFT = "craft"
     BUILD = "build"
     MOVE = "move"
-    # THINK = "think"
+    # > THINK = "think"
 
 
 class MissionStep(BaseModel):
@@ -70,6 +73,8 @@ class MissionStep(BaseModel):
 
 
 class Mission(BaseModel):
+    """A mission composed of ordered mission steps."""
+
     steps: list[MissionStep] = Field(default_factory=list)
 
     @classmethod

@@ -1,3 +1,5 @@
+"""Minimal pygame + asyncio loop examples for local testing."""
+
 import asyncio
 import sys
 import time
@@ -21,7 +23,7 @@ class Player:
         start_think = time.time()
         await asyncio.sleep(3.5)
         end_think = time.time()
-        print(f"PLAYER.think: {self.name} thought in {end_think-start_think:.2f}s")
+        print(f"PLAYER.think: {self.name} thought in {end_think - start_think:.2f}s")
         self.state = "idle"
 
 
@@ -39,9 +41,11 @@ clock = pygame.time.Clock()
 
 
 async def main_loop() -> NoReturn:
+    """Start the minimal game main loop and spawn player tasks."""
     print("MAIN: Starting game loop")
     players = [Player(f"p{i}") for i in range(5)]
-    player_tasks = [asyncio.create_task(play(player)) for player in players]
+    # keep the reference
+    player_tasks = [asyncio.create_task(play(player)) for player in players]  # noqa: F841
 
     while True:
         # print("MAIN: Running game loop")

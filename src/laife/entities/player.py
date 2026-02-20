@@ -1,29 +1,33 @@
+"""Player entity and behavior for the game."""
+
 import asyncio
-from enum import Enum
-import random
 import time
 
 from pygame.sprite import Sprite
 
 from laife.config.types import Position
-from laife.entities.action import Action, ActionBuild, ActionCraft, ActionMove
+from laife.entities.action import Action
+from laife.entities.action import ActionBuild
+from laife.entities.action import ActionCraft
+from laife.entities.action import ActionMove
 from laife.entities.player_state import PlayerState
-from laife.entities.world_channel import WorldRequest, WorldResponse
+from laife.entities.world_channel import WorldRequest
+from laife.entities.world_channel import WorldResponse
 from laife.llm.brain import Brain
-from laife.llm.mission import (
-    Mission,
-    MissionHistory,
-    MissionHistoryEntry,
-    MissionStatus,
-    MissionStep,
-    MissionType,
-)
+from laife.llm.mission import Mission
+from laife.llm.mission import MissionHistory
+from laife.llm.mission import MissionHistoryEntry
+from laife.llm.mission import MissionStatus
+from laife.llm.mission import MissionStep
+from laife.llm.mission import MissionType
 from laife.ui.alog import alg
 from laife.ui.directions import CardinalDirection
-from laife.ui.sprites import SpriteLoader, SpriteSheet
+from laife.ui.sprites import SpriteLoader
 
 
 class Player(Sprite):
+    """Represents a player with state, brain, and world interaction."""
+
     def __init__(
         self,
         name: str,
@@ -32,6 +36,7 @@ class Player(Sprite):
         world_input_queue: asyncio.Queue[WorldRequest],
         state: PlayerState = PlayerState.IDLE,
     ) -> None:
+        """Create a new player with initial state and background tasks."""
         super().__init__()
 
         # save info about the player
@@ -66,13 +71,13 @@ class Player(Sprite):
         self.history = MissionHistory()
 
         # start the player loop
-        asyncio.create_task(self.play())
+        self.play_task = asyncio.create_task(self.play())
 
     async def play(self) -> None:
         """Play the game."""
         while True:
             alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
-            # TODO add exploration step
+            # TODO: add exploration step
             # think about the mission
             action = await self.think()
             # execute the action
@@ -95,21 +100,22 @@ class Player(Sprite):
         self.set_state(PlayerState.THINKING)
         alg.log(f"{self.name} is thinking")
 
-        # TODO - replace with actual thinking logic
-        # think_start = time.time()
-        # alg.log(f"Think start: {think_start}")
-        # action = await self.brain.think("Should I rest or move?")
-        # think_end = time.time()
-        # alg.log(f"Brain think time: {think_end-think_start:.6f}")
-        # alg.log(
-        #     f"PLAYER.think: {self.name} thought in {think_end-think_start:.2f}s"
-        #     f" and decided to {action}"
-        # )
+        # TODO: - replace with actual thinking logic
+        # > think_start = time.time()
+        # > alg.log(f"Think start: {think_start}")
+        # > action = await self.brain.think("Should I rest or move?")
+        # > think_end = time.time()
+        # > alg.log(f"Brain think time: {think_end-think_start:.6f}")
+        # > alg.log(
+        # >     f"PLAYER.think: {self.name} thought in {think_end-think_start:.2f}s"
+        # >     f" and decided to {action}"
+        # > )
 
         # for now it's just a random decision
-        # options = ["move", "request"]
-        # action = random.choice(options)
+        # > options = ["move", "request"]
+        # > action = random.choice(options)
 
+        # actually send the object, static
         am = ActionMove(
             direction=CardinalDirection.North,
             distance=10,
@@ -128,9 +134,9 @@ class Player(Sprite):
         self.set_state(PlayerState.MOVING)
         alg.log(f"PLAYER.move {self.name}: is moving")
 
-        am: ActionMove = action.get_action_move()
+        am: ActionMove = action.get_action_move()  # noqa: F841
 
-        # TODO the move should also be delegated to the world
+        # TODO: the move should also be delegated to the world
         # the think method should return an action
         # here we package it into a WRMove object and send it to the world
         # and the world should handle the move, so we can collision detect
@@ -138,7 +144,7 @@ class Player(Sprite):
         #   and the world will progressively move the player
         # ? or do we receive the step from the world and move the player here?
 
-        # TODO - replace with actual movement logic with move_delta loop
+        # TODO: replace with actual movement logic with move_delta loop
         wrsp = WorldResponse("ok", {"message": "You reached the destination."})
         await asyncio.sleep(1)
 
@@ -147,16 +153,17 @@ class Player(Sprite):
         return wrsp
 
     def move_delta(self, dx: int, dy: int) -> None:
+        """Adjust the player's position by delta values."""
         new_position = (self.position[0] + dx, self.position[1] + dy)
         self.set_position(new_position)
 
-    async def build(self, action: Action) -> WorldResponse:
+    async def build(self, action: Action) -> WorldResponse:  # noqa: ARG002
         """Prepare the build request and send it to the world."""
         wrsp = WorldResponse("ok", {"message": "You built the thing."})
         await asyncio.sleep(1)
         return wrsp
 
-    async def craft(self, action: Action) -> WorldResponse:
+    async def craft(self, action: Action) -> WorldResponse:  # noqa: ARG002
         """Prepare the craft request and send it to the world."""
         wrsp = WorldResponse("ok", {"message": "You crafted the thing."})
         await asyncio.sleep(1)
@@ -189,10 +196,12 @@ class Player(Sprite):
     ## RENDER METHODS
 
     def set_position(self, position: Position) -> None:
+        """Set the player's position and update rendering rect."""
         self.position = position
         self.rect.center = self.position
 
     def set_state(self, state: PlayerState) -> None:
+        """Update the player's state and refresh sprite/image."""
         self.state = state
         self.image = self.sprite_loader.load_sprite(self.state.value)
         self.rect = self.image.get_rect()
@@ -200,4 +209,5 @@ class Player(Sprite):
         self.set_position(self.position)
 
     def __str__(self) -> str:
+        """Return a concise human-readable representation of the player."""
         return f"Player {self.name} at {self.position} with state {self.state}"

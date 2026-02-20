@@ -14,6 +14,7 @@ class Tool:
         description: str,
         vector_db: VectorDB,
     ) -> None:
+        """Initialize a tool with a name, description and vector DB."""
         self.name = name
         self.description = description
         self.vector_db = vector_db
@@ -21,12 +22,15 @@ class Tool:
         self.add_to_vdb()
 
     def __str__(self) -> str:
+        """Return the tool's display name."""
         return self.name
 
     def __repr__(self) -> str:
+        """Return the developer representation of the tool."""
         return f"{self.name}: {self.description}"
 
     def to_prompt(self) -> str:
+        """Return a short prompt describing the tool."""
         return f"{self.name}: {self.description}"
 
     def to_document(self) -> Document:

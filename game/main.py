@@ -8,21 +8,19 @@ from laife.entities.player import Player
 from laife.entities.world import World
 from laife.ui.alog import alg
 
-# set_llm_cache(SQLiteCache(database_path=str(LANGCHAIN_CACHE_DB)))
-
 
 def setup_world(world: World) -> None:
-    """Setup the world."""
+    """Set up the world."""
     player = Player(
         "p0",
-        position=(random.randint(0, 800), random.randint(0, 600)),
+        position=(random.randint(0, 800), random.randint(0, 600)),  # noqa: S311
         player_type="inu",
         world_input_queue=world.input_queue,
     )
     world.add_player(player)
     player = Player(
         "p1",
-        position=(random.randint(0, 800), random.randint(0, 600)),
+        position=(random.randint(0, 800), random.randint(0, 600)),  # noqa: S311
         player_type="inu",
         world_input_queue=world.input_queue,
     )
@@ -73,7 +71,7 @@ def setup_world(world: World) -> None:
 
 
 async def main() -> None:
-    """Main function."""
+    """Run main function."""
     world = World()
 
     setup_world(world)

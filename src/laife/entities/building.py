@@ -1,9 +1,11 @@
 """Building entity module."""
 
+import pygame
 import pygame.freetype
 from pygame.sprite import Sprite
 
-from laife.config.types import Position, Size
+from laife.config.types import Position
+from laife.config.types import Size
 from laife.ui.alog import alg
 from laife.ui.directions import pospos2cardinal_direction
 
@@ -25,9 +27,10 @@ class Building(Sprite):
         description: str | None,
         position: Position,
         size: Size,
+        *groups: pygame.sprite.Group,
     ) -> None:
         """Initialize the building."""
-        super().__init__()
+        super().__init__(*groups)
         self.name = name
         self.building_type = building_type
         self.description = description

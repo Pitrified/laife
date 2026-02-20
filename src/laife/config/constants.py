@@ -1,3 +1,5 @@
+"""Project-level filesystem constants for paths and names."""
+
 from pathlib import Path
 
 # Path to the root of the project

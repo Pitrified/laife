@@ -1,3 +1,5 @@
+"""Load and manage sprites for the game."""
+
 import pygame
 from pygame.surface import Surface
 
@@ -34,13 +36,21 @@ STATE_FNS = {
 
 
 class SpriteSheet:
+    """A sprite sheet class."""
+
     def __init__(self, sprite_type: str) -> None:
         """Load the sprite sheet."""
         self.sprite_type = sprite_type
         sprite_fp = SPRITES_FOL / f"{self.sprite_type}" / f"{self.sprite_type}.png"
         self.sprite_sheet = pygame.image.load(sprite_fp).convert_alpha()
 
-    def get_sprite(self, x, y, width, height) -> Surface:
+    def get_sprite(
+        self,
+        x: float,
+        y: float,
+        width: float,
+        height: float,
+    ) -> Surface:
         """Extract a single sprite from the sprite sheet using subsurface."""
         rect = pygame.Rect(x, y, width, height)
         return self.sprite_sheet.subsurface(rect)
@@ -74,14 +84,10 @@ class SpriteLoader:
         """Return the sprite paths for the requested entity."""
         entity_fol = SPRITES_FOL / self.entity_kind
         entity_fns = STATE_FNS[self.entity_kind]
-        self.sprite_paths = {
-            state: entity_fol / entity_fns[state] for state in entity_fns
-        }
+        self.sprite_paths = {state: entity_fol / entity_fns[state] for state in entity_fns}
 
     def load_sprite(self, state: str) -> pygame.Surface:
         """Load a sprite for the requested entity state."""
         if state not in self.loaded_sprites:
-            self.loaded_sprites[state] = pygame.image.load(
-                self.sprite_paths[state]
-            ).convert_alpha()
+            self.loaded_sprites[state] = pygame.image.load(self.sprite_paths[state]).convert_alpha()
         return self.loaded_sprites[state]

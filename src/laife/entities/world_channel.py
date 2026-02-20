@@ -19,9 +19,7 @@ class WorldResponse:
 
     def __str__(self) -> str:
         """Return the string representation of the response."""
-        return (
-            f"WorldResponse(status={self.status}, response_data={self.response_data})"
-        )
+        return f"WorldResponse(status={self.status}, response_data={self.response_data})"
 
 
 class WorldRequest:
@@ -53,4 +51,8 @@ class WRBuild(WorldRequest):
 
     def __str__(self) -> str:
         """Return the string representation of the request."""
-        return f"WRBuild(id={id(self)}, response_queue={self.response_queue}, building={self.building})"
+        return (
+            f"WRBuild(id={id(self)}"
+            f", response_queue={self.response_queue}"
+            f", building={self.building})"
+        )

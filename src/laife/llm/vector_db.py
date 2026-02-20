@@ -6,11 +6,9 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 
-from laife.config.lc_embeddings import (
-    LcEmbeddingsConfig,
-    OpenAIEmbeddingsConfig,
-    SentenceTransformerConfig,
-)
+from laife.config.lc_embeddings import LcEmbeddingsConfig
+from laife.config.lc_embeddings import OpenAIEmbeddingsConfig
+from laife.config.lc_embeddings import SentenceTransformerConfig
 from laife.embed.sentence_transformer_embeddings import SentenceTransformersEmbeddings
 from laife.llm.hasher import Hasher
 
@@ -45,8 +43,8 @@ class VectorDB(Chroma):
     def __init__(
         self,
         embeddings_config: LcEmbeddingsConfig | None = None,
-        *args,
-        **kwargs,
+        *args: Any,  # noqa: ANN401
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Initialize the vector database.
 
@@ -64,14 +62,15 @@ class VectorDB(Chroma):
             case None:
                 pass
             case _:
-                raise ValueError(f"Invalid embeddings config {embeddings_config}")
+                msg = f"Invalid embeddings config {embeddings_config}"
+                raise ValueError(msg)
         super().__init__(*args, **kwargs)
 
     def add_documents(
         self,
         documents: list[Document],
         id_in_metadata: str | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> list[str]:
         """Add documents, computing unique ids, unless provided in the metadata.
 
@@ -80,6 +79,7 @@ class VectorDB(Chroma):
         Args:
             documents (list[Document]): List of documents to add.
             id_in_metadata (str, optional): Metadata key to use as id. Defaults to None.
+            kwargs: Additional keyword arguments to pass to the parent add_documents method.
 
         Returns:
             list[str]: List of ids of the newly added documents.
@@ -91,7 +91,8 @@ class VectorDB(Chroma):
         known_ids: list[str] = known_ids_data["ids"]
         # filter and keep only the new ids and documents
         new_ids = [doc_id for doc_id in ids if doc_id not in known_ids]
-        new_docs = [doc for doc, doc_id in zip(documents, ids) if doc_id in new_ids]
+        zip_docs_ids = zip(documents, ids, strict=False)
+        new_docs = [doc for doc, doc_id in zip_docs_ids if doc_id in new_ids]
         # if there are no new documents, return an empty list
         if len(new_ids) == 0:
             return []

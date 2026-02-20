@@ -3,20 +3,24 @@
 https://langchain-ai.github.io/langgraph/#example
 """
 
-from typing import Annotated, Literal, TypedDict
+from typing import Literal
 
 from langchain_core.messages import HumanMessage
+from langchain_core.messages.ai import AIMessage
 from langchain_core.tools import tool
 from langchain_ollama import ChatOllama
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import END, START, MessagesState, StateGraph
+from langgraph.graph import END
+from langgraph.graph import START
+from langgraph.graph import MessagesState
+from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
 from loguru import logger as lg
 
 
 # Define the tools for the agent to use
 @tool
-def search(query: str):
+def search(query: str) -> str:
     """Call to surf the web."""
     # This is a placeholder, but don't tell the LLM that...
     if "sf" in query.lower() or "san francisco" in query.lower():
@@ -33,18 +37,20 @@ model = ChatOllama(model=model_name, temperature=0).bind_tools(tools)
 
 
 # Define the function that determines whether to continue or not
-def should_continue(state: MessagesState) -> Literal["tools", END]:  # type: ignore
+def should_continue(state: MessagesState) -> Literal["tools", END]:  # pyright: ignore[reportInvalidTypeForm]
+    """Decide the next graph node based on the latest messages state."""
     messages = state["messages"]
     last_message = messages[-1]
     # If the LLM makes a tool call, then we route to the "tools" node
-    if last_message.tool_calls:  # type: ignore
+    if last_message.tool_calls:  # pyright: ignore[reportAttributeAccessIssue]
         return "tools"
     # Otherwise, we stop (reply to the user)
     return END
 
 
 # Define the function that calls the model
-def call_model(state: MessagesState):
+def call_model(state: MessagesState) -> dict[str, list[AIMessage]]:
+    """Invoke the model on the current messages and return updated messages."""
     messages = state["messages"]
     response = model.invoke(messages)
     # We return a list, because this will get added to the existing list
