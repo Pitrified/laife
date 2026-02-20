@@ -49,7 +49,7 @@ def setup_world(world: World) -> None:
     world.add_building(b)
     # a factory
     b = Building(
-        "Tool shop",
+        "Utensil shop",
         "factory",
         None,
         (500, 800),

@@ -16,4 +16,4 @@ VECTORSTORE_FOL = DATA_FOL / "vectorstore"
 
 EMBEDDING_MODEL = "text-embedding-3-small"
 
-TOOLS_COLLECTION = "tools"
+UTENSILS_COLLECTION = "utensils"

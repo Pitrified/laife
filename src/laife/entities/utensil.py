@@ -1,12 +1,12 @@
-"""Tools for the player to use."""
+"""Utensils for the player to use."""
 
 from langchain_core.documents import Document
 
 from laife.llm.vector_db import VectorDB
 
 
-class Tool:
-    """A tool the player can use."""
+class Utensil:
+    """An utensil the player can use."""
 
     def __init__(
         self,
@@ -14,7 +14,7 @@ class Tool:
         description: str,
         vector_db: VectorDB,
     ) -> None:
-        """Initialize a tool with a name, description and vector DB."""
+        """Initialize an utensil with a name, description and vector DB."""
         self.name = name
         self.description = description
         self.vector_db = vector_db
@@ -22,23 +22,23 @@ class Tool:
         self.add_to_vdb()
 
     def __str__(self) -> str:
-        """Return the tool's display name."""
+        """Return the utensil's display name."""
         return self.name
 
     def __repr__(self) -> str:
-        """Return the developer representation of the tool."""
+        """Return the developer representation of the utensil."""
         return f"{self.name}: {self.description}"
 
     def to_prompt(self) -> str:
-        """Return a short prompt describing the tool."""
+        """Return a short prompt describing the utensil."""
         return f"{self.name}: {self.description}"
 
     def to_document(self) -> Document:
-        """Convert the tool to a document."""
+        """Convert the utensil to a document."""
         meta = {
             "name": self.name,
             "description": self.description,
-            "entity_type": "tool",
+            "entity_type": "utensil",
         }
         return Document(
             page_content=self.to_prompt(),
@@ -46,8 +46,8 @@ class Tool:
         )
 
     @classmethod
-    def from_document(cls, doc: Document, vector_db: VectorDB) -> "Tool":
-        """Create a tool from a document."""
+    def from_document(cls, doc: Document, vector_db: VectorDB) -> "Utensil":
+        """Create an utensil from a document."""
         return cls(
             name=doc.metadata["name"],
             description=doc.metadata["description"],
@@ -55,6 +55,6 @@ class Tool:
         )
 
     def add_to_vdb(self) -> None:
-        """Add the tool to the vector db."""
-        tool_doc = self.to_document()
-        self.vector_db.add_documents([tool_doc])
+        """Add the utensil to the vector db."""
+        utensil_doc = self.to_document()
+        self.vector_db.add_documents([utensil_doc])

@@ -76,15 +76,15 @@ To complete the mission, the player has to interact with the environment.
 A mission can be solved in several steps.
 Missions can be nested.
 
-If a tool is needed to solve a mission, the player has to find the tool first.
-If the tool does not exist, the player has to create it.
+If an utensil is needed to solve a mission, the player has to find the utensil first.
+If the utensil does not exist, the player has to create it.
 
 New building blocks can be created by the players.
 
 World entities:
 * Player
 * Building
-* Tool
+* Utensil
 * Terrain
     - A terrain is an entire section of map
     - Default background is grass
@@ -92,9 +92,9 @@ World entities:
       and described
 
 Game logic is dynamic:
-given a mission, the player decides which tool to use, and where to go to use it.
-The engine checks that the player has the tool,
-the LLM checks that the tool can be used in the location to solve the mission.
+given a mission, the player decides which utensil to use, and where to go to use it.
+The engine checks that the player has the utensil,
+the LLM checks that the utensil can be used in the location to solve the mission.
 
 A swap in control might happen:
 the player can send requests to the world to do some action,
@@ -151,7 +151,7 @@ The `Planner` breaks down the Mission into sub-missions.
     - [ ] : Prettier background with tiled grass
     - [ ] : Prettier terrain with tiled terrain types
     - [ ] : Prettier buildings with a big building in the center and a tiled garden
-    - [ ] : Tools can be held by the player
+    - [ ] : Utensils can be held by the player
 - [x] : Swap player and world queue control,
         the player sends requests to the world to do some action,
         and the world answers with the result
@@ -163,7 +163,7 @@ The `Planner` breaks down the Mission into sub-missions.
     - [ ] : Make the map dynamic with dataclasses
             or some kind of loader
 - [ ] : Vector db of the world entities
-    - [x] : Different tools
+    - [x] : Different utensils
     - [ ] : Different buildings
 - [ ] : Action object as an output of the Brain
 - [ ] : Translate the map into a prompt
@@ -171,9 +171,9 @@ The `Planner` breaks down the Mission into sub-missions.
 - [ ] : Assign a mission to a player based on the map
     - [ ] : If a mission is too complex, break it down into sub-missions
     - [ ] : Share the mission with the world: the player can ask for help
-- [ ] : Create a tool to solve the mission
-    - [ ] : If the tool does not exist, create it
-    - [ ] : Create an image of the tool
+- [ ] : Create an utensil to solve the mission
+    - [ ] : If the utensil does not exist, create it
+    - [ ] : Create an image of the utensil
 - [ ] : Solve the mission
 - [ ] : The mission could be building a building
 - [ ] : Add an alive parameter to the player,
@@ -190,9 +190,9 @@ The `Planner` breaks down the Mission into sub-missions.
     - fertile land
 - building:
     - house - to rest
-    - factory - to create tools
+    - factory - to create utensils
     - farm - to grow food
-- tools:
+- utensils:
     - bucket
     - axe
     - hammer

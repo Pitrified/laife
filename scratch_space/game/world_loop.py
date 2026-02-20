@@ -62,7 +62,7 @@ class SpriteLoader:
     ) -> None:
         """Initialize the sprite loader.
 
-        * Entity types: player, terrain, tool, building
+        * Entity types: player, terrain, utensil, building
         * Entity kinds: human, animal, plant, object
         * Entity states: idle, thinking, moving
         """

@@ -28,14 +28,14 @@ class ActionBuild(BaseModel):
 
 
 class ActionCraft(BaseModel):
-    """Craft something, like an item or tool.
+    """Craft something, like an item or utensil.
 
     An item is a physical object that can be used to solve a mission.
-    A tool is a device that can be used to craft other items or tools.
+    An utensil is a device that can be used to craft other items or utensils.
     """
 
-    object: str = Field(..., description="The item or tool to craft.")
-    description: str = Field(..., description="The description of the item or tool.")
+    object: str = Field(..., description="The item or utensil to craft.")
+    description: str = Field(..., description="The description of the item or utensil.")
 
 
 Actions = ActionMove | ActionBuild | ActionCraft
