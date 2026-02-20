@@ -29,3 +29,4 @@ cool but all not needed for now
 
 1. split entities from communication?
 1. explicit action of communication with other agent?
+1. split rendering from acting? world and player classes are doing both which seems a lot
