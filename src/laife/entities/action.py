@@ -34,7 +34,7 @@ class ActionCraft(BaseModel):
     An utensil is a device that can be used to craft other items or utensils.
     """
 
-    object: str = Field(..., description="The item or utensil to craft.")
+    utensil_name: str = Field(..., description="The item or utensil to craft.")
     description: str = Field(..., description="The description of the item or utensil.")
 
 

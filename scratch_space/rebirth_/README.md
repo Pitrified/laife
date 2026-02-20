@@ -23,7 +23,7 @@ cool but all not needed for now
 1. clean up the world and give it a decisor to decide if the action is valid or not, and to give feedback to the player
 1. clean up the player and give it a planner to break down the mission into sub-missions, and a brain to think about the mission and generate an action (or just a big brain)
 1. setup qdrant for the world entities and utensils and resources...
-1. there is an attribute called `object`, that seems shady
+1. there is an attribute called `object`, that seems shady -- DONE
 
 ## world
 
