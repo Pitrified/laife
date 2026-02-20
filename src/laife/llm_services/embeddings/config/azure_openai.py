@@ -13,7 +13,7 @@ class AzureOpenAIEmbeddingsConfig(EmbeddingsConfig):
 
     model: str = "text-embedding-3-small"
     """Azure deployment model name."""
-    model_provider: str = "azure_openai"
+    provider: str = "azure_openai"
     """Provider name for init_embeddings."""
     api_key: SecretStr | None = Field(
         default_factory=secret_from_env("AZURE_OPENAI_API_KEY", default=None)

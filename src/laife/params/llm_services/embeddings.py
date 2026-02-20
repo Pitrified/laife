@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from laife.llm_services.embeddings.config.azure_openai import AzureOpenAIEmbeddingsConfig
 from laife.llm_services.embeddings.config.openai import OpenAIEmbeddingsConfig
 from laife.params.env_type import EnvType
 
@@ -23,11 +24,13 @@ class EmbeddingsParams:
 
     def load_params(self) -> None:
         """Load the params for embedding services."""
-        self.default: EmbeddingsConfig = OpenAIEmbeddingsConfig()
+        self.openai = OpenAIEmbeddingsConfig()
+        self.azure = AzureOpenAIEmbeddingsConfig()
+        self.default: EmbeddingsConfig = self.openai
 
     def __str__(self) -> str:
         """Provide String representation of the EmbeddingsParams."""
-        return f"EmbeddingsParams: default={self.default.model_provider}/{self.default.model}"
+        return f"EmbeddingsParams: default={self.default.provider}/{self.default.model}"
 
     def __repr__(self) -> str:
         """Provide String representation of the EmbeddingsParams."""

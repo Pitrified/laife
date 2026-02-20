@@ -1,4 +1,8 @@
-"""Base class for LLM services chat configuration."""
+"""Base class for LLM services chat configuration.
+
+Leverage `init_chat_model`:
+https://reference.langchain.com/python/langchain/chat_models/base/init_chat_model
+"""
 
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel

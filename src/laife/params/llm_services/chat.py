@@ -27,12 +27,14 @@ class ChatParams:
 
     def load_params(self) -> None:
         """Load the params for chat services."""
-        self.default: ChatConfig = ChatOpenAIConfig()
+        self.openai = ChatOpenAIConfig()
 
         self.azure = AzureOpenAIChatConfig(
             temperature=1,
             model="gpt-5.2-chat",
         )
+
+        self.default: ChatConfig = self.openai
 
     def __str__(self) -> str:
         """Provide String representation of the ChatParams."""

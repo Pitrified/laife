@@ -12,7 +12,7 @@ class OpenAIEmbeddingsConfig(EmbeddingsConfig):
 
     model: str = "text-embedding-3-small"
     """Default OpenAI embedding model."""
-    model_provider: str = "openai"
+    provider: str = "openai"
     """Provider name for init_embedding_model."""
     api_key: SecretStr | None = Field(
         default_factory=secret_from_env("OPENAI_API_KEY", default=None)

@@ -8,5 +8,5 @@ class HuggingFaceEmbeddingsConfig(EmbeddingsConfig):
 
     model: str = "sentence-transformers/all-mpnet-base-v2"
     """Default SentenceTransformer model."""
-    model_provider: str = "huggingface"
+    provider: str = "huggingface"
     """Provider name for init_embeddings."""

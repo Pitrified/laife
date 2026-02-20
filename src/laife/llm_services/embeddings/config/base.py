@@ -1,7 +1,7 @@
 """Base class for LLM services embeddings configuration.
 
-Provides a small, langchain-friendly config wrapper similar to the
-chat `ChatConfig` implementation.
+Leverage `init_embeddings`:
+https://reference.langchain.com/python/langchain/embeddings/base/init_embeddings
 """
 
 from langchain.embeddings import Embeddings
@@ -18,7 +18,7 @@ class EmbeddingsConfig(BaseModelKwargs):
     """
 
     model: str
-    model_provider: str
+    provider: str
 
     def create_embedding_model(self) -> Embeddings:
         """Instantiate the embeddings model from the config."""
