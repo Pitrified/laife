@@ -4,13 +4,9 @@ from typing import Any
 
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
-from langchain_openai import OpenAIEmbeddings
 
-from laife.embed.sentence_transformer_embeddings import SentenceTransformersEmbeddings
 from laife.llm.hasher import Hasher
-from laife.llm_services.embeddings.lc_embeddings import LcEmbeddingsConfig
-from laife.llm_services.embeddings.lc_embeddings import OpenAIEmbeddingsConfig
-from laife.llm_services.embeddings.lc_embeddings import SentenceTransformerConfig
+from laife.llm_services.embeddings.config.base import EmbeddingsConfig
 
 
 def get_document_id(document: Document) -> str:
@@ -42,28 +38,13 @@ class CChroma(Chroma):
 
     def __init__(
         self,
-        embeddings_config: LcEmbeddingsConfig | None = None,
+        embeddings_config: EmbeddingsConfig | None = None,
         *args: Any,  # noqa: ANN401
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
-        """Initialize the vector database.
-
-        This is unreadable just pass the embeddings_function as an argument.
-        """
-        match embeddings_config:
-            case OpenAIEmbeddingsConfig():
-                kwargs["embedding_function"] = OpenAIEmbeddings(
-                    **embeddings_config.to_dict(),
-                )
-            case SentenceTransformerConfig():
-                kwargs["embedding_function"] = SentenceTransformersEmbeddings(
-                    model_name=embeddings_config.model_name.value,
-                )
-            case None:
-                pass
-            case _:
-                msg = f"Invalid embeddings config {embeddings_config}"
-                raise ValueError(msg)
+        """Initialize the vector database."""
+        if embeddings_config is not None:
+            kwargs["embedding_function"] = embeddings_config.create_embedding_model()
         super().__init__(*args, **kwargs)
 
     def add_documents(

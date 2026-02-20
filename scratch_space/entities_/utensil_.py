@@ -10,7 +10,7 @@ from laife.config.constants import EMBEDDING_MODEL
 from laife.config.constants import UTENSILS_COLLECTION
 from laife.config.constants import VECTORSTORE_FOL
 from laife.entities.utensil import Utensil
-from laife.llm.vector_db import VectorDB
+from laife.llm_services.vectorstores.cchroma import CChroma
 
 # %% setup vector db
 
@@ -20,7 +20,7 @@ embedding_function_lc = OpenAIEmbeddings(
 )
 
 
-vdb = VectorDB(
+vdb = CChroma(
     collection_name=UTENSILS_COLLECTION,
     embedding_function=embedding_function_lc,
     persist_directory=str(VECTORSTORE_FOL),

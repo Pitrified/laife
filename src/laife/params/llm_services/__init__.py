@@ -2,6 +2,7 @@
 
 from laife.params.env_type import EnvType
 from laife.params.llm_services.chat import ChatParams
+from laife.params.llm_services.embeddings import EmbeddingsParams
 from laife.params.llm_services.search import SearchParams
 
 
@@ -23,11 +24,13 @@ class LLMServicesParams:
     def load_common_params_pre(self) -> None:
         """Load the common params."""
         self.chat = ChatParams(self.env_type)
+        self.embeddings = EmbeddingsParams(self.env_type)
         self.vector_search = SearchParams(self.env_type)
 
     def __str__(self) -> str:
         """Provide String representation of the LLMServicesParams."""
         s = f"{self.chat}\n"
+        s += f"{self.embeddings}\n"
         s += f"{self.vector_search}\n"
         return s.rstrip()
 
