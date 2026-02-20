@@ -47,12 +47,15 @@ this class defines an interface with a method `create_chat_model` that will crea
 We can consider leveraging the `BaseModelKwargs` from 
 https://github.com/Pitrified/python-project-template/blob/feat/webapp_scaffold/src/project_name/data_models/basemodel_kwargs.py
 which lets us dump the `BaseModel` to a dict at first level only and we can send that to the `init_chat_model` with `**config.to_kw()`.
+src/laife/llm_services/chat/config/base.py
 
 Then define specific config for each provider, e.g. `OpenAIChatConfig`, `AzureOpenAIChatConfig`, etc.
+src/laife/llm_services/chat/config/chat_openai.py
 If the standard `create_chat_model` is not enough for a specific provider, we can override it in the specific config class.
 Eg the HuggingFace based local model might have additional configs for a full offline mode, we can intercept them in the create method and set the env vars before calling the general `init_chat_model`.
 
 Config classes can have sensible defaults.
 In the big params file, we can customize the config for each provider, and have multiple models for each provider if needed.
+src/laife/params/llm_services/chat.py
 
 Config classes will be placed in `src/laife/llm_services/chat/config` folder, one module per provider, and a general `base.py` for the base config class.

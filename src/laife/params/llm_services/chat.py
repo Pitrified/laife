@@ -1,10 +1,20 @@
 """Params for chat services."""
 
+from typing import TYPE_CHECKING
+
+from laife.llm_services.chat.config.chat_openai import ChatOpenAIConfig
 from laife.params.env_type import EnvType
+
+if TYPE_CHECKING:
+    from laife.llm_services.chat.config.base import ChatConfig
 
 
 class ChatParams:
-    """Params for chat services."""
+    """Params for chat services.
+
+    Holds one or more ChatConfig instances.
+    Swap out ``default`` for a different provider config as needed.
+    """
 
     def __init__(
         self,
@@ -16,15 +26,11 @@ class ChatParams:
 
     def load_params(self) -> None:
         """Load the params for chat services."""
-        self.load_common_params_pre()
-
-    def load_common_params_pre(self) -> None:
-        """Load the common params."""
+        self.default: ChatConfig = ChatOpenAIConfig()
 
     def __str__(self) -> str:
         """Provide String representation of the ChatParams."""
-        s = "ChatParams:"
-        return s
+        return f"ChatParams: default={self.default.model_provider}/{self.default.model}"
 
     def __repr__(self) -> str:
         """Provide String representation of the ChatParams."""
