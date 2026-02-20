@@ -11,6 +11,7 @@
 ## Renderer
 
 cool but all not needed for now
+
 1. Runner with no pygame - text only
 1. Async logger is needed? can loguru handle that? -- no, ALog also skips repeated messages
 1. ipygame if needed
@@ -24,6 +25,8 @@ cool but all not needed for now
 1. clean up the player and give it a planner to break down the mission into sub-missions, and a brain to think about the mission and generate an action (or just a big brain)
 1. setup qdrant for the world entities and utensils and resources...
 1. there is an attribute called `object`, that seems shady -- DONE
+1. entities that go into the vector database should all inherit from a common base class that can convert them to a langchain document with the necessary metadata for retrieval, and also have a method to convert them back from a document to an entity
+   so that we can just have a generic `add_entity_to_db` and `get_entity_from_db` methods that can work with any entity type
 
 ## world
 

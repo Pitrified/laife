@@ -2,7 +2,7 @@
 
 from langchain_core.documents import Document
 
-from laife.llm.vector_db import VectorDB
+from laife.llm_services.vectorstores.cchroma import CChroma
 
 
 class Utensil:
@@ -12,7 +12,7 @@ class Utensil:
         self,
         name: str,
         description: str,
-        vector_db: VectorDB,
+        vector_db: CChroma,
     ) -> None:
         """Initialize an utensil with a name, description and vector DB."""
         self.name = name
@@ -46,7 +46,7 @@ class Utensil:
         )
 
     @classmethod
-    def from_document(cls, doc: Document, vector_db: VectorDB) -> "Utensil":
+    def from_document(cls, doc: Document, vector_db: CChroma) -> "Utensil":
         """Create an utensil from a document."""
         return cls(
             name=doc.metadata["name"],

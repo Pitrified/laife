@@ -39,12 +39,13 @@ If possible we want to leverage langchain for the common interface:
 ## Chat
 
 Refs:
+
 1. general model usage https://docs.langchain.com/oss/python/langchain/models
 2. `init_chat_model` specs https://reference.langchain.com/python/langchain/models/
 
 We define a general `ChatConfig` base class,
 this class defines an interface with a method `create_chat_model` that will create the chat model based on the config, using the general `init_chat_model` from langchain.
-We can consider leveraging the `BaseModelKwargs` from 
+We can consider leveraging the `BaseModelKwargs` from
 https://github.com/Pitrified/python-project-template/blob/feat/webapp_scaffold/src/project_name/data_models/basemodel_kwargs.py
 which lets us dump the `BaseModel` to a dict at first level only and we can send that to the `init_chat_model` with `**config.to_kw()`.
 src/laife/llm_services/chat/config/base.py
@@ -59,3 +60,25 @@ In the big params file, we can customize the config for each provider, and have 
 src/laife/params/llm_services/chat.py
 
 Config classes will be placed in `src/laife/llm_services/chat/config` folder, one module per provider, and a general `base.py` for the base config class.
+
+## Embedding
+
+Refs:
+
+1. https://reference.langchain.com/python/langchain/embeddings/
+2. https://reference.langchain.com/python/langchain/embeddings/base/init_embeddings
+
+Same structure as Chat, we have a general `EmbeddingConfig` base class with a `create_embeddings` method, and specific config classes for each provider that can override the create method if needed.
+src/laife/llm_services/embeddings/config/base.py
+
+There are some old configs in
+src/laife/llm_services/embeddings/lc_embeddings.py
+
+We use that already in `Cchroma`, now we will be able to just instantiate the embeddings
+src/laife/llm/cchroma.py
+
+We have a custom implementation of sentence transformers in `SentenceTransformersEmbeddings`,
+we can try using the native
+https://github.com/langchain-ai/langchain/blob/master/libs/partners/huggingface/langchain_huggingface/embeddings/huggingface.py
+and see it the compatibility issues are resolved now.
+And if not at least update to the latest version from the online one.

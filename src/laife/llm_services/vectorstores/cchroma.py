@@ -6,11 +6,11 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 
-from laife.config.lc_embeddings import LcEmbeddingsConfig
-from laife.config.lc_embeddings import OpenAIEmbeddingsConfig
-from laife.config.lc_embeddings import SentenceTransformerConfig
 from laife.embed.sentence_transformer_embeddings import SentenceTransformersEmbeddings
 from laife.llm.hasher import Hasher
+from laife.llm_services.embeddings.lc_embeddings import LcEmbeddingsConfig
+from laife.llm_services.embeddings.lc_embeddings import OpenAIEmbeddingsConfig
+from laife.llm_services.embeddings.lc_embeddings import SentenceTransformerConfig
 
 
 def get_document_id(document: Document) -> str:
@@ -37,8 +37,8 @@ def get_document_ids(
     return [doc.metadata[id_in_metadata] for doc in documents]
 
 
-class VectorDB(Chroma):
-    """Custom vector db."""
+class CChroma(Chroma):
+    """Custom chroma wrapper, avoids adding duplicate documents."""
 
     def __init__(
         self,
