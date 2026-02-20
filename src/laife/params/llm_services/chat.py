@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from laife.llm_services.chat.config.azure_openai import AzureOpenAIChatConfig
 from laife.llm_services.chat.config.chat_openai import ChatOpenAIConfig
 from laife.params.env_type import EnvType
 
@@ -27,6 +28,11 @@ class ChatParams:
     def load_params(self) -> None:
         """Load the params for chat services."""
         self.default: ChatConfig = ChatOpenAIConfig()
+
+        self.azure = AzureOpenAIChatConfig(
+            temperature=1,
+            model="gpt-5.2-chat",
+        )
 
     def __str__(self) -> str:
         """Provide String representation of the ChatParams."""
