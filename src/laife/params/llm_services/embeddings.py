@@ -3,6 +3,8 @@
 from typing import TYPE_CHECKING
 
 from laife.llm_services.embeddings.config.azure_openai import AzureOpenAIEmbeddingsConfig
+from laife.llm_services.embeddings.config.huggingface import HuggingFaceEmbeddingsConfig
+from laife.llm_services.embeddings.config.ollama import OllamaEmbeddingsConfig
 from laife.llm_services.embeddings.config.openai import OpenAIEmbeddingsConfig
 from laife.params.env_type import EnvType
 
@@ -26,6 +28,8 @@ class EmbeddingsParams:
         """Load the params for embedding services."""
         self.openai = OpenAIEmbeddingsConfig()
         self.azure = AzureOpenAIEmbeddingsConfig()
+        self.huggingface = HuggingFaceEmbeddingsConfig()
+        self.ollama = OllamaEmbeddingsConfig()
         self.default: EmbeddingsConfig = self.openai
 
     def __str__(self) -> str:

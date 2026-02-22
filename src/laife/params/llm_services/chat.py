@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 from laife.llm_services.chat.config.azure_openai import AzureOpenAIChatConfig
 from laife.llm_services.chat.config.chat_openai import ChatOpenAIConfig
+from laife.llm_services.chat.config.huggingface import HuggingFaceChatConfig
+from laife.llm_services.chat.config.ollama import OllamaChatConfig
 from laife.params.env_type import EnvType
 
 if TYPE_CHECKING:
@@ -33,6 +35,10 @@ class ChatParams:
             temperature=1,
             model="gpt-5.2-chat",
         )
+
+        self.huggingface = HuggingFaceChatConfig()
+
+        self.ollama = OllamaChatConfig()
 
         self.default: ChatConfig = self.openai
 
