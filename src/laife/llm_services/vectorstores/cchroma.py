@@ -5,8 +5,8 @@ from typing import Any
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
-from laife.llm.hasher import Hasher
 from laife.llm_services.embeddings.config.base import EmbeddingsConfig
+from laife.llm_services.vectorstores.hasher import Hasher
 
 
 def get_document_id(document: Document) -> str:

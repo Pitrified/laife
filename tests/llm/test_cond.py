@@ -2,12 +2,12 @@
 
 import pytest
 
-from laife.llm.cond import CompCond
-from laife.llm.cond import CompOp
-from laife.llm.cond import InclusionCond
-from laife.llm.cond import InclusionOp
-from laife.llm.cond import LogicalCond
-from laife.llm.cond import LogicalOp
+from laife.llm_services.vectorstores.cond import CompCond
+from laife.llm_services.vectorstores.cond import CompOp
+from laife.llm_services.vectorstores.cond import InclusionCond
+from laife.llm_services.vectorstores.cond import InclusionOp
+from laife.llm_services.vectorstores.cond import LogicalCond
+from laife.llm_services.vectorstores.cond import LogicalOp
 
 
 def test_comp_cond() -> None:
