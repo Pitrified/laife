@@ -20,7 +20,7 @@ class MissionHistoryEntry(BaseModel):
 
     def to_prompt(self) -> str:
         """Return the history entry as a prompt."""
-        return f"You tried to {self.action} and the result was {self.result}"
+        return f"You tried to <{self.action}> and the result was {self.result}\n"
 
 
 class MissionHistory(BaseModel):
@@ -39,7 +39,7 @@ class MissionHistory(BaseModel):
         """Return the history as a prompt."""
         p = ""
         for entry in self.history:
-            p += entry.to_prompt() + "\n"
+            p += entry.to_prompt()
         return p
 
 
@@ -70,16 +70,17 @@ class Mission(BaseModel):
         )
         self.steps.append(sm)
 
-    def to_prompt(self) -> str:
+    def to_prompt(self, *, top_prompt: bool = True) -> str:
         """Return the mission as a prompt."""
         # current mission objective
-        p = f"[M{self.sub_mission_level}] The mission is '{self.objective}' ({self.status.value})"
+        p = f"[M{self.sub_mission_level}] The mission is '{self.objective}' ({self.status.value})\n"
         # context of what we plan to do later/have done before
         for step in self.steps:
-            p += step.to_prompt() + "\n"
+            p += step.to_prompt(top_prompt=False)
         # context of parent mission to ground to bigger picture
-        pm = self.parent_mission
-        while pm is not None:
-            p += f"Parent mission [M{pm.sub_mission_level}]: {pm.objective} ({pm.status.value})\n"
-            pm = pm.parent_mission
+        if top_prompt:
+            pm = self.parent_mission
+            while pm is not None:
+                p += f"[PM{pm.sub_mission_level}]: {pm.objective} ({pm.status.value})\n"
+                pm = pm.parent_mission
         return p
