@@ -6,19 +6,19 @@ from enum import StrEnum
 from laife.entities.building import Building
 
 
-class WorldResponseStatus(StrEnum):
+class WResStatus(StrEnum):
     """The status of a world response."""
 
     SUCCESS = "success"
     ERROR = "error"
 
 
-class WorldResponse:
+class WRes:
     """A response from the world."""
 
     def __init__(
         self,
-        status: WorldResponseStatus,
+        status: WResStatus,
         response_data: dict,
     ) -> None:
         """Initialize the response."""
@@ -27,25 +27,25 @@ class WorldResponse:
 
     def __str__(self) -> str:
         """Return the string representation of the response."""
-        return f"WorldResponse(status={self.status}, response_data={self.response_data})"
+        return f"WRes(status={self.status}, response_data={self.response_data})"
 
 
-class WorldRequest:
+class WReq:
     """A request to the world."""
 
     def __init__(
         self,
-        response_queue: asyncio.Queue[WorldResponse],
+        response_queue: asyncio.Queue[WRes],
     ) -> None:
         """Initialize the request."""
         self.response_queue = response_queue
 
     def __str__(self) -> str:
         """Return the string representation of the request."""
-        return f"WorldRequest(id={id(self)}, response_queue={self.response_queue})"
+        return f"WReq(id={id(self)}, response_queue={self.response_queue})"
 
 
-class WRBuild(WorldRequest):
+class WRecBuild(WReq):
     """A building request."""
 
     def __init__(
@@ -61,7 +61,7 @@ class WRBuild(WorldRequest):
     def __str__(self) -> str:
         """Return the string representation of the request."""
         return (
-            f"WRBuild(id={id(self)}"
+            f"WRecBuild(id={id(self)}"
             f", response_queue={self.response_queue}"
             f", building={self.building})"
         )

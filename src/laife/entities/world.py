@@ -8,10 +8,10 @@ import pygame
 
 from laife.entities.building import Building
 from laife.entities.player import Player
-from laife.entities.world_channel import WorldRequest
-from laife.entities.world_channel import WorldResponse
-from laife.entities.world_channel import WorldResponseStatus
-from laife.entities.world_channel import WRBuild
+from laife.entities.world_channel import WRecBuild
+from laife.entities.world_channel import WReq
+from laife.entities.world_channel import WRes
+from laife.entities.world_channel import WResStatus
 from laife.ui.alog import alg
 
 
@@ -23,7 +23,7 @@ class World:
         self.init_renderer()
 
         # setup the world queue where players will send their input
-        self.input_queue: asyncio.Queue[WorldRequest] = asyncio.Queue()
+        self.input_queue: asyncio.Queue[WReq] = asyncio.Queue()
 
         # setup the player and entities groups
         self.players = pygame.sprite.Group()
@@ -45,16 +45,16 @@ class World:
             await player_input.response_queue.put(wrsp)
             alg.log("W: Sent response to player")
 
-    async def handle_player_input(self, player_input: WorldRequest) -> WorldResponse:
+    async def handle_player_input(self, player_input: WReq) -> WRes:
         """Handle the player input and return a response."""
         # match on the player_input class
         match player_input:
-            case WRBuild():
+            case WRecBuild():
                 wrsp = self.add_building(player_input.building)
             case _:
                 await asyncio.sleep(1)
-                wrsp = WorldResponse(
-                    WorldResponseStatus.ERROR,
+                wrsp = WRes(
+                    WResStatus.ERROR,
                     {"message": f"unknown request {player_input}"},
                 )
         return wrsp
@@ -63,18 +63,18 @@ class World:
         """Add a player to the world."""
         self.players.add(player)
 
-    def add_building(self, building: Building) -> WorldResponse:
+    def add_building(self, building: Building) -> WRes:
         """Add a building to the world."""
         # check that the building sprite is not colliding with any other building
         if pygame.sprite.spritecollideany(building, self.buildings):  # pyright: ignore[reportArgumentType]
-            wrsp = WorldResponse(
-                WorldResponseStatus.ERROR,
+            wrsp = WRes(
+                WResStatus.ERROR,
                 {"message": "building collides with another building"},
             )
             return wrsp
         self.buildings.add(building)
-        wrsp = WorldResponse(
-            WorldResponseStatus.SUCCESS,
+        wrsp = WRes(
+            WResStatus.SUCCESS,
             {"message": "building added"},
         )
         return wrsp

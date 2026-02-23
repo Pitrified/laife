@@ -11,9 +11,9 @@ from laife.entities.action import ActionBuild
 from laife.entities.action import ActionCraft
 from laife.entities.action import ActionMove
 from laife.entities.player_state import PlayerState
-from laife.entities.world_channel import WorldRequest
-from laife.entities.world_channel import WorldResponse
-from laife.entities.world_channel import WorldResponseStatus
+from laife.entities.world_channel import WReq
+from laife.entities.world_channel import WRes
+from laife.entities.world_channel import WResStatus
 from laife.llm.brain import Brain
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
@@ -34,7 +34,7 @@ class Player(Sprite):
         name: str,
         position: Position,
         player_type: str,
-        world_input_queue: asyncio.Queue[WorldRequest],
+        world_input_queue: asyncio.Queue[WReq],
         state: PlayerState = PlayerState.IDLE,
     ) -> None:
         """Create a new player with initial state and background tasks."""
@@ -48,7 +48,7 @@ class Player(Sprite):
         self.sprite_loader = SpriteLoader("player", self.player_type)
 
         # save the world input queue
-        self.world_input_queue: asyncio.Queue[WorldRequest] = world_input_queue
+        self.world_input_queue: asyncio.Queue[WReq] = world_input_queue
 
         # the state needs to know the position
         self.position = position
@@ -56,7 +56,7 @@ class Player(Sprite):
         self.set_position(position)
 
         # this is the queue where the player will receive input
-        self.input_queue: asyncio.Queue[WorldResponse] = asyncio.Queue()
+        self.input_queue: asyncio.Queue[WRes] = asyncio.Queue()
 
         # setup the player brain
         self.brain = Brain()
@@ -130,7 +130,7 @@ class Player(Sprite):
         self.set_state(PlayerState.IDLE)
         return action
 
-    async def move(self, action: Action) -> WorldResponse:
+    async def move(self, action: Action) -> WRes:
         """Move the player."""
         self.set_state(PlayerState.MOVING)
         alg.log(f"PLAYER.move {self.name}: is moving")
@@ -146,8 +146,8 @@ class Player(Sprite):
         # ? or do we receive the step from the world and move the player here?
 
         # TODO: replace with actual movement logic with move_delta loop
-        wrsp = WorldResponse(
-            WorldResponseStatus.SUCCESS,
+        wrsp = WRes(
+            WResStatus.SUCCESS,
             {"message": "You reached the destination."},
         )
         await asyncio.sleep(1)
@@ -161,31 +161,31 @@ class Player(Sprite):
         new_position = (self.position[0] + dx, self.position[1] + dy)
         self.set_position(new_position)
 
-    async def build(self, action: Action) -> WorldResponse:  # noqa: ARG002
+    async def build(self, action: Action) -> WRes:  # noqa: ARG002
         """Prepare the build request and send it to the world."""
-        wrsp = WorldResponse(WorldResponseStatus.SUCCESS, {"message": "You built the thing."})
+        wrsp = WRes(WResStatus.SUCCESS, {"message": "You built the thing."})
         await asyncio.sleep(1)
         return wrsp
 
-    async def craft(self, action: Action) -> WorldResponse:  # noqa: ARG002
+    async def craft(self, action: Action) -> WRes:  # noqa: ARG002
         """Prepare the craft request and send it to the world."""
-        wrsp = WorldResponse(WorldResponseStatus.SUCCESS, {"message": "You crafted the thing."})
+        wrsp = WRes(WResStatus.SUCCESS, {"message": "You crafted the thing."})
         await asyncio.sleep(1)
         return wrsp
 
-    async def action_error(self, action: Action) -> WorldResponse:
+    async def action_error(self, action: Action) -> WRes:
         """Handle an unknown action."""
         wrsp = await self.action_error(action)
         alg.log(f"PLAYER.play {self.name}: unknown action {action}")
         await asyncio.sleep(1)
-        wrsp = WorldResponse(WorldResponseStatus.ERROR, {"message": f"unknown action {action}"})
+        wrsp = WRes(WResStatus.ERROR, {"message": f"unknown action {action}"})
         return wrsp
 
     async def world_request(self) -> None:
         """Request something from the world."""
         alg.log(f"PWR {self.name}: requesting")
         # send a request to the world
-        wreq = WorldRequest(response_queue=self.input_queue)
+        wreq = WReq(response_queue=self.input_queue)
         request_start = time.time()
         alg.log(f"PWR: world input queue len: {self.world_input_queue.qsize()}")
         await self.world_input_queue.put(wreq)
