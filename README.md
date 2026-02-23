@@ -128,6 +128,7 @@ There are mission and actions.
 Add decorators to player functions to update the state of the player.
 
 The `Mission` do not need a `MissionType`, it has to be inferred from the mission description.
+This is because missions can be very dynamic and complex, world/brain driven.
 
 We need an `ActionHistory` to keep track of the actions done by the player.
 Not a mission history for now.
@@ -135,6 +136,8 @@ Not a mission history for now.
 The `Brain` takes a `Mission` and generates an `Action`.
 
 The `Planner` breaks down the Mission into sub-missions.
+Which is an option that the `Brain` can choose if the mission is too complex.
+And there is a `ActionPlan` that the `Brain` can choose to do, to trigger the replanning phase.
 
 ### Full loop
 

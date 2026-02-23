@@ -10,6 +10,7 @@ from laife.entities.action import Action
 from laife.entities.action import ActionBuild
 from laife.entities.action import ActionCraft
 from laife.entities.action import ActionMove
+from laife.entities.action import ActionPlan
 from laife.entities.player_state import PlayerState
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
@@ -79,7 +80,7 @@ class Player(Sprite):
         while True:
             alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
             # TODO: add exploration step
-            # think about the mission
+            # think about the current state of the mission
             action = await self.think()
             # execute the action
             match action:
@@ -89,12 +90,29 @@ class Player(Sprite):
                     action_handler = self.build
                 case ActionCraft():
                     action_handler = self.craft
+                case ActionPlan():
+                    action_handler = self.plan
                 case _:
                     action_handler = self.action_error
             wrsp = await action_handler(action)
             # save the feedback of what this action did
             he = MissionHistoryEntry(action=action, result=str(wrsp))
             self.history.add_history_entry(he)
+
+    async def plan(self, action: Action) -> WRes:
+        """Plan the next steps for the mission."""
+        # get the ActionPlan object from the action
+        ap: ActionPlan = action.get_action_plan()
+        alg.log(f"PLAYER.plan {self.name}: planning for {ap.reason}")
+        self.set_state(PlayerState.THINKING)
+        # plan step: wr get a NEW mission with a bunch of steps,
+        # after reflecting on the current mission and history, and the reason for planning
+        await asyncio.sleep(1)
+        # conclude the plan step
+        alg.log(f"PLAYER.plan {self.name}: planned")
+        self.set_state(PlayerState.IDLE)
+        wrsp = WRes(WResStatus.SUCCESS, {"message": "Planning completed."})
+        return wrsp
 
     async def think(self) -> Action:
         """Examine the mission and decide what to do."""

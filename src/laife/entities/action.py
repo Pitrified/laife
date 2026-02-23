@@ -38,7 +38,13 @@ class ActionCraft(BaseModel):
     description: str = Field(..., description="The description of the item or utensil.")
 
 
-Actions = ActionMove | ActionBuild | ActionCraft
+class ActionPlan(BaseModel):
+    """Plan the next steps for the mission."""
+
+    reason: str = Field(..., description="The reason for planning. What is not clear?")
+
+
+Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan
 
 
 class Action(BaseModel):
@@ -70,6 +76,13 @@ class Action(BaseModel):
         """Get the ActionCraft."""
         if not isinstance(self.act, ActionCraft):
             msg = "Action is not an ActionCraft"
+            raise TypeError(msg)
+        return self.act
+
+    def get_action_plan(self) -> ActionPlan:
+        """Get the ActionPlan."""
+        if not isinstance(self.act, ActionPlan):
+            msg = "Action is not an ActionPlan"
             raise TypeError(msg)
         return self.act
 
