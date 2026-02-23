@@ -1,8 +1,16 @@
 """Channels to and from the World."""
 
 import asyncio
+from enum import StrEnum
 
 from laife.entities.building import Building
+
+
+class WorldResponseStatus(StrEnum):
+    """The status of a world response."""
+
+    SUCCESS = "success"
+    ERROR = "error"
 
 
 class WorldResponse:
@@ -10,7 +18,7 @@ class WorldResponse:
 
     def __init__(
         self,
-        status: str,
+        status: WorldResponseStatus,
         response_data: dict,
     ) -> None:
         """Initialize the response."""
@@ -42,11 +50,12 @@ class WRBuild(WorldRequest):
 
     def __init__(
         self,
-        response_queue: asyncio.Queue[WorldResponse],
         building: Building,
+        *args,  # noqa: ANN002
+        **kwargs,  # noqa: ANN003
     ) -> None:
         """Initialize the building request."""
-        super().__init__(response_queue)
+        super().__init__(*args, **kwargs)
         self.building = building
 
     def __str__(self) -> str:

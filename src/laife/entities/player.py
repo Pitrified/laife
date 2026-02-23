@@ -13,6 +13,7 @@ from laife.entities.action import ActionMove
 from laife.entities.player_state import PlayerState
 from laife.entities.world_channel import WorldRequest
 from laife.entities.world_channel import WorldResponse
+from laife.entities.world_channel import WorldResponseStatus
 from laife.llm.brain import Brain
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
@@ -145,7 +146,10 @@ class Player(Sprite):
         # ? or do we receive the step from the world and move the player here?
 
         # TODO: replace with actual movement logic with move_delta loop
-        wrsp = WorldResponse("ok", {"message": "You reached the destination."})
+        wrsp = WorldResponse(
+            WorldResponseStatus.SUCCESS,
+            {"message": "You reached the destination."},
+        )
         await asyncio.sleep(1)
 
         alg.log(f"PLAYER.move {self.name}: moved")
@@ -159,13 +163,13 @@ class Player(Sprite):
 
     async def build(self, action: Action) -> WorldResponse:  # noqa: ARG002
         """Prepare the build request and send it to the world."""
-        wrsp = WorldResponse("ok", {"message": "You built the thing."})
+        wrsp = WorldResponse(WorldResponseStatus.SUCCESS, {"message": "You built the thing."})
         await asyncio.sleep(1)
         return wrsp
 
     async def craft(self, action: Action) -> WorldResponse:  # noqa: ARG002
         """Prepare the craft request and send it to the world."""
-        wrsp = WorldResponse("ok", {"message": "You crafted the thing."})
+        wrsp = WorldResponse(WorldResponseStatus.SUCCESS, {"message": "You crafted the thing."})
         await asyncio.sleep(1)
         return wrsp
 
@@ -174,7 +178,7 @@ class Player(Sprite):
         wrsp = await self.action_error(action)
         alg.log(f"PLAYER.play {self.name}: unknown action {action}")
         await asyncio.sleep(1)
-        wrsp = WorldResponse("error", {"message": f"unknown action {action}"})
+        wrsp = WorldResponse(WorldResponseStatus.ERROR, {"message": f"unknown action {action}"})
         return wrsp
 
     async def world_request(self) -> None:

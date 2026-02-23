@@ -10,6 +10,7 @@ from laife.entities.building import Building
 from laife.entities.player import Player
 from laife.entities.world_channel import WorldRequest
 from laife.entities.world_channel import WorldResponse
+from laife.entities.world_channel import WorldResponseStatus
 from laife.entities.world_channel import WRBuild
 from laife.ui.alog import alg
 
@@ -33,21 +34,30 @@ class World:
         alg.log("W: Simulating the world")
         while True:
             alg.log("W: awaiting player input")
+            # grab the player input from the queue
             player_input = await self.input_queue.get()
             alg.log(f"W: Got player input: {player_input}")
             # execute the player input
-            # match on the player_input class
-            match player_input:
-                case WRBuild():
-                    wrsp = self.add_building(player_input.building)
-                case _:
-                    await asyncio.sleep(1)
-                    wrsp = WorldResponse("error", {"message": f"unknown request {player_input}"})
+            wrsp = await self.handle_player_input(player_input)
             # mark the task as done
             self.input_queue.task_done()
             # pack the answer into an object and send it back to the player
             await player_input.response_queue.put(wrsp)
             alg.log("W: Sent response to player")
+
+    async def handle_player_input(self, player_input: WorldRequest) -> WorldResponse:
+        """Handle the player input and return a response."""
+        # match on the player_input class
+        match player_input:
+            case WRBuild():
+                wrsp = self.add_building(player_input.building)
+            case _:
+                await asyncio.sleep(1)
+                wrsp = WorldResponse(
+                    WorldResponseStatus.ERROR,
+                    {"message": f"unknown request {player_input}"},
+                )
+        return wrsp
 
     def add_player(self, player: Player) -> None:
         """Add a player to the world."""
@@ -57,10 +67,16 @@ class World:
         """Add a building to the world."""
         # check that the building sprite is not colliding with any other building
         if pygame.sprite.spritecollideany(building, self.buildings):  # pyright: ignore[reportArgumentType]
-            wrsp = WorldResponse("error", {"message": "building collides with another building"})
+            wrsp = WorldResponse(
+                WorldResponseStatus.ERROR,
+                {"message": "building collides with another building"},
+            )
             return wrsp
         self.buildings.add(building)
-        wrsp = WorldResponse("ok", {"message": "building added"})
+        wrsp = WorldResponse(
+            WorldResponseStatus.SUCCESS,
+            {"message": "building added"},
+        )
         return wrsp
 
     def move_player(self) -> None:
