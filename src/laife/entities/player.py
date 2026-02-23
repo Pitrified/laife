@@ -20,8 +20,6 @@ from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
-from laife.llm.mission import MissionStep
-from laife.llm.mission import MissionType
 from laife.ui.alog import alg
 from laife.ui.directions import CardinalDirection
 from laife.ui.sprites import SpriteLoader
@@ -63,12 +61,10 @@ class Player(Sprite):
         self.brain = Brain()
 
         # the player mission
-        ms = MissionStep(
-            mission_type=MissionType.BUILD,
+        self.mission = Mission(
             objective="Build a house",
             status=MissionStatus.ACTIVE,
         )
-        self.mission = Mission.from_step(ms)
         # the player history
         self.history = MissionHistory()
 

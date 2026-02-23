@@ -2,57 +2,64 @@
 
 # %% imports
 
+from laife.entities.action import Action
+from laife.entities.action import ActionBuild
+from laife.entities.action import ActionCraft
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
-from laife.llm.mission import MissionStep
-from laife.llm.mission import MissionType
 
 # %% simple mission
 
-ms = MissionStep(
-    mission_type=MissionType.CRAFT,
-    objective="Craft a hammer",
-)
-mission = Mission(steps=[ms])
+mission = Mission(objective="Build a settlement")
 print(mission.to_prompt())
 
-# %% with step constructor
+# %% mission with sub-missions
 
-m2 = Mission.from_step(ms)
+mission.add_sub_mission("Gather wood")
+mission.add_sub_mission("Craft a hammer")
+print(mission.to_prompt())
+
+# %% nested sub-missions
+
+sub = mission.steps[0]
+sub.add_sub_mission("Find a forest")
+sub.add_sub_mission("Chop trees")
+print(sub.to_prompt())
+
+# %% mission with statuses
+
+m2 = Mission(objective="Craft a sword", status=MissionStatus.ACTIVE)
+m2.add_sub_mission("Mine iron ore")
+m2.steps[0].status = MissionStatus.COMPLETED
+m2.add_sub_mission("Smelt iron")
 print(m2.to_prompt())
-
-# %% add a step
-
-ms2 = MissionStep(
-    mission_type=MissionType.BUILD,
-    objective="Build a house",
-    status=MissionStatus.ACTIVE,
-)
-mission.add_step(ms2)
-print(mission.to_prompt())
-
-# %% all steps at once
-
-m3 = Mission.from_steps(ms, ms2)
-print(m3.to_prompt())
 
 # %% history
 
-mission_history_entry = MissionHistoryEntry(
-    action="try",
-    result="success",
+action1 = Action(
+    act=ActionCraft(
+        utensil_name="hammer",
+        description="A sturdy wooden hammer",
+    ),
+    reason="Need a hammer to build the house",
 )
-mission_history = MissionHistory(history=[mission_history_entry])
-print(mission.to_prompt())
+entry1 = MissionHistoryEntry(action=action1, result="success")
+history = MissionHistory(history=[entry1])
+print(history.to_prompt())
 
-# another
-mhe2 = MissionHistoryEntry(
-    action="try",
-    result="failure",
+# another entry
+action2 = Action(
+    act=ActionBuild(
+        building_type="house",
+        description="A small wooden house",
+        size=3,
+    ),
+    reason="Build a shelter before nightfall",
 )
-mission_history.add_history_entry(mhe2)
-print(mission_history.to_prompt())
+entry2 = MissionHistoryEntry(action=action2, result="failure - not enough materials")
+history.add_history_entry(entry2)
+print(history.to_prompt())
 
 # %%

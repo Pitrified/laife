@@ -1,12 +1,15 @@
 """Mission for the player to complete."""
 
+from __future__ import annotations
+
 from enum import Enum
-from typing import Self
 
 from pydantic import BaseModel
 from pydantic import Field
 
-from laife.entities.action import Action
+from laife.entities.action import Action  # noqa: TC001
+
+# TC001 is needed to let pydantic know what an Action is
 
 
 class MissionHistoryEntry(BaseModel):
@@ -49,51 +52,34 @@ class MissionStatus(Enum):
     COMPLETED = "completed"
 
 
-class MissionType(Enum):
-    """Type of the mission."""
-
-    CRAFT = "craft"
-    BUILD = "build"
-    MOVE = "move"
-    PLAN = "plan"
-
-
-class MissionStep(BaseModel):
-    """Mission for the player to complete."""
-
-    mission_type: MissionType
-    objective: str
-    status: MissionStatus = MissionStatus.PENDING
-
-    def to_prompt(self) -> str:
-        """Return the mission as a prompt."""
-        p = f"The mission is '{self.objective}'"
-        p += f"\nStatus: {self.status.value}"
-        return p
-
-
 class Mission(BaseModel):
     """A mission composed of ordered mission steps."""
 
-    steps: list[MissionStep] = Field(default_factory=list)
+    objective: str
+    sub_mission_level: int = 0
+    status: MissionStatus = MissionStatus.PENDING
+    steps: list[Mission] = Field(default_factory=list)
+    parent_mission: Mission | None = None
 
-    @classmethod
-    def from_step(cls, mission_step: MissionStep) -> Self:
-        """Create a mission from a step."""
-        return cls(steps=[mission_step])
-
-    @classmethod
-    def from_steps(cls, *mission_steps: MissionStep) -> Self:
-        """Create a mission from steps."""
-        return cls(steps=list(mission_steps))
-
-    def add_step(self, mission_step: MissionStep) -> None:
-        """Add a step to the mission."""
-        self.steps.append(mission_step)
+    def add_sub_mission(self, objective: str) -> None:
+        """Add a sub-mission to the mission."""
+        sm = Mission(
+            objective=objective,
+            sub_mission_level=self.sub_mission_level + 1,
+            parent_mission=self,
+        )
+        self.steps.append(sm)
 
     def to_prompt(self) -> str:
         """Return the mission as a prompt."""
-        p = ""
+        # current mission objective
+        p = f"[M{self.sub_mission_level}] The mission is '{self.objective}' ({self.status.value})"
+        # context of what we plan to do later/have done before
         for step in self.steps:
             p += step.to_prompt() + "\n"
+        # context of parent mission to ground to bigger picture
+        pm = self.parent_mission
+        while pm is not None:
+            p += f"Parent mission [M{pm.sub_mission_level}]: {pm.objective} ({pm.status.value})\n"
+            pm = pm.parent_mission
         return p
