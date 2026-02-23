@@ -18,11 +18,11 @@ cool but all not needed for now
 
 ## LLM
 
-1. huge update in langchain/langgraph happened in the mean time
+1. huge update in langchain/langgraph happened in the mean time -- TODO, will be done in future Brain/Planner updates
 1. split llm and embedding in a general provider -- leverage langchain for common interface if possible and clean up the config to just use them to control which to use -- DONE
 1. rename tool.py to utensil.py, tools mean something specific in langchain and LLM -- DONE
-1. clean up the world and give it a decisor to decide if the action is valid or not, and to give feedback to the player
-1. clean up the player and give it a planner to break down the mission into sub-missions, and a brain to think about the mission and generate an action (or just a big brain)
+1. clean up the world and give it a decisor to decide if the action is valid or not, and to give feedback to the player -- TODO
+1. clean up the player and give it a planner to break down the mission into sub-missions, and a brain to think about the mission and generate an action (or just a big brain) -- DONE
 1. setup qdrant for the world entities and utensils and resources...
 1. there is an attribute called `object`, that seems shady -- DONE
 1. entities that go into the vector database should all inherit from a common base class that can convert them to a langchain document with the necessary metadata for retrieval, and also have a method to convert them back from a document to an entity
