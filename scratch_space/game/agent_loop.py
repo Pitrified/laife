@@ -12,13 +12,13 @@ e033a973a352a5a6b004a45d27ffe09cc3c0425a
 # from loguru import logger as lg
 # import pygame
 
-# from laife.entities.player import Player
-# from laife.entities.player import PlayerState
+# from laife.entities.player_agent import PlayerAgent
+# from laife.entities.player_state import PlayerState
 
 
 # # Define an asynchronous function for player actions
 # async def async_player_action(
-#     player: Player,
+#     player: PlayerAgent,
 #     dx: int,
 #     dy: int,
 #     delay: float,
@@ -32,7 +32,7 @@ e033a973a352a5a6b004a45d27ffe09cc3c0425a
 #         await asyncio.sleep(delay)
 
 
-# async def player_poll(player: Player) -> None:
+# async def player_poll(player: PlayerAgent) -> None:
 #     """Poll the player for input."""
 #     lg.info(f"Polling player {player.name}")
 #     while not player.dying:
@@ -44,7 +44,7 @@ e033a973a352a5a6b004a45d27ffe09cc3c0425a
 #     lg.info(f"Player {player.name} is dying")
 
 
-# async def player_queue(player: Player, queue: Queue) -> None:
+# async def player_queue(player: PlayerAgent, queue: Queue) -> None:
 #     """Consume inputs from a queue and forward them to the player."""
 #     while True:
 #         lg.info("Waiting for input in player_queue")
@@ -67,23 +67,23 @@ e033a973a352a5a6b004a45d27ffe09cc3c0425a
 # pygame.display.set_caption("Minimal Pygame")
 
 # # Create the players
-# player_idle = Player(
+# player_idle = PlayerAgent(
 #     name="inu_idle",
 #     position=(100, 100),
 #     player_type="inu",
 # )
-# player_think = Player(
+# player_think = PlayerAgent(
 #     name="inu_think",
 #     position=(200, 100),
 #     player_type="inu",
 #     state=PlayerState.THINKING,
 # )
-# player_poller = Player(
+# player_poller = PlayerAgent(
 #     name="inu_poll",
 #     position=(300, 100),
 #     player_type="inu",
 # )
-# player_queuer = Player(
+# player_queuer = PlayerAgent(
 #     name="inu_queue",
 #     position=(400, 100),
 #     player_type="inu",
