@@ -1,6 +1,7 @@
 """Actions are something the Brain decides to do to solve a Mission."""
 
 from dataclasses import dataclass
+from typing import TypeVar
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts import SystemMessagePromptTemplate
@@ -10,6 +11,8 @@ from pydantic import Field
 
 from laife.entities.utils.directions import CardinalDirection
 from laife.llm_services.chat.config.chat_openai import ChatOpenAIConfig
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class ActionMove(BaseModel):
@@ -57,6 +60,13 @@ class Action(BaseModel):
 
     act: Actions = Field(..., description="The action to take.")
     reason: str = Field(..., description="The reason for the action.")
+
+    def get_action_typed(self, action_type: type[T]) -> T:
+        """Get the action of a specific type."""
+        if not isinstance(self.act, action_type):
+            msg = f"Action is not of type {action_type.__name__}"
+            raise TypeError(msg)
+        return self.act
 
     def get_action_move(self) -> ActionMove:
         """Get the ActionMove."""

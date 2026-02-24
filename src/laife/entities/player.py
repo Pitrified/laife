@@ -74,7 +74,7 @@ class Player:
         while True:
             alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
             action = await self.think()
-            match action:
+            match action.act:
                 case ActionMove():
                     action_handler = self.move
                 case ActionBuild():
@@ -123,7 +123,7 @@ class Player:
         """Move the player."""
         self.state = PlayerState.MOVING
         alg.log(f"PLAYER.move {self.name}: is moving")
-        am: ActionMove = action.get_action_move()  # noqa: F841
+        am = action.get_action_typed(ActionMove)  # noqa: F841
         # TODO: delegate move to world for collision detection
         await asyncio.sleep(1)
         alg.log(f"PLAYER.move {self.name}: moved")
