@@ -14,11 +14,11 @@ from laife.entities.utils.directions import CardinalDirection
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
 from laife.entities.world_channel import WResStatus
-from laife.llm.brain import Brain
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
+from laife.llm.player_brain import PlayerBrain
 from laife.ui.alog import alg
 
 
@@ -58,7 +58,7 @@ class Player:
         self.input_queue: asyncio.Queue[WRes] = asyncio.Queue()
 
         # cognition
-        self.brain = Brain()
+        self.brain = PlayerBrain()
         self.mission = Mission(
             objective="Build a house",
             status=MissionStatus.ACTIVE,

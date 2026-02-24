@@ -1,4 +1,4 @@
-"""Brain of an agent."""
+"""Brain of a player."""
 
 import asyncio
 import random
@@ -12,8 +12,8 @@ from langchain_ollama import ChatOllama
 from laife.ui.alog import alg
 
 
-class Brain:
-    """Brain of an agent."""
+class PlayerBrain:
+    """Brain of a player."""
 
     def __init__(self) -> None:
         """Initialize the brain."""
