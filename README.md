@@ -2,66 +2,21 @@
 
 Let's make AI rule the world!
 
+## Run the game
+
+```bash
+uv run game/main.py
+```
+
+press `q` to quit the game.
+
 ## Setup
 
-### Pygame
-
-might need SDL to solve
-
-`RuntimeError: Unable to run "sdl-config". Please make sure a development version of SDL is installed.`
-
-which actually need SDL2
-
-```
-sudo apt install -y \
-    libsdl2-dev \
-    libsdl2-image-dev \
-    libsdl2-mixer-dev \
-    libsdl2-ttf-dev \
-    libfreetype6-dev \
-    libportmidi-dev \
-    libjpeg-dev \
-    libpng-dev 
-```
-
-
-### Install package
-
-```bash
-poetry install
-```
-
-edit the chromadb package to deal with the old sqlite3 version
-
-`~/.cache/pypoetry/virtualenvs/laife-IdkopDz3-py3.11/lib/python3.11/site-packages/chromadb/__init__.py`
-
-around line 86 where the import fails
-
-```
-            __import__("pysqlite3")
-            import sys
-            sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
-```
-
-### Openai key
-
-place the openai key in `src/laife/config/credentials.py`:
-
-```python
-from pydantic.v1 import SecretStr
-
-OPENAI_API_KEY = SecretStr("your-openai-api-key")
-```
-
-### Run the game
-
-```bash
-poetry run python game/main.py
-```
+Check the [CONTRIBUTING.md](CONTRIBUTING.md) for instructions on how to set up the local development environment.
 
 ## Ideas
 
-There are players, that do things in the environment.
+There are players, that do things in the environment via actions.
 
 Players have states.
 
@@ -69,7 +24,7 @@ There are objects in the environment.
 
 The players can interact with the objects, and with each other.
 
-A player has a mission.
+A player has a main mission.
 If a player has nothing to do, it can interact with the environment to find a mission.
 To complete the mission, the player has to interact with the environment.
 
@@ -77,55 +32,63 @@ A mission can be solved in several steps.
 Missions can be nested.
 
 If an utensil is needed to solve a mission, the player has to find the utensil first.
-If the utensil does not exist, the player has to create it.
+If the utensil does not exist, the player has to create it, which is a mission in itself.
 
-New building blocks can be created by the players.
+New building blocks can be created by the players, again as a mission.
 
 World entities:
-* Player
-* Building
-* Utensil
-* Terrain
-    - A terrain is an entire section of map
-    - Default background is grass
-    - When building the prompt, the area of each type of terrain is calculated
-      and described
+
+- Player
+- Building
+  - which can be things like a factory/farm/house but also chest/tree/rock
+  - some buildings can be one over the other, like a tree in a forest, or a chest in a house
+- Utensil
+- Terrain
+  - A terrain is an entire section of map
+  - Default background is grass
+  - When building the prompt, the area of each type of terrain is calculated
+    and described
 
 Game logic is dynamic:
 given a mission, the player decides which utensil to use, and where to go to use it.
 The engine checks that the player has the utensil,
 the LLM checks that the utensil can be used in the location to solve the mission.
 
-A swap in control might happen:
+In general,
 the player can send requests to the world to do some action,
 and the world answers with the result.
 The world never tells the player what to do.
 
 In `to_prompt` there could be a position parameter,
-so that in the prompt the location is dynamically converted to text eg "to the south".
+so that in the prompt the location of other entities is dynamically converted to text eg "to the south",
+by the world.
 
 A player in the beginning does not know the world.
-One of the option is observe.
+One of the option is to explore (well actually just move, but with purpose).
 
 A mission has an objective, a history of actions, and a status (done, failed, in progress).
 There can be sub-missions, and the nesting level is tracked.
 
 The chosen action is validated by the world, it must exist as an option, and be possible in the current state of the world.
-The world can answer with a feedback, which is placed in the history of the mission.
+The world answers with a feedback, which is placed in the history of the mission.
 The player LLM iterates on the mission with more history, and can pick a different action.
 One of the player LLM response option is to split the mission into sub-missions.
 
-The validation of whether an action actually solves the mission is done by the world LLM.
+The validation of whether an action actually solves the mission is done by the world LLM,
+this is one of the possible feedback.
 
 The `Brain` thinks about a `Mission` and generates an `Action`.
+
 All the action except `move` are done as world requests.
-The response of the world is set into the mission history.
+Actually `move` is also a world request, but has to be handled in `move_delta` steps,
+each one has to be validated by the world with deterministic collision system.
+Whether the player thinks again after a certain number of steps, or after each step, or after each failed step, is to be decided.
 
 Add a langchain `tool` to compute distance between two points on the map.
-
-There are mission and actions.
+No dude just compute it, the worlds knows these things.
 
 Add decorators to player functions to update the state of the player.
+What was this??
 
 The `Mission` do not need a `MissionType`, it has to be inferred from the mission description.
 This is because missions can be very dynamic and complex, world/brain driven.
@@ -133,11 +96,10 @@ This is because missions can be very dynamic and complex, world/brain driven.
 We need an `ActionHistory` to keep track of the actions done by the player.
 Not a mission history for now.
 
-The `Brain` takes a `Mission` and generates an `Action`.
-
 The `Planner` breaks down the Mission into sub-missions.
-Which is an option that the `Brain` can choose if the mission is too complex.
-And there is a `ActionPlan` that the `Brain` can choose to do, to trigger the replanning phase.
+There is an action `ActionPlan` that the `Brain` can choose to do, to trigger the replanning phase,
+if the mission is too complex and it failed some times maybe.
+The new planning will have more feedback received in the history.
 
 ### Full loop
 
@@ -151,52 +113,53 @@ And there is a `ActionPlan` that the `Brain` can choose to do, to trigger the re
 ### Features
 
 - [x] : World with renderer
-    - [ ] : Prettier background with tiled grass
-    - [ ] : Prettier terrain with tiled terrain types
-    - [ ] : Prettier buildings with a big building in the center and a tiled garden
-    - [ ] : Utensils can be held by the player
+  - [ ] : Prettier background with tiled grass
+  - [ ] : Prettier terrain with tiled terrain types
+  - [ ] : Prettier buildings with a big building in the center and a tiled garden
+  - [ ] : Utensils can be held by the player
 - [x] : Swap player and world queue control,
-        the player sends requests to the world to do some action,
-        and the world answers with the result
-    - [x] : Formalize the player and world interaction
-    - [ ] : Make the list of possible player actions
+      the player sends requests to the world to do some action,
+      and the world answers with the result
+  - [x] : Formalize the player and world interaction
+  - [x] : Make the list of possible player actions: base done, easily extendable with new actions
 - [ ] : Map of the world with entities:
-    - [x] : Different buildings
-    - [ ] : Different terrain
-    - [ ] : Make the map dynamic with dataclasses
-            or some kind of loader
+  - [x] : Different buildings
+  - [ ] : Different terrain
+  - [ ] : Make the map dynamic with some kind of loader
 - [ ] : Vector db of the world entities
-    - [x] : Different utensils
-    - [ ] : Different buildings
+  - [x] : Different utensils
+  - [ ] : Different buildings
+  - [ ] : Different terrains
 - [ ] : Action object as an output of the Brain
 - [ ] : Translate the map into a prompt
 - [ ] : Convert the `to_prompts` into langchain objects using `PromptTemplate`s
 - [ ] : Assign a mission to a player based on the map
-    - [ ] : If a mission is too complex, break it down into sub-missions
-    - [ ] : Share the mission with the world: the player can ask for help
+  - [ ] : If a mission is too complex, break it down into sub-missions
+  - [ ] : Share the mission with the world: the player can ask for help
 - [ ] : Create an utensil to solve the mission
-    - [ ] : If the utensil does not exist, create it
-    - [ ] : Create an image of the utensil
+  - [ ] : If the utensil does not exist, create it
+  - [ ] : Create an image of the utensil --> need wrapper for langchain image generation tools
 - [ ] : Solve the mission
 - [ ] : The mission could be building a building
-- [ ] : Add an alive parameter to the player,
-        if the player is not alive, kill the async task
-        by exiting the loop
+- [ ] : Add an alive parameter to the player
+- [ ] : Let players interact with each other with
+   - [ ] : a `ActionInteract` action 
+   - [ ] : a `to_prompt` that describes the other player in the prompt
 - [ ] : Add a player inventory
-
+- [ ] : Add a player long term memory
 
 ### Startup Entities
 
 - terrain:
-    - forest
-    - lake    
-    - fertile land
+  - forest
+  - lake
+  - fertile land
 - building:
-    - house - to rest
-    - factory - to create utensils
-    - farm - to grow food
+  - house - to rest
+  - factory - to create utensils
+  - farm - to grow food
 - utensils:
-    - bucket
-    - axe
-    - hammer
-    - hoe
+  - bucket
+  - axe
+  - hammer
+  - hoe
