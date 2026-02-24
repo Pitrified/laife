@@ -1,4 +1,4 @@
-"""Pure geometry utilities — no pygame dependency."""
+"""Pure geometry utilities - no pygame dependency."""
 
 from laife.config.types import Position
 from laife.config.types import Size

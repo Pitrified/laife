@@ -8,8 +8,8 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from pydantic import Field
 
+from laife.entities.utils.directions import CardinalDirection
 from laife.llm_services.chat.config.chat_openai import ChatOpenAIConfig
-from laife.ui.directions import CardinalDirection
 
 
 class ActionMove(BaseModel):

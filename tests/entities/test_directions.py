@@ -3,8 +3,8 @@
 import pytest
 
 from laife.config.types import Position
-from laife.ui.directions import CardinalDirection
-from laife.ui.directions import pospos2cardinal_direction
+from laife.entities.utils.directions import CardinalDirection
+from laife.entities.utils.directions import pospos2cardinal_direction
 
 
 @pytest.mark.parametrize(

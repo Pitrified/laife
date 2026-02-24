@@ -1,17 +1,17 @@
-"""BuildingSprite — pygame visual representation of a BuildingData."""
+"""BuildingSprite - pygame visual representation of a Building."""
 
 import pygame
 import pygame.freetype
 from pygame.sprite import Sprite
 
-from laife.entities.building_data import BuildingData
+from laife.entities.building import Building
 from laife.ui.alog import alg
 
 
 class BuildingSprite(Sprite):
-    """Pygame sprite that renders a BuildingData entity."""
+    """Pygame sprite that renders a Building entity."""
 
-    def __init__(self, building: BuildingData, *groups: pygame.sprite.Group) -> None:
+    def __init__(self, building: Building, *groups: pygame.sprite.Group) -> None:
         """Create a sprite surface for the given building."""
         super().__init__(*groups)
         self.building = building

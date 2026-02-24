@@ -1,11 +1,11 @@
-"""Building data — pure entity state, no pygame dependency."""
+"""Building entity - pure data, no pygame dependency."""
 
 from dataclasses import dataclass
 from dataclasses import field
 
 from laife.config.types import Position
 from laife.config.types import Size
-from laife.ui.directions import pospos2cardinal_direction
+from laife.entities.utils.directions import pospos2cardinal_direction
 
 BUILDING_TYPES = ["house", "farm", "factory"]
 BUILDING_DESCRIPTIONS = {
@@ -16,7 +16,7 @@ BUILDING_DESCRIPTIONS = {
 
 
 @dataclass
-class BuildingData:
+class Building:
     """Pure data representation of a building (no pygame)."""
 
     name: str

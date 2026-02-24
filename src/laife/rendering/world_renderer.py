@@ -1,4 +1,4 @@
-"""WorldRenderer — pygame display layer that observes a WorldRunner."""
+"""WorldRenderer - pygame display layer that observes a WorldRunner."""
 
 import asyncio
 import sys
@@ -6,9 +6,9 @@ import time
 
 import pygame
 
-from laife.entities.building_sprite import BuildingSprite
-from laife.entities.player_sprite import PlayerSprite
 from laife.entities.world_runner import WorldRunner
+from laife.rendering.building_sprite import BuildingSprite
+from laife.rendering.player_sprite import PlayerSprite
 from laife.ui.alog import alg
 
 
@@ -45,7 +45,7 @@ class WorldRenderer:
         self.building_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
         # maps used to avoid recreating sprites for the same entity
-        self._agent_sprite_map: dict[int, PlayerSprite] = {}
+        self._player_sprite_map: dict[int, PlayerSprite] = {}
         self._building_sprite_map: dict[int, BuildingSprite] = {}
 
     # ------------------------------------------------------------------
@@ -53,7 +53,7 @@ class WorldRenderer:
     # ------------------------------------------------------------------
 
     async def render(self) -> None:
-        """Async render loop — call from asyncio.gather alongside the runner."""
+        """Async render loop - call from asyncio.gather alongside the runner."""
         alg.log("W: Starting rendering loop")
         while True:
             self._sync_sprites()
@@ -67,11 +67,11 @@ class WorldRenderer:
 
     def _sync_sprites(self) -> None:
         """Reconcile renderer sprite collections with runner entity lists."""
-        # add sprites for new agents
-        for agent in self.runner.agents:
-            if id(agent) not in self._agent_sprite_map:
-                sprite = PlayerSprite(agent, self.player_sprites)
-                self._agent_sprite_map[id(agent)] = sprite
+        # add sprites for new players
+        for player in self.runner.players:
+            if id(player) not in self._player_sprite_map:
+                sprite = PlayerSprite(player, self.player_sprites)
+                self._player_sprite_map[id(player)] = sprite
 
         # add sprites for new buildings
         for building in self.runner.buildings:
@@ -79,7 +79,7 @@ class WorldRenderer:
                 sprite = BuildingSprite(building, self.building_sprites)
                 self._building_sprite_map[id(building)] = sprite
 
-        # pull latest state from all agent sprites
+        # pull latest state from all player sprites
         self.player_sprites.update()
 
     # ------------------------------------------------------------------

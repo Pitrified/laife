@@ -1,6 +1,7 @@
-"""PlayerAgent — pure agent logic, no pygame dependency."""
+"""Player entity - agent logic and state, no pygame dependency."""
 
 import asyncio
+from enum import StrEnum
 import time
 
 from laife.config.types import Position
@@ -9,7 +10,7 @@ from laife.entities.action import ActionBuild
 from laife.entities.action import ActionCraft
 from laife.entities.action import ActionMove
 from laife.entities.action import ActionPlan
-from laife.entities.player_state import PlayerState
+from laife.entities.utils.directions import CardinalDirection
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
 from laife.entities.world_channel import WResStatus
@@ -19,11 +20,18 @@ from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
 from laife.ui.alog import alg
-from laife.ui.directions import CardinalDirection
 
 
-class PlayerAgent:
-    """Pure agent: state, logic, and world communication — no pygame."""
+class PlayerState(StrEnum):
+    """Possible runtime states for a player."""
+
+    IDLE = "idle"
+    THINKING = "thinking"
+    MOVING = "moving"
+
+
+class Player:
+    """Pure agent: state, logic, and world communication - no pygame."""
 
     def __init__(
         self,
@@ -33,7 +41,7 @@ class PlayerAgent:
         world_input_queue: asyncio.Queue[WReq],
         state: PlayerState = PlayerState.IDLE,
     ) -> None:
-        """Create the player agent.
+        """Create the player.
 
         The play loop is NOT started here.  The caller is responsible for
         starting it (e.g. via asyncio.create_task or asyncio.gather).
@@ -41,7 +49,7 @@ class PlayerAgent:
         self.name: str = name
         self.player_type: str = player_type
 
-        # logical state — no sprite side-effects
+        # logical state - no sprite side-effects
         self.position: Position = position
         self.state: PlayerState = state
 
@@ -112,7 +120,7 @@ class PlayerAgent:
         return WRes(WResStatus.SUCCESS, {"message": "Planning completed."})
 
     async def move(self, action: Action) -> WRes:
-        """Move the agent."""
+        """Move the player."""
         self.state = PlayerState.MOVING
         alg.log(f"PLAYER.move {self.name}: is moving")
         am: ActionMove = action.get_action_move()  # noqa: F841
@@ -123,7 +131,7 @@ class PlayerAgent:
         return WRes(WResStatus.SUCCESS, {"message": "You reached the destination."})
 
     def move_delta(self, dx: int, dy: int) -> None:
-        """Adjust the agent's position by delta values."""
+        """Adjust the player's position by delta values."""
         self.position = (self.position[0] + dx, self.position[1] + dy)
 
     async def build(self, action: Action) -> WRes:  # noqa: ARG002
@@ -156,5 +164,5 @@ class PlayerAgent:
         self.input_queue.task_done()
 
     def __str__(self) -> str:
-        """Return a concise human-readable representation of the agent."""
-        return f"PlayerAgent {self.name} at {self.position} with state {self.state}"
+        """Return a concise human-readable representation of the player."""
+        return f"Player {self.name} at {self.position} with state {self.state}"

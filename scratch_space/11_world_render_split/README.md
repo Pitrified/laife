@@ -15,22 +15,22 @@ and similar, for players, should we split the player sprite from the player runn
 
 **Simulation / runner responsibilities:**
 
-- `simulate()` — the main async loop that processes player requests from the queue
-- `handle_player_input()` / `add_player()` / `add_building()` — world state mutation
-- `self.players` and `self.buildings` (`pygame.sprite.Group`) — entity state storage
-- `move_player()` / `craft()` — stub game logic
+- `simulate()` - the main async loop that processes player requests from the queue
+- `handle_player_input()` / `add_player()` / `add_building()` - world state mutation
+- `self.players` and `self.buildings` (`pygame.sprite.Group`) - entity state storage
+- `move_player()` / `craft()` - stub game logic
 
 **Renderer responsibilities:**
 
-- `init_renderer()` — calls `pygame.init()`, `pygame.display.set_mode()`, creates the display window
-- `render()` — async loop (spawned as a task in `__init__`) that drives the visual update cycle
-- `check_events()` — pygame event polling, including `pygame.QUIT` and `pygame.K_q`
-- `quit()` — calls `pygame.quit()` and `sys.exit()`
-- `redraw()` — fills screen black, calls `.draw()` on both sprite groups, flips the display
-- `should_redraw()` / `reset_deadline()` — rate-limiting timer
+- `init_renderer()` - calls `pygame.init()`, `pygame.display.set_mode()`, creates the display window
+- `render()` - async loop (spawned as a task in `__init__`) that drives the visual update cycle
+- `check_events()` - pygame event polling, including `pygame.QUIT` and `pygame.K_q`
+- `quit()` - calls `pygame.quit()` and `sys.exit()`
+- `redraw()` - fills screen black, calls `.draw()` on both sprite groups, flips the display
+- `should_redraw()` / `reset_deadline()` - rate-limiting timer
 - `self.screen`, `self.redraw_period_sec`, `self.redraw_deadline`, `self.render_task`
 
-The render task is spawned inside `__init__` via `init_renderer()`, meaning a `World` instance is never just a simulation — it is always also a windowed pygame application.
+The render task is spawned inside `__init__` via `init_renderer()`, meaning a `World` instance is never just a simulation - it is always also a windowed pygame application.
 
 #### 1.2 `Player` class (`src/laife/entities/player.py`)
 
@@ -38,24 +38,24 @@ The render task is spawned inside `__init__` via `init_renderer()`, meaning a `W
 
 **Runner / agent responsibilities:**
 
-- `play()` — async loop (task spawned in `__init__`) that drives the agent decision cycle
-- `think()` — decides the next `Action` via `Brain`
-- `move()` / `build()` / `craft()` / `plan()` — action handlers that communicate with the world via queues
-- `world_request()` — sends `WReq` to the world and awaits a `WRes`
+- `play()` - async loop (task spawned in `__init__`) that drives the agent decision cycle
+- `think()` - decides the next `Action` via `Brain`
+- `move()` / `build()` / `craft()` / `plan()` - action handlers that communicate with the world via queues
+- `world_request()` - sends `WReq` to the world and awaits a `WRes`
 - `self.brain`, `self.mission`, `self.history`, `self.world_input_queue`, `self.input_queue`
 
 **Sprite / renderer responsibilities:**
 
-- `set_state()` — changes `self.state` enum AND immediately loads and sets `self.image` from the `SpriteLoader`
-- `set_position()` — updates `self.position` AND mutates `self.rect.center` (pygame render rect)
-- `self.sprite_loader` — a `SpriteLoader` instance that file-loads png assets
-- `self.image` / `self.rect` — required pygame `Sprite` contract, consumed by `Group.draw()`
+- `set_state()` - changes `self.state` enum AND immediately loads and sets `self.image` from the `SpriteLoader`
+- `set_position()` - updates `self.position` AND mutates `self.rect.center` (pygame render rect)
+- `self.sprite_loader` - a `SpriteLoader` instance that file-loads png assets
+- `self.image` / `self.rect` - required pygame `Sprite` contract, consumed by `Group.draw()`
 
 State transitions (`set_state`) are called throughout the agent loop (e.g. before and after `think()`, `move()`) purely so the visual sprite reflects the agent's current activity. This means agent logic directly drives the rendering data.
 
 #### 1.3 `Building` class (`src/laife/entities/building.py`)
 
-`Building(Sprite)` has a similar, but smaller, dual-concern: it creates a real pygame surface (`create_sprite()`) at construction time, blending entity data with visual rendering. However its rendering concern is more self-contained — the surface is created once and not mutated by game logic.
+`Building(Sprite)` has a similar, but smaller, dual-concern: it creates a real pygame surface (`create_sprite()`) at construction time, blending entity data with visual rendering. However its rendering concern is more self-contained - the surface is created once and not mutated by game logic.
 
 ---
 
@@ -69,7 +69,7 @@ State transitions (`set_state`) are called throughout the agent loop (e.g. befor
 - LLM agent training / batch simulation runs
 - Server-side or CI execution
 
-The same applies to `Player` — `set_state()` calls `self.sprite_loader.load_sprite()` which calls `pygame.image.load()`, which requires pygame to be initialized with a display.
+The same applies to `Player` - `set_state()` calls `self.sprite_loader.load_sprite()` which calls `pygame.image.load()`, which requires pygame to be initialized with a display.
 
 #### 2.2 Tight coupling between state change and visual update
 
@@ -85,7 +85,7 @@ Both the render loop (`World.render_task`) and the agent loop (`Player.play_task
 
 #### 2.5 Untestable agent logic
 
-No test in `tests/` covers `World` or `Player` behavior. The tight coupling to pygame is the main blocker — any test that instantiates these classes needs a display server.
+No test in `tests/` covers `World` or `Player` behavior. The tight coupling to pygame is the main blocker - any test that instantiates these classes needs a display server.
 
 ---
 
@@ -137,7 +137,7 @@ PlayerSprite(pygame.sprite.Sprite)
   └── update()  ← pygame Sprite.update() hook
 ```
 
-`PlayerAgent` becomes a plain Python object with no pygame dependency. `PlayerSprite` wraps it for rendering. `WorldRenderer` creates and owns the `PlayerSprite` objects; `WorldRunner` creates and owns `PlayerAgent` objects. State change in `PlayerAgent` does not immediately touch any surface — the renderer syncs on its next frame.
+`PlayerAgent` becomes a plain Python object with no pygame dependency. `PlayerSprite` wraps it for rendering. `WorldRenderer` creates and owns the `PlayerSprite` objects; `WorldRunner` creates and owns `PlayerAgent` objects. State change in `PlayerAgent` does not immediately touch any surface - the renderer syncs on its next frame.
 
 #### 3.3 Building: `BuildingData` + `BuildingSprite`
 
@@ -206,8 +206,8 @@ This makes it explicit which coroutines are running and allows individual compon
 
 **Yes, the split is well-justified and the codebase is in a good position to do it.**
 
-The mixing of rendering and logic is already causing practical problems (no tests for world/player logic exist) and will become a hard blocker for the LLM agent development path (training, batch simulation, deterministic replay). The split is not a premature abstraction — it aligns exactly with the two independently evolving axes of this project: the AI/agent behavior layer and the pygame visualization layer.
+The mixing of rendering and logic is already causing practical problems (no tests for world/player logic exist) and will become a hard blocker for the LLM agent development path (training, batch simulation, deterministic replay). The split is not a premature abstraction - it aligns exactly with the two independently evolving axes of this project: the AI/agent behavior layer and the pygame visualization layer.
 
 The `Building` class is the easiest to split and would be a good starting point. The `Player` split is the highest-value item since it unblocks testing of the agent loop. The `World` split follows naturally once `Player` is clean.
 
-The `scratch_space/game/world_loop.py` prototype actually pre-figures this architecture in its own way — `SpriteLoader` is already a standalone class separate from `Player` logic — which validates the direction.
+The `scratch_space/game/world_loop.py` prototype actually pre-figures this architecture in its own way - `SpriteLoader` is already a standalone class separate from `Player` logic - which validates the direction.

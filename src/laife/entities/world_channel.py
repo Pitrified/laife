@@ -3,7 +3,7 @@
 import asyncio
 from enum import StrEnum
 
-from laife.entities.building_data import BuildingData
+from laife.entities.building import Building
 
 
 class WResStatus(StrEnum):
@@ -50,7 +50,7 @@ class WRecBuild(WReq):
 
     def __init__(
         self,
-        building: BuildingData,
+        building: Building,
         *args,  # noqa: ANN002
         **kwargs,  # noqa: ANN003
     ) -> None:

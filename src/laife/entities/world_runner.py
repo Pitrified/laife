@@ -1,10 +1,10 @@
-"""WorldRunner — pure simulation loop, no pygame dependency."""
+"""WorldRunner - pure simulation loop, no pygame dependency."""
 
 import asyncio
 
-from laife.entities.building_data import BuildingData
-from laife.entities.geometry import aabb_collides
-from laife.entities.player_agent import PlayerAgent
+from laife.entities.building import Building
+from laife.entities.player import Player
+from laife.entities.utils.geometry import aabb_collides
 from laife.entities.world_channel import WRecBuild
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
@@ -23,8 +23,8 @@ class WorldRunner:
     def __init__(self) -> None:
         """Initialise the runner with empty entity lists and an input queue."""
         # authoritative entity lists (no pygame data structures)
-        self.agents: list[PlayerAgent] = []
-        self.buildings: list[BuildingData] = []
+        self.players: list[Player] = []
+        self.buildings: list[Building] = []
 
         # players send world-modification requests through this queue
         self.input_queue: asyncio.Queue[WReq] = asyncio.Queue()
@@ -62,11 +62,11 @@ class WorldRunner:
     # Entity management
     # ------------------------------------------------------------------
 
-    def add_player(self, agent: PlayerAgent) -> None:
-        """Register a player agent with the world."""
-        self.agents.append(agent)
+    def add_player(self, player: Player) -> None:
+        """Register a player with the world."""
+        self.players.append(player)
 
-    def add_building(self, building: BuildingData) -> WRes:
+    def add_building(self, building: Building) -> WRes:
         """Add a building after checking for spatial collisions."""
         for existing in self.buildings:
             if aabb_collides(building.position, building.size, existing.position, existing.size):
