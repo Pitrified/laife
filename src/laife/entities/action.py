@@ -1,7 +1,6 @@
 """Actions are something the Brain decides to do to solve a Mission."""
 
 from dataclasses import dataclass
-from typing import TypeVar
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts import SystemMessagePromptTemplate
@@ -10,8 +9,6 @@ from pydantic import Field
 
 from laife.entities.utils.directions import CardinalDirection
 from laife.llm_services.chat.config.base import ChatConfig
-
-T = TypeVar("T", bound=BaseModel)
 
 
 class BaseAction(BaseModel):
@@ -89,6 +86,14 @@ class ActionPicker:
         """Pick an action to take."""
         # MAYBE the mission is of type Mission
         output = self.chain.invoke({"mission": mission})
+        if not isinstance(output, ActionEnvelope):
+            msg = f"Unexpected output type: {type(output)}"
+            raise TypeError(msg)
+        return output.act
+
+    async def ainvoke(self, mission: str) -> BaseAction:
+        """Pick an action to take asynchronously."""
+        output = await self.chain.ainvoke({"mission": mission})
         if not isinstance(output, ActionEnvelope):
             msg = f"Unexpected output type: {type(output)}"
             raise TypeError(msg)

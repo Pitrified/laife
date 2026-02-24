@@ -311,61 +311,41 @@ match action:
 
 This requires changing handler signatures from `BaseAction` to the concrete type, which breaks
 the "store handler then call" pattern. The trade-off: a little more repetition at the call site,
-but handlers that are honest about what they accept. For now, `cast` is acceptable as a stepping
-stone; the `as` binding approach is the right end state.
+but handlers that are honest about what they accept. **This is now implemented.** `cast` is gone;
+all handlers take their concrete type; dispatch uses `as` binding throughout.
 
 ---
 
 ### Current implementation status
 
-| Item                                                                    | Status                            |
-| ----------------------------------------------------------------------- | --------------------------------- |
-| `BaseAction(reason)` with concrete classes inheriting                   | ✅ done                           |
-| `ActionEnvelope` as thin LLM-only wrapper, hidden inside `ActionPicker` | ✅ done                           |
-| `ActionPicker.invoke` returns `BaseAction`, uses `create_chat_model()`  | ✅ done                           |
-| `match action:` directly on concrete type in `Player.play`              | ✅ done                           |
-| Handlers accept `BaseAction` (uniform signatures)                       | ✅ done                           |
-| `get_action_*` specific extractors removed                              | ✅ done                           |
-| `ActionPlan.reason` duplication resolved (inherits from `BaseAction`)   | ✅ done                           |
-| Notebook validates all 4 types end-to-end with LLM                      | ✅ done                           |
-| `cast()` in handlers — unsafe, no runtime check                         | ⚠️ present, acceptable short-term |
-| `TypeVar T` import in `action.py` — dead code                           | ❌ remove                         |
-| `ActionPicker.ainvoke` — async path                                     | ❌ missing                        |
-| `Player.think()` wired to `ActionPicker`                                | ❌ still a hardcoded stub         |
-| `Brain` wiring                                                          | ❌ deferred                       |
+| Item                                                                    | Status                                       |
+| ----------------------------------------------------------------------- | -------------------------------------------- |
+| `BaseAction(reason)` with concrete classes inheriting                   | ✅ done                                      |
+| `ActionEnvelope` as thin LLM-only wrapper, hidden inside `ActionPicker` | ✅ done                                      |
+| `ActionPicker.invoke` returns `BaseAction`, uses `create_chat_model()`  | ✅ done                                      |
+| `match action:` directly on concrete type in `Player.play`              | ✅ done                                      |
+| Handlers accept `BaseAction` (uniform signatures)                       | ✅ done                                      |
+| `get_action_*` specific extractors removed                              | ✅ done                                      |
+| `ActionPlan.reason` duplication resolved (inherits from `BaseAction`)   | ✅ done                                      |
+| Notebook validates all 4 types end-to-end with LLM                      | ✅ done                                      |
+| `cast()` in handlers — unsafe, no runtime check                         | ✅ done — `as` binding + concrete signatures |
+| `TypeVar T` import in `action.py` — dead code                           | ✅ done                                      |
+| `ActionPicker.ainvoke` — async path                                     | ✅ done                                      |
+| `Player.think()` wired to `ActionPicker`                                | ⏳ deferred — wiring goes through `brain`    |
+| `Brain` wiring                                                          | ❌ deferred                                  |
 
 ---
 
 ### Remaining work
 
-**1. Remove dead `TypeVar T` import in `action.py`**
+**Wire `Player.think()` through `Brain`**
 
-One-line cleanup. `T` was left over from the `get_action_typed` design that was not implemented.
-
-**2. Add `ActionPicker.ainvoke`**
-
-```python
-async def ainvoke(self, mission: str) -> BaseAction:
-    envelope: ActionEnvelope = await self.chain.ainvoke({"mission": mission})
-    return envelope.act
-```
-
-The chain is already a LangChain `Runnable`; `ainvoke` exists on the underlying objects.
-
-**3. Wire `Player.think()` to `ActionPicker`**
-
-`Player` needs an `ActionPicker` instance. Once `ainvoke` exists:
+The LLM call will live inside `Brain`, not be called directly via `ActionPicker` from `Player`.
+`Brain` is still a stub returning a raw string and needs a full LLM wiring pass before
+`think()` can be connected. Placeholder comment in `think()` reads:
 
 ```python
-async def think(self, mission: str) -> BaseAction:
-    return await self.action_picker.ainvoke(mission)
+# > action = await self.brain.think(self.mission, self.history)
 ```
 
-`ActionPicker` requires a `ChatConfig`; `Player` already holds other config state, so the
-instance can be constructed at `Player.__init__` time or passed in.
-
-**4. `cast` → `as` binding (optional, quality of life)**
-
-Change handlers to accept concrete types and update the dispatch to use `as` binding. This
-removes the need for `cast` and gives the type checker real narrowing. Low priority but the
-right end state.
+Once `Brain` is wired, `think()` becomes a one-liner delegating to it.
