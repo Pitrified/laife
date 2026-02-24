@@ -3,13 +3,14 @@
 import asyncio
 from enum import StrEnum
 import time
+from typing import cast
 
 from laife.config.types import Position
-from laife.entities.action import Action
 from laife.entities.action import ActionBuild
 from laife.entities.action import ActionCraft
 from laife.entities.action import ActionMove
 from laife.entities.action import ActionPlan
+from laife.entities.action import BaseAction
 from laife.entities.utils.directions import CardinalDirection
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
@@ -74,7 +75,7 @@ class Player:
         while True:
             alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
             action = await self.think()
-            match action.act:
+            match action:
                 case ActionMove():
                     action_handler = self.move
                 case ActionBuild():
@@ -93,25 +94,23 @@ class Player:
     # Action handlers
     # ------------------------------------------------------------------
 
-    async def think(self) -> Action:
+    async def think(self) -> BaseAction:
         """Decide what to do next."""
         self.state = PlayerState.THINKING
         alg.log(f"{self.name} is thinking")
-        am = ActionMove(
+        # placeholder logic, BaseAction will be received from the LLM in the future
+        action = ActionMove(
+            reason="I need to move to complete the mission.",
             direction=CardinalDirection.North,
             distance=10,
-        )
-        action = Action(
-            act=am,
-            reason="I need to move to complete the mission.",
         )
         alg.log(f"PLAYER.play {self.name}: picked {action}")
         self.state = PlayerState.IDLE
         return action
 
-    async def plan(self, action: Action) -> WRes:
+    async def plan(self, action: BaseAction) -> WRes:
         """Reflect on the mission and plan next steps."""
-        ap: ActionPlan = action.get_action_plan()
+        ap = cast("ActionPlan", action)
         alg.log(f"PLAYER.plan {self.name}: planning for {ap.reason}")
         self.state = PlayerState.THINKING
         await asyncio.sleep(1)
@@ -119,11 +118,11 @@ class Player:
         self.state = PlayerState.IDLE
         return WRes(WResStatus.SUCCESS, {"message": "Planning completed."})
 
-    async def move(self, action: Action) -> WRes:
+    async def move(self, action: BaseAction) -> WRes:
         """Move the player."""
         self.state = PlayerState.MOVING
         alg.log(f"PLAYER.move {self.name}: is moving")
-        am = action.get_action_typed(ActionMove)  # noqa: F841
+        am = cast("ActionMove", action)  # noqa: F841
         # TODO: delegate move to world for collision detection
         await asyncio.sleep(1)
         alg.log(f"PLAYER.move {self.name}: moved")
@@ -134,17 +133,17 @@ class Player:
         """Adjust the player's position by delta values."""
         self.position = (self.position[0] + dx, self.position[1] + dy)
 
-    async def build(self, action: Action) -> WRes:  # noqa: ARG002
+    async def build(self, action: BaseAction) -> WRes:  # noqa: ARG002
         """Prepare and send a build request to the world."""
         await asyncio.sleep(1)
         return WRes(WResStatus.SUCCESS, {"message": "You built the thing."})
 
-    async def craft(self, action: Action) -> WRes:  # noqa: ARG002
+    async def craft(self, action: BaseAction) -> WRes:  # noqa: ARG002
         """Prepare a craft request."""
         await asyncio.sleep(1)
         return WRes(WResStatus.SUCCESS, {"message": "You crafted the thing."})
 
-    async def action_error(self, action: Action) -> WRes:
+    async def action_error(self, action: BaseAction) -> WRes:
         """Handle an unknown action type."""
         alg.log(f"PLAYER.play {self.name}: unknown action {action}")
         await asyncio.sleep(1)

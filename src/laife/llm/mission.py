@@ -7,7 +7,7 @@ from enum import Enum
 from pydantic import BaseModel
 from pydantic import Field
 
-from laife.entities.action import Action  # noqa: TC001
+from laife.entities.action import BaseAction  # noqa: TC001
 
 # TC001 is needed to let pydantic know what an Action is
 
@@ -15,7 +15,7 @@ from laife.entities.action import Action  # noqa: TC001
 class MissionHistoryEntry(BaseModel):
     """History entry of a mission."""
 
-    action: Action
+    action: BaseAction
     result: str
 
     def to_prompt(self) -> str:

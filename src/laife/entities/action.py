@@ -5,24 +5,34 @@ from typing import TypeVar
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts import SystemMessagePromptTemplate
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from pydantic import Field
 
 from laife.entities.utils.directions import CardinalDirection
-from laife.llm_services.chat.config.chat_openai import ChatOpenAIConfig
+from laife.llm_services.chat.config.base import ChatConfig
 
 T = TypeVar("T", bound=BaseModel)
 
 
-class ActionMove(BaseModel):
+class BaseAction(BaseModel):
+    """Base class for all agent actions.
+
+    The action does not necessarily have to solve the mission.
+    A good action is one that helps solve the mission, possibly by taking
+    other actions later.
+    """
+
+    reason: str = Field(..., description="Why this action was chosen.")
+
+
+class ActionMove(BaseAction):
     """Move towards a direction."""
 
     direction: CardinalDirection = Field(..., description="The direction to move.")
     distance: int = Field(..., description="The distance to move.")
 
 
-class ActionBuild(BaseModel):
+class ActionBuild(BaseAction):
     """Build something."""
 
     building_type: str = Field(..., description="The building to build.")
@@ -30,7 +40,7 @@ class ActionBuild(BaseModel):
     size: int = Field(..., description="The size of the building.")
 
 
-class ActionCraft(BaseModel):
+class ActionCraft(BaseAction):
     """Craft something, like an item or utensil.
 
     An item is a physical object that can be used to solve a mission.
@@ -41,60 +51,17 @@ class ActionCraft(BaseModel):
     description: str = Field(..., description="The description of the item or utensil.")
 
 
-class ActionPlan(BaseModel):
+class ActionPlan(BaseAction):
     """Plan the next steps for the mission."""
-
-    reason: str = Field(..., description="The reason for planning. What is not clear?")
 
 
 Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan
 
 
-class Action(BaseModel):
-    """An action to take.
-
-    The action does not necessarily have to solve the mission.
-    A good action is one that helps solve the mission, possibly by taking
-    other actions later.
-    """
+class ActionEnvelope(BaseModel):
+    """An action to take, wrapped in LLM-friendly format."""
 
     act: Actions = Field(..., description="The action to take.")
-    reason: str = Field(..., description="The reason for the action.")
-
-    def get_action_typed(self, action_type: type[T]) -> T:
-        """Get the action of a specific type."""
-        if not isinstance(self.act, action_type):
-            msg = f"Action is not of type {action_type.__name__}"
-            raise TypeError(msg)
-        return self.act
-
-    def get_action_move(self) -> ActionMove:
-        """Get the ActionMove."""
-        if not isinstance(self.act, ActionMove):
-            msg = "Action is not an ActionMove"
-            raise TypeError(msg)
-        return self.act
-
-    def get_action_build(self) -> ActionBuild:
-        """Get the ActionBuild."""
-        if not isinstance(self.act, ActionBuild):
-            msg = "Action is not an ActionBuild"
-            raise TypeError(msg)
-        return self.act
-
-    def get_action_craft(self) -> ActionCraft:
-        """Get the ActionCraft."""
-        if not isinstance(self.act, ActionCraft):
-            msg = "Action is not an ActionCraft"
-            raise TypeError(msg)
-        return self.act
-
-    def get_action_plan(self) -> ActionPlan:
-        """Get the ActionPlan."""
-        if not isinstance(self.act, ActionPlan):
-            msg = "Action is not an ActionPlan"
-            raise TypeError(msg)
-        return self.act
 
 
 action_template = """You are an agent in a virtual world. \
@@ -110,19 +77,19 @@ action_prompt = ChatPromptTemplate([SystemMessagePromptTemplate.from_template(ac
 class ActionPicker:
     """Pick an action to take."""
 
-    chat_openai_config: ChatOpenAIConfig
+    chat_config: ChatConfig
 
     def __post_init__(self) -> None:
         """Initialize the action picker."""
-        self.model = ChatOpenAI(**self.chat_openai_config.model_dump())
-        self.structured_llm = self.model.with_structured_output(Action)
+        self.model = self.chat_config.create_chat_model()
+        self.structured_llm = self.model.with_structured_output(ActionEnvelope)
         self.chain = action_prompt | self.structured_llm
 
-    def invoke(self, mission: str) -> Action:
+    def invoke(self, mission: str) -> BaseAction:
         """Pick an action to take."""
         # MAYBE the mission is of type Mission
         output = self.chain.invoke({"mission": mission})
-        if not isinstance(output, Action):
+        if not isinstance(output, ActionEnvelope):
             msg = f"Unexpected output type: {type(output)}"
             raise TypeError(msg)
-        return output
+        return output.act

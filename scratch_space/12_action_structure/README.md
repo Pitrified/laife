@@ -197,79 +197,175 @@ would carry the same semantic meaning. That is confusing.
 
 The clean options are:
 
-**Option A — Drop `reason` from `Action`, move it entirely to `BaseAction` and concrete classes.**
+**Option A — Drop `reason` from the wrapper, move it entirely to `BaseAction` and concrete classes.**
 The LLM fills `reason` once, inside the chosen action. The wrapper becomes just `act: Actions`.
-Handlers receive a `BaseAction` and have `reason` without going back to the wrapper. Clean, but
-changes the LLM schema and removes the outer wrapper's most meaningful field.
+Handlers receive a `BaseAction` and have `reason` without going back to the wrapper. Clean, and
+requires an intentional schema change + LLM prompt update.
 
 **Option B — Keep `Action.reason`, `BaseAction` has no `reason`.**
 `BaseAction` is just a marker for `isinstance` checks. Handlers that need `reason` read
-`action.reason` from the wrapper. This is essentially the status quo with a tag class added.
-Low benefit.
+`action.reason` from the wrapper. Essentially the status quo with a tag class added. Low benefit.
 
 **Option C — Keep `Action.reason`, no `BaseAction` at all.**
-Use `get_action_typed` for extraction and `as` binding in dispatch. This is the minimal change
-that removes all the specific getters and keeps everything else intact.
+Use `get_action_typed` for extraction and `as` binding in dispatch. Minimal change that removes
+all the specific getters without touching the LLM boundary.
 
-Option A is the cleanest long-term shape but requires an intentional schema change. Option C is
-the right short-term move: it delivers the cleanup without touching the LLM boundary.
+**Option A was implemented.** The clean long-term shape was worth the schema change.
 
 ---
 
 ### What the notebook revealed about the inheritance approach
 
 The notebook (`discriminator_test.ipynb`) validated the discriminated union shape end-to-end.
-Working through it surfaced two constraints that directly affect whether the full refactor is worth doing:
+Working through it surfaced two constraints:
 
 1. **`with_structured_output` requires a `BaseModel` class with `type: "object"` at the root.**
-   A discriminated union produces `anyOf`/`oneOf` at the root, which OpenAI rejects. The fix was
-   to wrap it in an `ActionEnvelope(action: Actions)` model and use `method="function_calling"`.
-   That envelope is structurally identical to the existing `Action(act: Actions, reason: str)`.
-   **The current wrapper is not a weird pattern — it is the required pattern for this LLM boundary.**
+   A discriminated union produces `anyOf`/`oneOf` at the root, which OpenAI rejects with a 400.
+   The fix is to wrap it in an envelope model and use `method="function_calling"`. That envelope
+   must live inside `ActionPicker` and be unwrapped before returning — callers never see it.
 
 2. **The discriminator `type: Literal[...]` field adds fragility for no gain here.**
-   Pydantic v2 can already distinguish `ActionMove`, `ActionBuild`, etc. by field shape (no
-   discriminator needed). The `type` field is only required when shapes overlap. Since ours don't,
-   adding it means the LLM must emit an extra field it has never been asked for, and can quietly
-   omit it (observed during testing), causing a `union_tag_not_found` validation error.
+   Pydantic v2 can distinguish `ActionMove`, `ActionBuild`, etc. by field shape alone — no
+   discriminator needed unless shapes overlap (ours don't). Adding it means the LLM must emit an
+   extra field it can quietly omit, causing `union_tag_not_found` at parse time (observed in testing).
+   **Leave it out.** Union routing by field shape works reliably.
 
 ---
 
-### Is the shared base class worth it?
+### What was decided and implemented (Option A)
 
-**Probably not as the primary refactor.** Here is the honest breakdown:
+Option C (minimal change, keep wrapper) was the prior recommendation. After the notebook confirmed
+the envelope constraint, **Option A was implemented instead** — `reason` was moved into `BaseAction`
+and each concrete class inherits it, making the wrapper truly thin.
 
-**What the inheritance refactor achieves:**
+**Shape after the refactor:**
 
-- `reason` lives on the concrete type, so a handler that receives `ActionMove` has everything it needs without reaching back to the wrapper.
-- `isinstance(action, BaseAction)` works across all action types — useful for generic history/logging.
-- Callers never see the wrapper; the dispatch and handler signatures are cleaner.
+```python
+class BaseAction(BaseModel):
+    reason: str
 
-**What it costs:**
+class ActionMove(BaseAction):
+    direction: Direction
 
-- `ActionPicker` still needs a `BaseModel` envelope for `with_structured_output` — the wrapper doesn't go away, it just moves inside `ActionPicker` and gets unwrapped before returning.
-- Each concrete class needs a `reason` field that didn't exist before (or the envelope's `reason` must be copied into the concrete instance post-hoc, which is awkward with Pydantic's immutability).
-- The `type` discriminator field is required if you want Pydantic to route the union cleanly, but adds LLM-side fragility.
-- Net effect: the same complexity, just relocated.
+class ActionBuild(BaseAction):
+    building_type: BuildingType
 
-**What already works fine:**
-The existing `Action(act: Actions, reason: str)` is exactly the `ActionEnvelope` pattern the
-notebook validated. `ActionPicker.with_structured_output(Action)` already works correctly.
-The pattern match bug (matching on `action` instead of `action.act`) is already fixed.
-The `get_action_*` extractors are the only genuine redundancy left.
+class ActionCraft(BaseAction):
+    item_name: str
+
+class ActionPlan(BaseAction):
+    next_actions: list[str]
+
+Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan
+
+class ActionEnvelope(BaseModel):          # LLM boundary only — never leaves ActionPicker
+    act: Actions
+
+class ActionPicker:
+    def invoke(self, mission: str) -> BaseAction:
+        envelope: ActionEnvelope = self.chain.invoke(...)
+        return envelope.act               # callers get a concrete BaseAction directly
+```
+
+**What this achieves over the old `Action(act, reason)` shape:**
+
+- A handler that receives `ActionMove` has `reason` without needing to reach back to a wrapper.
+- `isinstance(action, BaseAction)` works uniformly across all action types.
+- The dispatch in `Player.play` matches directly on `action` (the returned `BaseAction`), not on
+  `action.act`. Pattern match works as written.
+- All handler signatures are `action: BaseAction` — uniform, easy to store and call.
+- `ActionPlan` no longer duplicates a `reason` field (was always present on `ActionPlan` before).
+
+**What it costs (known trade-offs):**
+
+- The envelope is still required; it just lives entirely inside `ActionPicker`.
+- No discriminator fields — clean, but means Pydantic routes the union by field shape. Add one
+  only if two action types ever have identical field sets.
 
 ---
 
-### Revised proposed approach (Option C — minimal, low risk)
+### Dispatch and type narrowing: `cast` vs `as` binding
 
-1. **Keep `Action` and `Actions` as-is.** Correct shape for the LLM boundary.
-2. **Remove the 4 specific `get_action_*` methods** — replaced by the already-added generic `get_action_typed`.
-3. **Rewrite dispatch in `Player.play`** using `case ActionMove() as act:` with inline `wrsp = await` calls.
-4. **Keep handler signatures as `action: Action`** — handlers call `action.get_action_typed(ActionMove)` internally. Uniform signatures, self-contained handlers.
-5. **Add `async def ainvoke` to `ActionPicker`** using `self.chain.ainvoke`.
-6. **Wire `Player.think()` to `ActionPicker.ainvoke`.**
-7. `Brain` / full LLM wiring deferred.
+Handlers currently use `cast()` to tell the type checker what the concrete type is:
 
-If `reason` on the concrete type matters later, that is the right time to pursue Option A
-(drop `reason` from the wrapper, move it into `BaseAction`), as it requires a deliberate schema
-change and LLM prompt update.
+```python
+async def move(self, action: BaseAction) -> str:
+    action = cast("ActionMove", action)   # type-checker hint only — no runtime check
+    ...
+```
+
+`cast` is a lie: it does no validation. If the wrong action somehow reached the handler, it would
+silently access wrong fields or raise an `AttributeError` at runtime with no clear cause.
+
+The alternative is `as` binding at the dispatch site, which gives real narrowing (type checker
+sees the concrete type; Python has already proven the isinstance):
+
+```python
+match action:
+    case ActionMove() as act:
+        wrsp = await self.move(act)       # act: ActionMove — type-safe, no cast needed
+    case ActionBuild() as act:
+        wrsp = await self.build(act)
+    ...
+```
+
+This requires changing handler signatures from `BaseAction` to the concrete type, which breaks
+the "store handler then call" pattern. The trade-off: a little more repetition at the call site,
+but handlers that are honest about what they accept. For now, `cast` is acceptable as a stepping
+stone; the `as` binding approach is the right end state.
+
+---
+
+### Current implementation status
+
+| Item                                                                    | Status                            |
+| ----------------------------------------------------------------------- | --------------------------------- |
+| `BaseAction(reason)` with concrete classes inheriting                   | ✅ done                           |
+| `ActionEnvelope` as thin LLM-only wrapper, hidden inside `ActionPicker` | ✅ done                           |
+| `ActionPicker.invoke` returns `BaseAction`, uses `create_chat_model()`  | ✅ done                           |
+| `match action:` directly on concrete type in `Player.play`              | ✅ done                           |
+| Handlers accept `BaseAction` (uniform signatures)                       | ✅ done                           |
+| `get_action_*` specific extractors removed                              | ✅ done                           |
+| `ActionPlan.reason` duplication resolved (inherits from `BaseAction`)   | ✅ done                           |
+| Notebook validates all 4 types end-to-end with LLM                      | ✅ done                           |
+| `cast()` in handlers — unsafe, no runtime check                         | ⚠️ present, acceptable short-term |
+| `TypeVar T` import in `action.py` — dead code                           | ❌ remove                         |
+| `ActionPicker.ainvoke` — async path                                     | ❌ missing                        |
+| `Player.think()` wired to `ActionPicker`                                | ❌ still a hardcoded stub         |
+| `Brain` wiring                                                          | ❌ deferred                       |
+
+---
+
+### Remaining work
+
+**1. Remove dead `TypeVar T` import in `action.py`**
+
+One-line cleanup. `T` was left over from the `get_action_typed` design that was not implemented.
+
+**2. Add `ActionPicker.ainvoke`**
+
+```python
+async def ainvoke(self, mission: str) -> BaseAction:
+    envelope: ActionEnvelope = await self.chain.ainvoke({"mission": mission})
+    return envelope.act
+```
+
+The chain is already a LangChain `Runnable`; `ainvoke` exists on the underlying objects.
+
+**3. Wire `Player.think()` to `ActionPicker`**
+
+`Player` needs an `ActionPicker` instance. Once `ainvoke` exists:
+
+```python
+async def think(self, mission: str) -> BaseAction:
+    return await self.action_picker.ainvoke(mission)
+```
+
+`ActionPicker` requires a `ChatConfig`; `Player` already holds other config state, so the
+instance can be constructed at `Player.__init__` time or passed in.
+
+**4. `cast` → `as` binding (optional, quality of life)**
+
+Change handlers to accept concrete types and update the dispatch to use `as` binding. This
+removes the need for `cast` and gives the type checker real narrowing. Low priority but the
+right end state.
