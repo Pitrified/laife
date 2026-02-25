@@ -8,24 +8,26 @@ The player brain is responsible for in general interacting with the language mod
 
 - `entities/action.py`: `BaseAction`, `ActionMove`, `ActionBuild`, `ActionCraft`, `ActionPlan`, `Actions` union, `ActionEnvelope`, `ActionPicker` (chain wrapping `ChatConfig`)
 - `llm/player_brain.py`: `PlayerBrain` stub — hardcoded ollama, translation prompt, no config injection; `think(query: str) -> str` not yet returning `BaseAction`
+- `llm/prompt_loader.py`: `PromptLoaderConfig`, `PromptLoader`, `NoPromptVersionFoundError` ✅
 - `llm/mission.py`: `Mission`, `MissionHistory`, `MissionHistoryEntry`, `MissionStatus` — `to_prompt()` on all of them
 - `entities/player.py`: `Player` with `play()` loop; `think()` returns a hardcoded `ActionMove`; all action handlers are stubs
 - `llm_services/chat/config/base.py`: `ChatConfig(BaseModelKwargs)` with `create_chat_model()`
-- `params/laife_paths.py`: `LaifePaths` with `src_fol`, `root_fol`, etc. via `LaifeParams` singleton
+- `params/laife_paths.py`: `LaifePaths` with `src_fol`, `root_fol`, `prompts_fol`, etc. via `LaifeParams` singleton ✅
+- `prompts/player_brain/v1.jinja`: system prompt template ✅
 
 ---
 
 ## Implementation plan
 
-### Phase 1 — PromptLoader infrastructure
+### Phase 1 — PromptLoader infrastructure ✅
 
 **Files:** `src/laife/llm/prompt_loader.py`, `src/laife/prompts/player_brain/v1.jinja`
 
-1. Create `src/laife/prompts/player_brain/v1.jinja` — system prompt template with placeholders for mission, history, observation, player_state; leave rendering for later phases
-2. Add `prompts_fol` to `LaifePaths.load_common_config_pre()` pointing to `src/laife/prompts/`
-3. Create `PromptLoaderConfig(BaseModel)` with fields: `base_prompt_fol: Path`, `prompt_name: str`, `version: str` (default `"auto"`)
+1. ✅ Created `src/laife/prompts/player_brain/v1.jinja` — system prompt template with placeholders for mission, history, observation, player_state; leave rendering for later phases
+2. ✅ Added `prompts_fol` to `LaifePaths.load_common_config_pre()` pointing to `src/laife/prompts/`; also updated `__str__`
+3. ✅ Created `PromptLoaderConfig(BaseModel)` with fields: `base_prompt_fol: Path`, `prompt_name: str`, `version: str` (default `"auto"`)
    - expected file path: `base_prompt_fol / prompt_name / f"v{version}.jinja"`
-4. Create `PromptLoader` dataclass accepting `PromptLoaderConfig`:
+4. ✅ Created `PromptLoader` dataclass accepting `PromptLoaderConfig`:
    - `_resolve_version() -> str`: if `version == "auto"`, scan `base_prompt_fol / prompt_name /` for `vN.jinja` files and return the highest N; else return config version as-is
    - `load_prompt() -> str`: read and return raw jinja string; cache result in `_prompt_cache: str | None`
    - `prompt_str = PromptLoader(config).load_prompt()`
