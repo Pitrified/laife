@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.prompts import SystemMessagePromptTemplate
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -65,15 +64,17 @@ class ActionEnvelope(BaseModel):
     act: Actions = Field(..., description="The action to take.")
 
 
-action_template_str = """You are an agent in a virtual world. \
-You have a mission to complete. \
-You can take an action to solve the mission. \
-
-The mission is to: {mission}
-"""
-action_prompt_template = ChatPromptTemplate(
-    [SystemMessagePromptTemplate.from_template(action_template_str)]
+_REQUIRED_PROMPT_VARS: frozenset[str] = frozenset(
+    {"mission", "history", "observation", "player_state"}
 )
+
+
+class MissingPromptVariablesError(ValueError):
+    """Raised when a prompt template is missing required input variables."""
+
+    def __init__(self, missing: set[str] | frozenset[str]) -> None:
+        """Initialise with the set of missing variable names."""
+        super().__init__(f"Prompt template is missing required variables: {sorted(missing)}")
 
 
 @dataclass
@@ -81,25 +82,58 @@ class ActionPicker:
     """Pick an action to take."""
 
     chat_config: ChatConfig
+    prompt_str: str
 
     def __post_init__(self) -> None:
-        """Initialize the action picker."""
+        """Validate the prompt template and build the LangChain chain."""
+        self.prompt_template = ChatPromptTemplate.from_messages(
+            [("system", self.prompt_str)],
+            template_format="jinja2",
+        )
+        missing = _REQUIRED_PROMPT_VARS - set(self.prompt_template.input_variables)
+        if missing:
+            raise MissingPromptVariablesError(missing)
         self.model = self.chat_config.create_chat_model()
         self.structured_llm = self.model.with_structured_output(ActionEnvelope)
-        self.chain = action_prompt_template | self.structured_llm
+        self.chain = self.prompt_template | self.structured_llm
 
-    def invoke(self, mission: str) -> BaseAction:
-        """Pick an action to take."""
-        # MAYBE the mission is of type Mission
-        output = self.chain.invoke({"mission": mission})
+    def invoke(
+        self,
+        mission: str,
+        history: str,
+        observation: str,
+        player_state: str,
+    ) -> BaseAction:
+        """Pick an action synchronously."""
+        output = self.chain.invoke(
+            {
+                "mission": mission,
+                "history": history,
+                "observation": observation,
+                "player_state": player_state,
+            }
+        )
         if not isinstance(output, ActionEnvelope):
             msg = f"Unexpected output type: {type(output)}"
             raise TypeError(msg)
         return output.act
 
-    async def ainvoke(self, mission: str) -> BaseAction:
-        """Pick an action to take asynchronously."""
-        output = await self.chain.ainvoke({"mission": mission})
+    async def ainvoke(
+        self,
+        mission: str,
+        history: str,
+        observation: str,
+        player_state: str,
+    ) -> BaseAction:
+        """Pick an action asynchronously."""
+        output = await self.chain.ainvoke(
+            {
+                "mission": mission,
+                "history": history,
+                "observation": observation,
+                "player_state": player_state,
+            }
+        )
         if not isinstance(output, ActionEnvelope):
             msg = f"Unexpected output type: {type(output)}"
             raise TypeError(msg)

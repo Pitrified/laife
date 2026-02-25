@@ -6,7 +6,7 @@ The player brain is responsible for in general interacting with the language mod
 
 ## Current state of the codebase
 
-- `entities/action.py`: `BaseAction`, `ActionMove`, `ActionBuild`, `ActionCraft`, `ActionPlan`, `ActionObserve`, `Actions` union, `ActionEnvelope`, `ActionPicker` ✅
+- `entities/action.py`: `BaseAction`, `ActionMove`, `ActionBuild`, `ActionCraft`, `ActionPlan`, `ActionObserve`, `Actions` union, `ActionEnvelope`, `MissingPromptVariablesError`, `ActionPicker(chat_config, prompt_str)` ✅
 - `entities/world_channel.py`: `WReq`, `WRes`, `WRecBuild`, `WRecObserve` ✅
 - `entities/world_runner.py`: `WorldRunner` with `describe_world()` stub ✅
 - `llm/player_brain.py`: `PlayerBrainConfig(BaseModel)`, `PlayerBrain(config)` — creates LLM via `ChatConfig`, loads prompt via `PromptLoader`; `think()` stubbed ✅
@@ -67,18 +67,14 @@ The player brain is responsible for in general interacting with the language mod
 
 ---
 
-### Phase 4 — ActionPicker context enrichment
+### Phase 4 — ActionPicker context enrichment ✅
 
 **Files:** `src/laife/entities/action.py`
 
-1. Remove `action_template_str`, will be received from the users of the `ActionPicker`.
-2. Update `ActionPicker.__post_init__`: accept `prompt_str: str` parameter; build `ChatPromptTemplate` from it instead of the hardcoded string; keep `with_structured_output(ActionEnvelope)`
-   - should check that required variables are in the prompt template: `{mission}`, `{history}`, `{observation}`, `{player_state}`
-3. Update `ActionPicker.invoke` / `ainvoke` signatures to:
-   ```python
-   def invoke(self, mission: str, history: str, observation: str, player_state: str) -> BaseAction
-   ```
-4. ~~Inject `actions_schema` into the prompt~~ — not needed. `with_structured_output(ActionEnvelope)` already delivers the full field definitions to the model via the API's tool/function-calling mechanism. A raw JSON schema string in the prompt would be redundant and noisy. Describe actions semantically in the Jinja template if clarity is needed.
+1. ✅ Removed `action_template_str` and `action_prompt_template` module-level variables
+2. ✅ Updated `ActionPicker` dataclass: added `prompt_str: str` field; `__post_init__` builds `ChatPromptTemplate` from it using `template_format="jinja2"`, validates required variables (`mission`, `history`, `observation`, `player_state`) via `MissingPromptVariablesError`
+3. ✅ Updated `invoke` / `ainvoke` signatures to accept `mission`, `history`, `observation`, `player_state` and pass all four into the chain
+4. ✅ ~~Inject `actions_schema` into the prompt~~ — not needed. `with_structured_output(ActionEnvelope)` already delivers the full field definitions to the model via the API's tool/function-calling mechanism. A raw JSON schema string in the prompt would be redundant and noisy. Describe actions semantically in the Jinja template if clarity is needed.
 
 ---
 
