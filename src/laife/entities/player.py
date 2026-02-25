@@ -8,9 +8,11 @@ from laife.config.types import Position
 from laife.entities.action import ActionBuild
 from laife.entities.action import ActionCraft
 from laife.entities.action import ActionMove
+from laife.entities.action import ActionObserve
 from laife.entities.action import ActionPlan
 from laife.entities.action import BaseAction
 from laife.entities.utils.directions import CardinalDirection
+from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
 from laife.entities.world_channel import WResStatus
@@ -57,6 +59,9 @@ class Player:
         self.world_input_queue: asyncio.Queue[WReq] = world_input_queue
         self.input_queue: asyncio.Queue[WRes] = asyncio.Queue()
 
+        # observation
+        self.last_observation: str = ""
+
         # cognition
         # TODO(Phase 5): construct PlayerBrainConfig and pass it here
         self.brain = PlayerBrain()  # type: ignore[call-arg]  # broken until Phase 5
@@ -76,6 +81,8 @@ class Player:
             alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
             action = await self.think()
             match action:
+                case ActionObserve() as act:
+                    wrsp = await self.observe(act)
                 case ActionMove() as act:
                     wrsp = await self.move(act)
                 case ActionBuild() as act:
@@ -107,6 +114,17 @@ class Player:
         alg.log(f"PLAYER.play {self.name}: picked {action}")
         self.state = PlayerState.IDLE
         return action
+
+    async def observe(self, action: ActionObserve) -> WRes:  # noqa: ARG002
+        """Request a world observation and cache it in last_observation."""
+        alg.log(f"PLAYER.observe {self.name}: requesting observation")
+        wreq = WRecObserve(response_queue=self.input_queue)
+        await self.world_input_queue.put(wreq)
+        wrsp = await self.input_queue.get()
+        self.input_queue.task_done()
+        self.last_observation = wrsp.response_data.get("description", "")
+        alg.log(f"PLAYER.observe {self.name}: got '{self.last_observation}'")
+        return wrsp
 
     async def plan(self, action: ActionPlan) -> WRes:
         """Reflect on the mission and plan next steps."""

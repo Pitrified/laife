@@ -6,11 +6,13 @@ The player brain is responsible for in general interacting with the language mod
 
 ## Current state of the codebase
 
-- `entities/action.py`: `BaseAction`, `ActionMove`, `ActionBuild`, `ActionCraft`, `ActionPlan`, `Actions` union, `ActionEnvelope`, `ActionPicker` (chain wrapping `ChatConfig`)
+- `entities/action.py`: `BaseAction`, `ActionMove`, `ActionBuild`, `ActionCraft`, `ActionPlan`, `ActionObserve`, `Actions` union, `ActionEnvelope`, `ActionPicker` ✅
+- `entities/world_channel.py`: `WReq`, `WRes`, `WRecBuild`, `WRecObserve` ✅
+- `entities/world_runner.py`: `WorldRunner` with `describe_world()` stub ✅
 - `llm/player_brain.py`: `PlayerBrainConfig(BaseModel)`, `PlayerBrain(config)` — creates LLM via `ChatConfig`, loads prompt via `PromptLoader`; `think()` stubbed ✅
 - `llm/prompt_loader.py`: `PromptLoaderConfig`, `PromptLoader`, `NoPromptVersionFoundError` ✅
 - `llm/mission.py`: `Mission`, `MissionHistory`, `MissionHistoryEntry`, `MissionStatus` — `to_prompt()` on all of them
-- `entities/player.py`: `Player` with `play()` loop; `think()` returns a hardcoded `ActionMove`; all action handlers are stubs
+- `entities/player.py`: `Player` with `play()` loop, `last_observation`, `observe()` stub; `think()` still returns hardcoded `ActionMove` ✅
 - `llm_services/chat/config/base.py`: `ChatConfig(BaseModelKwargs)` with `create_chat_model()`
 - `params/laife_paths.py`: `LaifePaths` with `src_fol`, `root_fol`, `prompts_fol`, etc. via `LaifeParams` singleton ✅
 - `prompts/player_brain/v1.jinja`: system prompt template ✅
@@ -52,16 +54,16 @@ The player brain is responsible for in general interacting with the language mod
 
 ---
 
-### Phase 3 — ActionObserve + player observation state
+### Phase 3 — ActionObserve + player observation state ✅
 
-**Files:** `src/laife/entities/action.py`, `src/laife/entities/player.py`, `src/laife/entities/world_runner.py`
+**Files:** `src/laife/entities/action.py`, `src/laife/entities/player.py`, `src/laife/entities/world_runner.py`, `src/laife/entities/world_channel.py`
 
-1. Add `ActionObserve(BaseAction)` to `action.py` — no extra fields beyond `reason`
-2. Add `ActionObserve` to the `Actions` union
-3. `Player.__init__`: add `self.last_observation: str = ""`
-4. `Player.play()` match block: add `case ActionObserve() as act: wrsp = await self.observe(act)`
-5. `Player.observe(action: ActionObserve) -> WRes`: stub — sends a `WReq` to world, sets `self.last_observation = wrsp.data["description"]`, returns `WRes`
-6. `WorldRunner` (or world channel): add stub handler for observe requests that returns a placeholder description string; mark with `# TODO: implement real world description`
+1. ✅ Added `ActionObserve(BaseAction)` to `action.py` — no extra fields beyond `reason`
+2. ✅ Added `ActionObserve` to the `Actions` union
+3. ✅ `Player.__init__`: added `self.last_observation: str = ""`
+4. ✅ `Player.play()` match block: added `case ActionObserve() as act: wrsp = await self.observe(act)` (before other cases)
+5. ✅ `Player.observe(action: ActionObserve) -> WRes`: sends a `WRecObserve` to world, sets `self.last_observation = wrsp.response_data["description"]`, returns `WRes`
+6. ✅ `WorldRunner.describe_world()`: stub returning placeholder description; `WRecObserve` added to `world_channel.py` and routed in `handle_player_input()`
 
 ---
 

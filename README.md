@@ -148,6 +148,9 @@ The new planning will have more feedback received in the history.
 - [ ] : Add a player inventory
 - [ ] : Add a player long term memory
 - [ ] : Check why some classes are dataclasses and some are pydantic models, and unify the approach
+- [ ] : Add typed `WResXXX` classes for world responses, instead of the generic `WRes` with a dict payload
+   Or at least define schemas for the payloads of the different world responses, build the payloads as pydantic models and validate when receiving them.
+   And we can maybe just use `response: BaseModel` in `WRes`, and just have the different schemas defined.
 
 ### Startup Entities
 

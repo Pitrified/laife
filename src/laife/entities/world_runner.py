@@ -6,6 +6,7 @@ from laife.entities.building import Building
 from laife.entities.player import Player
 from laife.entities.utils.geometry import aabb_collides
 from laife.entities.world_channel import WRecBuild
+from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
 from laife.entities.world_channel import WResStatus
@@ -50,6 +51,8 @@ class WorldRunner:
         match player_input:
             case WRecBuild():
                 wrsp = self.add_building(player_input.building)
+            case WRecObserve():
+                wrsp = self.describe_world()
             case _:
                 await asyncio.sleep(1)
                 wrsp = WRes(
@@ -76,6 +79,12 @@ class WorldRunner:
                 )
         self.buildings.append(building)
         return WRes(WResStatus.SUCCESS, {"message": "building added"})
+
+    def describe_world(self) -> WRes:
+        """Return a placeholder world description for the observing player."""
+        # TODO: implement real world description
+        description = "You are standing in an open field. There are no buildings nearby."
+        return WRes(WResStatus.SUCCESS, {"description": description})
 
     def move_player(self) -> None:
         """Move the player (stub)."""
