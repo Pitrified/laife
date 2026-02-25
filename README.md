@@ -147,6 +147,7 @@ The new planning will have more feedback received in the history.
    - [ ] : a `to_prompt` that describes the other player in the prompt
 - [ ] : Add a player inventory
 - [ ] : Add a player long term memory
+- [ ] : Check why some classes are dataclasses and some are pydantic models, and unify the approach
 
 ### Startup Entities
 

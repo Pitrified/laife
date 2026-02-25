@@ -21,7 +21,7 @@ The player brain is responsible for in general interacting with the language mod
 
 **Files:** `src/laife/llm/prompt_loader.py`, `src/laife/prompts/player_brain/v1.jinja`
 
-1. Create `src/laife/prompts/player_brain/v1.jinja` — system prompt template with placeholders for mission, history, observation, player_state, actions_schema; leave rendering for later phases
+1. Create `src/laife/prompts/player_brain/v1.jinja` — system prompt template with placeholders for mission, history, observation, player_state; leave rendering for later phases
 2. Add `prompts_fol` to `LaifePaths.load_common_config_pre()` pointing to `src/laife/prompts/`
 3. Create `PromptLoaderConfig(BaseModel)` with fields: `base_prompt_fol: Path`, `prompt_name: str`, `version: str` (default `"auto"`)
    - expected file path: `base_prompt_fol / prompt_name / f"v{version}.jinja"`
@@ -65,14 +65,14 @@ The player brain is responsible for in general interacting with the language mod
 
 **Files:** `src/laife/entities/action.py`
 
-1. Extend `action_template_str` (or replace with the loaded jinja string) to include all context variables:
-   - `{mission}`, `{history}`, `{observation}`, `{player_state}`, `{actions_schema}`
+1. Remove `action_template_str`, will be received from the users of the `ActionPicker`.
 2. Update `ActionPicker.__post_init__`: accept `prompt_str: str` parameter; build `ChatPromptTemplate` from it instead of the hardcoded string; keep `with_structured_output(ActionEnvelope)`
+   - should check that required variables are in the prompt template: `{mission}`, `{history}`, `{observation}`, `{player_state}`
 3. Update `ActionPicker.invoke` / `ainvoke` signatures to:
    ```python
    def invoke(self, mission: str, history: str, observation: str, player_state: str) -> BaseAction
    ```
-4. Populate `actions_schema` by extracting the JSON schema from `ActionEnvelope.model_json_schema()` and injecting it as a static string in the prompt
+4. ~~Inject `actions_schema` into the prompt~~ — not needed. `with_structured_output(ActionEnvelope)` already delivers the full field definitions to the model via the API's tool/function-calling mechanism. A raw JSON schema string in the prompt would be redundant and noisy. Describe actions semantically in the Jinja template if clarity is needed.
 
 ---
 
