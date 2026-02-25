@@ -9,10 +9,10 @@ The player brain is responsible for in general interacting with the language mod
 - `entities/action.py`: `BaseAction`, `ActionMove`, `ActionBuild`, `ActionCraft`, `ActionPlan`, `ActionObserve`, `Actions` union, `ActionEnvelope`, `MissingPromptVariablesError`, `ActionPicker(chat_config, prompt_str)` ✅
 - `entities/world_channel.py`: `WReq`, `WRes`, `WRecBuild`, `WRecObserve` ✅
 - `entities/world_runner.py`: `WorldRunner` with `describe_world()` stub ✅
-- `llm/player_brain.py`: `PlayerBrainConfig(BaseModel)`, `PlayerBrain(config)` — creates LLM via `ChatConfig`, loads prompt via `PromptLoader`; `think()` stubbed ✅
+- `llm/player_brain.py`: `PlayerBrainConfig`, `PlayerBrain(config)` — owns `ActionPicker`; `think(mission, history, observation, player_state) -> BaseAction` fully wired ✅
 - `llm/prompt_loader.py`: `PromptLoaderConfig`, `PromptLoader`, `NoPromptVersionFoundError` ✅
 - `llm/mission.py`: `Mission`, `MissionHistory`, `MissionHistoryEntry`, `MissionStatus` — `to_prompt()` on all of them
-- `entities/player.py`: `Player` with `play()` loop, `last_observation`, `observe()` stub; `think()` still returns hardcoded `ActionMove` ✅
+- `entities/player.py`: `Player` with `play()` loop (observe-then-think); `think()` calls `brain.think()`; `observe()` refreshes `last_observation`; `PlayerBrainConfig` built from `LaifeParams` ✅
 - `llm_services/chat/config/base.py`: `ChatConfig(BaseModelKwargs)` with `create_chat_model()`
 - `params/laife_paths.py`: `LaifePaths` with `src_fol`, `root_fol`, `prompts_fol`, etc. via `LaifeParams` singleton ✅
 - `prompts/player_brain/v1.jinja`: system prompt template ✅
@@ -50,8 +50,6 @@ The player brain is responsible for in general interacting with the language mod
    - `think()` stubbed with `NotImplementedError`; `ActionPicker` wiring deferred to Phase 4
 3. ✅ Removed obsolete `chat()`, `achat()`, `llm_think()`, `naive_think()` methods
 
-> **Note:** `Player.__init__` still calls `PlayerBrain()` with no args — marked with a `TODO(Phase 5)` comment; will be fixed when `PlayerBrainConfig` is constructed there.
-
 ---
 
 ### Phase 3 — ActionObserve + player observation state ✅
@@ -78,20 +76,15 @@ The player brain is responsible for in general interacting with the language mod
 
 ---
 
-### Phase 5 — Wire Player.think() through PlayerBrain
+### Phase 5 — Wire Player.think() through PlayerBrain ✅
 
 **Files:** `src/laife/entities/player.py`, `src/laife/llm/player_brain.py`
 
-1. `PlayerBrain.__post_init__` (or `__init__`): instantiate `ActionPicker(chat_config=config.chat_config, prompt_str=loaded_prompt)`
-2. `PlayerBrain.think(mission: Mission, history: MissionHistory, observation: str, position: Position) -> BaseAction`:
-   - call `self.action_picker.ainvoke(mission=mission.to_prompt(), history=history.to_prompt(), observation=observation, player_state=str(position))`
-   - return the resulting `BaseAction`
-3. `Player.__init__`: construct `PlayerBrainConfig` using `LaifeParams()` paths and `ChatConfig` (read from env/config); pass to `PlayerBrain(config)`
-4. `Player.think()`: replace hardcoded `ActionMove` stub with:
-   ```python
-   return await self.brain.think(self.mission, self.history, self.last_observation, self.position)
-   ```
-5. `Player.play()`: ensure `ActionObserve` is dispatched first each loop iteration before calling `think()`, so `last_observation` is always fresh
+1. ✅ `PlayerBrain.__init__`: instantiates `ActionPicker(chat_config=config.chat_config, prompt_str=loaded_prompt)`; removed stale `self.llm` (owned by `ActionPicker` now)
+2. ✅ `PlayerBrain.think(mission, history, observation, player_state) -> BaseAction`: calls `self.action_picker.ainvoke(...)` and returns the action
+3. ✅ `Player.__init__`: constructs `PlayerBrainConfig` from `LaifeParams()` — `ChatParams(env_type).default` for the chat config, `prompts_fol / "player_brain"` for the prompt loader
+4. ✅ `Player.think()`: replaced hardcoded `ActionMove` stub with `await self.brain.think(mission, history, last_observation, position)`
+5. ✅ `Player.play()`: dispatches `ActionObserve` at the top of every loop iteration before calling `think()`
 
 ---
 

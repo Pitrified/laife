@@ -2,6 +2,10 @@
 
 from pydantic import BaseModel
 
+from laife.entities.action import ActionPicker
+from laife.entities.action import BaseAction
+from laife.llm.mission import Mission
+from laife.llm.mission import MissionHistory
 from laife.llm.prompt_loader import PromptLoader
 from laife.llm.prompt_loader import PromptLoaderConfig
 from laife.llm_services.chat.config.base import ChatConfig
@@ -17,16 +21,30 @@ class PlayerBrainConfig(BaseModel):
 class PlayerBrain:
     """Brain of a player.
 
-    Instantiate with a :class:`PlayerBrainConfig`. The brain handles interaction
-    with the language model; action-picking wiring is added in Phase 4/5.
+    Instantiate with a :class:`PlayerBrainConfig`. Owns the :class:`ActionPicker`
+    chain; calling :meth:`think` returns a concrete :class:`BaseAction`.
     """
 
     def __init__(self, config: PlayerBrainConfig) -> None:
         """Initialise the brain from config."""
         self.config = config
-        self.llm = config.chat_config.create_chat_model()
         self.prompt_str = PromptLoader(config.prompt_loader_config).load_prompt()
+        self.action_picker = ActionPicker(
+            chat_config=config.chat_config,
+            prompt_str=self.prompt_str,
+        )
 
-    async def think(self, query: str) -> str:
-        """Stub — will be replaced in Phase 5 with full action-returning signature."""
-        raise NotImplementedError("think() will be wired in Phase 5")
+    async def think(
+        self,
+        mission: Mission,
+        history: MissionHistory,
+        observation: str,
+        player_state: str,
+    ) -> BaseAction:
+        """Ask the LLM to pick the next action given full context."""
+        return await self.action_picker.ainvoke(
+            mission=mission.to_prompt(),
+            history=history.to_prompt(),
+            observation=observation,
+            player_state=player_state,
+        )

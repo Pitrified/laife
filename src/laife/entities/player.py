@@ -11,7 +11,6 @@ from laife.entities.action import ActionMove
 from laife.entities.action import ActionObserve
 from laife.entities.action import ActionPlan
 from laife.entities.action import BaseAction
-from laife.entities.utils.directions import CardinalDirection
 from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
@@ -21,6 +20,10 @@ from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
 from laife.llm.player_brain import PlayerBrain
+from laife.llm.player_brain import PlayerBrainConfig
+from laife.llm.prompt_loader import PromptLoaderConfig
+from laife.params.laife_params import get_laife_params
+from laife.params.llm_services.chat import ChatParams
 from laife.ui.alog import alg
 
 
@@ -63,8 +66,16 @@ class Player:
         self.last_observation: str = ""
 
         # cognition
-        # TODO(Phase 5): construct PlayerBrainConfig and pass it here
-        self.brain = PlayerBrain()  # type: ignore[call-arg]  # broken until Phase 5
+        laife_params = get_laife_params()
+        self.brain = PlayerBrain(
+            PlayerBrainConfig(
+                chat_config=ChatParams(laife_params.env_type).default,
+                prompt_loader_config=PromptLoaderConfig(
+                    base_prompt_fol=laife_params.paths.prompts_fol,
+                    prompt_name="player_brain",
+                ),
+            )
+        )
         self.mission = Mission(
             objective="Build a house",
             status=MissionStatus.ACTIVE,
@@ -79,9 +90,12 @@ class Player:
         """Run the agent decision loop (intended to run as an asyncio task)."""
         while True:
             alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
+            # Refresh observation before deciding
+            await self.observe(ActionObserve(reason="Observing surroundings before acting."))
             action = await self.think()
             match action:
                 case ActionObserve() as act:
+                    # TODO: remove this, always observe beforehand
                     wrsp = await self.observe(act)
                 case ActionMove() as act:
                     wrsp = await self.move(act)
@@ -101,16 +115,15 @@ class Player:
     # ------------------------------------------------------------------
 
     async def think(self) -> BaseAction:
-        """Decide what to do next."""
+        """Decide what to do next by calling the LLM brain."""
         self.state = PlayerState.THINKING
         alg.log(f"{self.name} is thinking")
-        # placeholder - LLM call will go through self.brain (deferred)
-        action = ActionMove(
-            reason="I need to move to complete the mission.",
-            direction=CardinalDirection.North,
-            distance=10,
+        action = await self.brain.think(
+            mission=self.mission,
+            history=self.history,
+            observation=self.last_observation,
+            player_state=str(self.position),
         )
-        # > action = await self.brain.think(self.mission, self.history)
         alg.log(f"PLAYER.play {self.name}: picked {action}")
         self.state = PlayerState.IDLE
         return action
