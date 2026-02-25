@@ -61,13 +61,15 @@ class ActionEnvelope(BaseModel):
     act: Actions = Field(..., description="The action to take.")
 
 
-action_template = """You are an agent in a virtual world. \
+action_template_str = """You are an agent in a virtual world. \
 You have a mission to complete. \
 You can take an action to solve the mission. \
 
 The mission is to: {mission}
 """
-action_prompt = ChatPromptTemplate([SystemMessagePromptTemplate.from_template(action_template)])
+action_prompt_template = ChatPromptTemplate(
+    [SystemMessagePromptTemplate.from_template(action_template_str)]
+)
 
 
 @dataclass
@@ -80,7 +82,7 @@ class ActionPicker:
         """Initialize the action picker."""
         self.model = self.chat_config.create_chat_model()
         self.structured_llm = self.model.with_structured_output(ActionEnvelope)
-        self.chain = action_prompt | self.structured_llm
+        self.chain = action_prompt_template | self.structured_llm
 
     def invoke(self, mission: str) -> BaseAction:
         """Pick an action to take."""
