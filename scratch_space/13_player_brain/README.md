@@ -7,7 +7,7 @@ The player brain is responsible for in general interacting with the language mod
 ## Current state of the codebase
 
 - `entities/action.py`: `BaseAction`, `ActionMove`, `ActionBuild`, `ActionCraft`, `ActionPlan`, `Actions` union, `ActionEnvelope`, `ActionPicker` (chain wrapping `ChatConfig`)
-- `llm/player_brain.py`: `PlayerBrain` stub — hardcoded ollama, translation prompt, no config injection; `think(query: str) -> str` not yet returning `BaseAction`
+- `llm/player_brain.py`: `PlayerBrainConfig(BaseModel)`, `PlayerBrain(config)` — creates LLM via `ChatConfig`, loads prompt via `PromptLoader`; `think()` stubbed ✅
 - `llm/prompt_loader.py`: `PromptLoaderConfig`, `PromptLoader`, `NoPromptVersionFoundError` ✅
 - `llm/mission.py`: `Mission`, `MissionHistory`, `MissionHistoryEntry`, `MissionStatus` — `to_prompt()` on all of them
 - `entities/player.py`: `Player` with `play()` loop; `think()` returns a hardcoded `ActionMove`; all action handlers are stubs
@@ -34,19 +34,21 @@ The player brain is responsible for in general interacting with the language mod
 
 ---
 
-### Phase 2 — PlayerBrainConfig + refactored PlayerBrain
+### Phase 2 — PlayerBrainConfig + refactored PlayerBrain ✅
 
 **Files:** `src/laife/llm/player_brain.py`
 
-1. Create `PlayerBrainConfig(BaseModel)` with:
+1. ✅ Created `PlayerBrainConfig(BaseModel)` with:
    - `chat_config: ChatConfig`
    - `prompt_loader_config: PromptLoaderConfig`
-2. Rewrite `PlayerBrain.__init__(config: PlayerBrainConfig)`:
-   - drop hardcoded ollama
-   - instantiate model via `config.chat_config.create_chat_model()`
-   - load raw prompt string via `PromptLoader(config.prompt_loader_config).load_prompt()`
-   - store config for use by `think()`; leave `ActionPicker` wiring for Phase 4
-3. Remove obsolete `chat()`, `achat()`, `llm_think()`, `naive_think()` methods (or mark deprecated)
+2. ✅ Rewrote `PlayerBrain.__init__(config: PlayerBrainConfig)`:
+   - dropped hardcoded ollama
+   - instantiates model via `config.chat_config.create_chat_model()`
+   - loads raw prompt string via `PromptLoader(config.prompt_loader_config).load_prompt()`
+   - `think()` stubbed with `NotImplementedError`; `ActionPicker` wiring deferred to Phase 4
+3. ✅ Removed obsolete `chat()`, `achat()`, `llm_think()`, `naive_think()` methods
+
+> **Note:** `Player.__init__` still calls `PlayerBrain()` with no args — marked with a `TODO(Phase 5)` comment; will be fixed when `PlayerBrainConfig` is constructed there.
 
 ---
 

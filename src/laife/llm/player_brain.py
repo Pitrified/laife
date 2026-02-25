@@ -1,89 +1,32 @@
 """Brain of a player."""
 
-import asyncio
-import random
+from pydantic import BaseModel
 
-from langchain.messages import AIMessage
-from langchain_core.prompts.chat import ChatPromptTemplate
-from langchain_core.prompts.chat import HumanMessagePromptTemplate
-from langchain_core.prompts.chat import SystemMessagePromptTemplate
-from langchain_ollama import ChatOllama
+from laife.llm.prompt_loader import PromptLoader
+from laife.llm.prompt_loader import PromptLoaderConfig
+from laife.llm_services.chat.config.base import ChatConfig
 
-from laife.ui.alog import alg
+
+class PlayerBrainConfig(BaseModel):
+    """Configuration for the PlayerBrain."""
+
+    chat_config: ChatConfig
+    prompt_loader_config: PromptLoaderConfig
 
 
 class PlayerBrain:
-    """Brain of a player."""
+    """Brain of a player.
 
-    def __init__(self) -> None:
-        """Initialize the brain."""
-        # ? ollama_model="llama3.1" # TODO(pmn): make this configurable
-        ollama_model = "phi3"
-        self.llm = ChatOllama(
-            model=ollama_model,
-            temperature=0,
-            # ? base_url="http://localhost:11434",
-        )
-        # > self.llm = ChatOpenAI(
-        # >     model="gpt-4o-mini",
-        # >     temperature=0,
-        # >     max_tokens=30,
-        # >     timeout=None,
-        # >     max_retries=2,
-        # >     api_key=OPENAI_API_KEY,
-        # > )
-        self.prompt = ChatPromptTemplate.from_messages(
-            [
-                SystemMessagePromptTemplate.from_template(
-                    "You are a helpful assistant that "
-                    "translates {input_language} to {output_language}."
-                ),
-                HumanMessagePromptTemplate.from_template("{input}"),
-            ]
-        )
-        self.chain = self.prompt | self.llm
+    Instantiate with a :class:`PlayerBrainConfig`. The brain handles interaction
+    with the language model; action-picking wiring is added in Phase 4/5.
+    """
 
-    def chat(self, input_language, output_language, input_text) -> AIMessage:  # noqa: ANN001
-        """Chat with the agent."""
-        res = self.chain.invoke(
-            {
-                "input_language": input_language,
-                "output_language": output_language,
-                "input": input_text,
-            }
-        )
-        return res
-
-    async def achat(self, input_language, output_language, input_text) -> AIMessage:  # noqa: ANN001
-        """Chat with the agent asynchronously."""
-        alg.log("Brain.achat started")
-        res = await self.chain.ainvoke(
-            {
-                "input_language": input_language,
-                "output_language": output_language,
-                "input": input_text,
-            }
-        )
-        alg.log("Brain.achat finished")
-        return res
+    def __init__(self, config: PlayerBrainConfig) -> None:
+        """Initialise the brain from config."""
+        self.config = config
+        self.llm = config.chat_config.create_chat_model()
+        self.prompt_str = PromptLoader(config.prompt_loader_config).load_prompt()
 
     async def think(self, query: str) -> str:
-        """Entry point for thinking."""
-        # return await self.naive_think(query)  # noqa: ERA001
-        return await self.llm_think(query)
-
-    async def naive_think(self, query: str) -> str:
-        """Randomly think about the next move."""
-        alg.log(f"BRAIN.naive_think: {query}")
-        await asyncio.sleep(2.5)
-        if random.randint(0, 1):  # noqa: S311
-            return "move"
-        return "rest"
-
-    async def llm_think(self, query: str) -> str:
-        """Use the language model to think about the next move."""
-        alg.log(f"BRAIN.llm_think: {query}")
-        res = await self.llm.ainvoke(query)
-        res_pretty = res.pretty_repr()
-        alg.log(f"BRAIN.llm_think: {res}")
-        return "move" if "move" in res_pretty else "rest"
+        """Stub — will be replaced in Phase 5 with full action-returning signature."""
+        raise NotImplementedError("think() will be wired in Phase 5")
