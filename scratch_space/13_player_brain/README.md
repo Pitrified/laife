@@ -88,15 +88,17 @@ The player brain is responsible for in general interacting with the language mod
 
 ---
 
-### Phase 6 — Tests
+### Phase 6 — Tests ✅
 
 **Files:** `tests/llm/test_prompt_loader.py`, `tests/llm/test_player_brain.py`
 
-1. `test_prompt_loader.py`:
-   - test `version="auto"` resolution with a temporary directory containing `v1.jinja`, `v2.jinja`
-   - test caching (same string returned on second call without re-reading disk)
-   - test explicit version loads exact file
-2. `test_player_brain.py`:
-   - test `PlayerBrainConfig` instantiation
-   - test `PlayerBrain.think()` with a mocked `ActionPicker` returning a known action
+1. ✅ `test_prompt_loader.py` (9 tests):
+   - `version="auto"` resolution: picks highest N, works with single file, raises `NoPromptVersionFoundError` when dir is empty
+   - explicit version: returns config version as-is, loads the correct file content
+   - content: auto loads highest, explicit loads exact version
+   - caching: poisoning `_prompt_cache` proves second call skips disk; cache starts as `None`, is set after first call
+2. ✅ `test_player_brain.py` (3 tests):
+   - `PlayerBrainConfig` instantiation with `OllamaChatConfig` + temp prompt dir
+   - `PlayerBrain.think()` returns the action from a mocked `ActionPicker.ainvoke`
+   - `PlayerBrain.think()` forwards all four kwargs (`mission`, `history`, `observation`, `player_state`) correctly serialised
 
