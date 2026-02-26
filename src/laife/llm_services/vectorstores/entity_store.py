@@ -3,7 +3,7 @@
 from langchain_core.documents import Document
 
 from laife.entities.vectorable import Vectorable
-from laife.llm_services.vectorstores.cchroma import CChroma
+from laife.llm_services.vectorstores.config.base import VectorStoreConfig
 
 
 class EntityStore:
@@ -13,9 +13,9 @@ class EntityStore:
     only place that holds a reference to the vector DB and performs I/O.
     """
 
-    def __init__(self, vector_db: CChroma) -> None:
-        """Initialise the store with an existing CChroma instance."""
-        self._db = vector_db
+    def __init__(self, config: VectorStoreConfig) -> None:
+        """Initialise the store by creating a vector DB from *config*."""
+        self._db = config.create_vector_store()
 
     # ------------------------------------------------------------------
     # Write

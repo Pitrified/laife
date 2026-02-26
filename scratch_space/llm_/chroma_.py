@@ -3,11 +3,11 @@
 # %% imports
 
 from laife.config.credentials import OPENAI_API_KEY
+from laife.llm.vector_db import VectorDB
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 
 from laife.config.constants import VECTORSTORE_FOL
-from laife.llm.vector_db import VectorDB
 
 # %% setup
 

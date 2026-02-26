@@ -20,7 +20,7 @@ def prompt_dir(tmp_path: Path) -> Path:
 
 
 def make_loader(base: Path, *, version: str = "auto") -> PromptLoader:
-    """Convenience factory."""
+    """Build a PromptLoader for the given base directory and version."""
     return PromptLoader(
         PromptLoaderConfig(
             base_prompt_fol=base,

@@ -25,7 +25,10 @@ class LLMServicesParams:
         """Load the common params."""
         self.chat = ChatParams(self.env_type)
         self.embeddings = EmbeddingsParams(self.env_type)
-        self.vector_search = SearchParams(self.env_type)
+        self.vector_search = SearchParams(
+            self.env_type,
+            embeddings_params=self.embeddings,
+        )
 
     def __str__(self) -> str:
         """Provide String representation of the LLMServicesParams."""
