@@ -6,6 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel
 from pydantic import Field
 
+from laife.data_models.basemodel_kwargs import BaseModelKwargs
 from laife.entities.utils.directions import CardinalDirection
 from laife.llm_services.chat.config.base import ChatConfig
 
@@ -60,9 +61,21 @@ class ActionEnvelope(BaseModel):
     act: Actions = Field(..., description="The action to take.")
 
 
-_REQUIRED_PROMPT_VARS: frozenset[str] = frozenset(
-    {"mission", "history", "observation", "player_state"}
-)
+class ActionPickerInput(BaseModelKwargs):
+    """Input payload for ActionPicker.invoke / ainvoke.
+
+    Field names define the required variables that every prompt template must
+    contain; the validation in ActionPicker.__post_init__ derives the required
+    set directly from these fields so the two can never drift apart.
+    """
+
+    mission: str
+    history: str
+    observation: str
+    player_state: str
+
+
+_REQUIRED_PROMPT_VARS: frozenset[str] = frozenset(ActionPickerInput.model_fields)
 
 
 class MissingPromptVariablesError(ValueError):
@@ -93,43 +106,17 @@ class ActionPicker:
         self.structured_llm = self.model.with_structured_output(ActionEnvelope)
         self.chain = self.prompt_template | self.structured_llm
 
-    def invoke(
-        self,
-        mission: str,
-        history: str,
-        observation: str,
-        player_state: str,
-    ) -> BaseAction:
+    def invoke(self, action_input: ActionPickerInput) -> BaseAction:
         """Pick an action synchronously."""
-        output = self.chain.invoke(
-            {
-                "mission": mission,
-                "history": history,
-                "observation": observation,
-                "player_state": player_state,
-            }
-        )
+        output = self.chain.invoke(action_input.to_kw())
         if not isinstance(output, ActionEnvelope):
             msg = f"Unexpected output type: {type(output)}"
             raise TypeError(msg)
         return output.act
 
-    async def ainvoke(
-        self,
-        mission: str,
-        history: str,
-        observation: str,
-        player_state: str,
-    ) -> BaseAction:
+    async def ainvoke(self, action_input: ActionPickerInput) -> BaseAction:
         """Pick an action asynchronously."""
-        output = await self.chain.ainvoke(
-            {
-                "mission": mission,
-                "history": history,
-                "observation": observation,
-                "player_state": player_state,
-            }
-        )
+        output = await self.chain.ainvoke(action_input.to_kw())
         if not isinstance(output, ActionEnvelope):
             msg = f"Unexpected output type: {type(output)}"
             raise TypeError(msg)

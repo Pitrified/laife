@@ -85,6 +85,14 @@ So the `ActionObserve` is not a possible action for the brain to choose.
 3. ✅ Updated `invoke` / `ainvoke` signatures to accept `mission`, `history`, `observation`, `player_state` and pass all four into the chain
 4. ✅ ~~Inject `actions_schema` into the prompt~~ — not needed. `with_structured_output(ActionEnvelope)` already delivers the full field definitions to the model via the API's tool/function-calling mechanism. A raw JSON schema string in the prompt would be redundant and noisy. Describe actions semantically in the Jinja template if clarity is needed.
 
+#### Phase 4.1 — ActionPicker input ✅
+
+1. ✅ Added `ActionPickerInput(BaseModelKwargs)` to `action.py` with fields `mission`, `history`, `observation`, `player_state: str`
+2. ✅ Replaced hardcoded `_REQUIRED_PROMPT_VARS` frozenset with `frozenset(ActionPickerInput.model_fields)` — single source of truth
+3. ✅ Updated `ActionPicker.invoke(action_input: ActionPickerInput)` / `ainvoke(action_input: ActionPickerInput)` — call `action_input.to_kw()` to feed the chain
+4. ✅ Updated `PlayerBrain.think()` to construct `ActionPickerInput` and pass it to `ainvoke`
+5. ✅ Updated `test_think_passes_correct_kwargs` to assert via `ActionPickerInput`
+
 ---
 
 ### Phase 5 — Wire Player.think() through PlayerBrain ✅

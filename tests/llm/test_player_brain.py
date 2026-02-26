@@ -9,6 +9,7 @@ from unittest.mock import patch
 import pytest
 
 from laife.entities.action import ActionMove
+from laife.entities.action import ActionPickerInput
 from laife.entities.utils.directions import CardinalDirection
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
@@ -126,8 +127,10 @@ def test_think_passes_correct_kwargs(brain: PlayerBrain) -> None:
     )
 
     brain.action_picker.ainvoke.assert_awaited_once_with(
-        mission=mission.to_prompt(),
-        history=history.to_prompt(),
-        observation=observation,
-        player_state=player_state,
+        ActionPickerInput(
+            mission=mission.to_prompt(),
+            history=history.to_prompt(),
+            observation=observation,
+            player_state=player_state,
+        )
     )

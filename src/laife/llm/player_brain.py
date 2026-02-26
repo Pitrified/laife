@@ -3,6 +3,7 @@
 from pydantic import BaseModel
 
 from laife.entities.action import ActionPicker
+from laife.entities.action import ActionPickerInput
 from laife.entities.action import BaseAction
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
@@ -43,8 +44,10 @@ class PlayerBrain:
     ) -> BaseAction:
         """Ask the LLM to pick the next action given full context."""
         return await self.action_picker.ainvoke(
-            mission=mission.to_prompt(),
-            history=history.to_prompt(),
-            observation=observation,
-            player_state=player_state,
+            ActionPickerInput(
+                mission=mission.to_prompt(),
+                history=history.to_prompt(),
+                observation=observation,
+                player_state=player_state,
+            )
         )
