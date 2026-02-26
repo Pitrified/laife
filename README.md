@@ -85,10 +85,12 @@ each one has to be validated by the world with deterministic collision system.
 Whether the player thinks again after a certain number of steps, or after each step, or after each failed step, is to be decided.
 
 Add a langchain `tool` to compute distance between two points on the map.
-No dude just compute it, the worlds knows these things.
+Which is something that the player can use to decide where to go precisely to solve the mission,
+generating something more specific than `ActionMove`.
 
 Add decorators to player functions to update the state of the player.
-What was this??
+So something like `@update_state(PlayerState.MOVING)` on the `move` function,
+so that the state is automatically updated when the function is called and ends.
 
 The `Mission` do not need a `MissionType`, it has to be inferred from the mission description.
 This is because missions can be very dynamic and complex, world/brain driven.

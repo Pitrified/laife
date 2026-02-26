@@ -1,9 +1,16 @@
 """Channels to and from the World."""
 
-import asyncio
-from enum import StrEnum
+from __future__ import annotations
 
-from laife.entities.building import Building
+from enum import StrEnum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import asyncio
+
+    from laife.config.types import Position
+    from laife.entities.building import Building
+    from laife.entities.player import Player
 
 
 class WResStatus(StrEnum):
@@ -81,3 +88,25 @@ class WRecObserve(WReq):
     def __str__(self) -> str:
         """Return the string representation of the request."""
         return f"WRecObserve(id={id(self)}, response_queue={self.response_queue})"
+
+
+class WRecMove(WReq):
+    """Request to validate and confirm a one-step player move."""
+
+    def __init__(
+        self,
+        player: Player,
+        new_position: Position,
+        *args,  # noqa: ANN002
+        **kwargs,  # noqa: ANN003
+    ) -> None:
+        """Initialize the move request."""
+        super().__init__(*args, **kwargs)
+        self.player = player
+        self.new_position = new_position
+
+    def __str__(self) -> str:
+        """Return the string representation of the request."""
+        return (
+            f"WRecMove(id={id(self)}, player={self.player.name}, new_position={self.new_position})"
+        )

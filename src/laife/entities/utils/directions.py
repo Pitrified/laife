@@ -55,3 +55,23 @@ def pospos2cardinal_degrees(you: Position, target: Position) -> float:
     polar_degrees = math.degrees(polar_radians)
     cardinal_degrees = (90 - polar_degrees) % 360
     return cardinal_degrees
+
+
+def cardinal_to_delta(direction: CardinalDirection, step: int = 1) -> tuple[int, int]:
+    """Return the (dx, dy) step vector for a cardinal direction.
+
+    Coordinate convention: x increases East, y increases South (pygame).
+    `step` scales the unit vector, enabling non-unit steps.
+    """
+    _unit: dict[CardinalDirection, tuple[int, int]] = {
+        CardinalDirection.North: (0, -1),
+        CardinalDirection.South: (0, +1),
+        CardinalDirection.East: (+1, 0),
+        CardinalDirection.West: (-1, 0),
+        CardinalDirection.NorthEast: (+1, -1),
+        CardinalDirection.NorthWest: (-1, -1),
+        CardinalDirection.SouthEast: (+1, +1),
+        CardinalDirection.SouthWest: (-1, +1),
+    }
+    ux, uy = _unit[direction]
+    return ux * step, uy * step

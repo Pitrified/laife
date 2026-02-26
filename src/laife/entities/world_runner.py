@@ -6,6 +6,7 @@ from laife.entities.building import Building
 from laife.entities.player import Player
 from laife.entities.utils.geometry import aabb_collides
 from laife.entities.world_channel import WRecBuild
+from laife.entities.world_channel import WRecMove
 from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
@@ -53,6 +54,8 @@ class WorldRunner:
                 wrsp = self.add_building(player_input.building)
             case WRecObserve():
                 wrsp = self.describe_world()
+            case WRecMove():
+                wrsp = self.move_player(player_input)
             case _:
                 await asyncio.sleep(1)
                 wrsp = WRes(
@@ -80,14 +83,34 @@ class WorldRunner:
         self.buildings.append(building)
         return WRes(WResStatus.SUCCESS, {"message": "building added"})
 
+    def move_player(self, req: WRecMove) -> WRes:
+        """Validate a one-step player move and return success or collision feedback.
+
+        The player's position is NOT mutated here; the player updates itself
+        after receiving SUCCESS.
+        """
+        player_size = req.player.size
+        for building in self.buildings:
+            if aabb_collides(req.new_position, player_size, building.position, building.size):
+                return WRes(
+                    WResStatus.ERROR,
+                    {"obstacle": str(building), "at": req.new_position},
+                )
+        for other in self.players:
+            if other is req.player:
+                continue
+            if aabb_collides(req.new_position, player_size, other.position, other.size):
+                return WRes(
+                    WResStatus.ERROR,
+                    {"obstacle": str(other), "at": req.new_position},
+                )
+        return WRes(WResStatus.SUCCESS, {"new_position": req.new_position})
+
     def describe_world(self) -> WRes:
         """Return a placeholder world description for the observing player."""
         # TODO: implement real world description
         description = "You are standing in an open field. There are no buildings nearby."
         return WRes(WResStatus.SUCCESS, {"description": description})
-
-    def move_player(self) -> None:
-        """Move the player (stub)."""
 
     def craft(self) -> None:
         """Craft something (stub)."""

@@ -5,11 +5,14 @@ from enum import StrEnum
 import time
 
 from laife.config.types import Position
+from laife.config.types import Size
 from laife.entities.action import ActionBuild
 from laife.entities.action import ActionCraft
 from laife.entities.action import ActionMove
 from laife.entities.action import ActionPlan
 from laife.entities.action import BaseAction
+from laife.entities.utils.directions import cardinal_to_delta
+from laife.entities.world_channel import WRecMove
 from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
@@ -43,6 +46,7 @@ class Player:
         player_type: str,
         world_input_queue: asyncio.Queue[WReq],
         state: PlayerState = PlayerState.IDLE,
+        size: Size = (1, 1),
     ) -> None:
         """Create the player.
 
@@ -51,6 +55,7 @@ class Player:
         """
         self.name: str = name
         self.player_type: str = player_type
+        self.size: Size = size
 
         # logical state - no sprite side-effects
         self.position: Position = position
@@ -147,15 +152,43 @@ class Player:
         self.state = PlayerState.IDLE
         return WRes(WResStatus.SUCCESS, {"message": "Planning completed."})
 
-    async def move(self, action: ActionMove) -> WRes:  # noqa: ARG002
-        """Move the player."""
+    async def move(self, action: ActionMove) -> WRes:
+        """Move the player in delta steps, each validated by the world."""
         self.state = PlayerState.MOVING
-        alg.log(f"PLAYER.move {self.name}: is moving")
-        # TODO: delegate move to world for collision detection
-        await asyncio.sleep(1)
-        alg.log(f"PLAYER.move {self.name}: moved")
+        start_position = self.position
+        dx, dy = cardinal_to_delta(action.direction)
+        alg.log(f"PLAYER.move {self.name}: moving {action.direction.value} x{action.distance}")
+
+        for step in range(action.distance):
+            new_pos = (self.position[0] + dx, self.position[1] + dy)
+            wreq = WRecMove(
+                player=self,
+                new_position=new_pos,
+                response_queue=self.input_queue,
+            )
+            await self.world_input_queue.put(wreq)
+            wrsp = await self.input_queue.get()
+            self.input_queue.task_done()
+
+            if wrsp.status == WResStatus.ERROR:
+                alg.log(f"PLAYER.move {self.name}: blocked at step {step}")
+                self.state = PlayerState.IDLE
+                return WRes(
+                    WResStatus.ERROR,
+                    {
+                        "message": (
+                            f"Blocked after {step} step(s) from {start_position}. "
+                            f"Obstacle: {wrsp.response_data.get('obstacle', 'unknown')}."
+                        ),
+                    },
+                )
+
+            # World validated the step - player owns its position update
+            self.position = new_pos
+
+        alg.log(f"PLAYER.move {self.name}: moved to {self.position}")
         self.state = PlayerState.IDLE
-        return WRes(WResStatus.SUCCESS, {"message": "You reached the destination."})
+        return WRes(WResStatus.SUCCESS, {"message": f"Moved {action.distance} step(s)."})
 
     def move_delta(self, dx: int, dy: int) -> None:
         """Adjust the player's position by delta values."""
