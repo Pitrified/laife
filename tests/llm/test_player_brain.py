@@ -11,6 +11,7 @@ import pytest
 from laife.entities.action import ActionMove
 from laife.entities.action import ActionPickerInput
 from laife.entities.utils.directions import CardinalDirection
+from laife.entities.world_map_observation import WorldMapObservation
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionStatus
@@ -93,7 +94,7 @@ def test_think_returns_action_from_picker(brain: PlayerBrain) -> None:
         brain.think(
             mission=Mission(objective="Build a house", status=MissionStatus.ACTIVE),
             history=MissionHistory(),
-            observation="Open field ahead.",
+            observation=WorldMapObservation.from_position((0, 0)),
             player_state="(10, 20)",
         )
     )
@@ -114,7 +115,7 @@ def test_think_passes_correct_kwargs(brain: PlayerBrain) -> None:
 
     mission = Mission(objective="Survive", status=MissionStatus.ACTIVE)
     history = MissionHistory()
-    observation = "Dark forest."
+    observation = WorldMapObservation.from_position((0, 0))
     player_state = "(0, 0)"
 
     asyncio.run(
@@ -130,7 +131,7 @@ def test_think_passes_correct_kwargs(brain: PlayerBrain) -> None:
         ActionPickerInput(
             mission=mission.to_prompt(),
             history=history.to_prompt(),
-            observation=observation,
+            observation=observation.to_prompt(),
             player_state=player_state,
         )
     )

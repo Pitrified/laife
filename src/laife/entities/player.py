@@ -17,6 +17,7 @@ from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
 from laife.entities.world_channel import WResStatus
+from laife.entities.world_map_observation import WorldMapObservation
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
@@ -65,8 +66,8 @@ class Player:
         self.world_input_queue: asyncio.Queue[WReq] = world_input_queue
         self.input_queue: asyncio.Queue[WRes] = asyncio.Queue()
 
-        # observation
-        self.last_observation: str = ""
+        # observation, will be stale for a tick
+        self.last_observation: WorldMapObservation = WorldMapObservation.from_position(position)
 
         # cognition
         laife_params = get_laife_params()
@@ -135,12 +136,15 @@ class Player:
     async def observe(self) -> WRes:
         """Request a world observation and cache it in last_observation."""
         alg.log(f"PLAYER.observe {self.name}: requesting observation")
-        wreq = WRecObserve(response_queue=self.input_queue)
+        wreq = WRecObserve(position=self.position, response_queue=self.input_queue)
         await self.world_input_queue.put(wreq)
         wrsp = await self.input_queue.get()
         self.input_queue.task_done()
-        self.last_observation = wrsp.response_data.get("description", "")
-        alg.log(f"PLAYER.observe {self.name}: got '{self.last_observation}'")
+        self.last_observation = wrsp.response_data["observation"]
+        alg.log(
+            f"PLAYER.observe {self.name}:"
+            f" got observation at {self.last_observation.player_position}"
+        )
         return wrsp
 
     async def plan(self, action: ActionPlan) -> WRes:

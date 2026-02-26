@@ -75,19 +75,25 @@ class WRecBuild(WReq):
 
 
 class WRecObserve(WReq):
-    """A request for a world-state description to be used as an observation."""
+    """A request for a world-state observation centred on *position*."""
 
     def __init__(
         self,
+        position: Position,
         *args,  # noqa: ANN002
         **kwargs,  # noqa: ANN003
     ) -> None:
         """Initialize the observe request."""
         super().__init__(*args, **kwargs)
+        self.position = position
 
     def __str__(self) -> str:
         """Return the string representation of the request."""
-        return f"WRecObserve(id={id(self)}, response_queue={self.response_queue})"
+        return (
+            f"WRecObserve(id={id(self)}"
+            f", position={self.position}"
+            f", response_queue={self.response_queue})"
+        )
 
 
 class WRecMove(WReq):

@@ -2,6 +2,7 @@
 
 import asyncio
 
+from laife.config.types import Position
 from laife.entities.building import Building
 from laife.entities.player import Player
 from laife.entities.utils.geometry import aabb_collides
@@ -11,6 +12,9 @@ from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
 from laife.entities.world_channel import WResStatus
+from laife.entities.world_map_observation import NearbyEntity
+from laife.entities.world_map_observation import WorldMapObservation
+from laife.entities.world_map_observation import euclidean
 from laife.ui.alog import alg
 
 
@@ -53,7 +57,7 @@ class WorldRunner:
             case WRecBuild():
                 wrsp = self.add_building(player_input.building)
             case WRecObserve():
-                wrsp = self.describe_world()
+                wrsp = self.observe_at(player_input.position)
             case WRecMove():
                 wrsp = self.move_player(player_input)
             case _:
@@ -106,11 +110,47 @@ class WorldRunner:
                 )
         return WRes(WResStatus.SUCCESS, {"new_position": req.new_position})
 
-    def describe_world(self) -> WRes:
-        """Return a placeholder world description for the observing player."""
-        # TODO: implement real world description
-        description = "You are standing in an open field. There are no buildings nearby."
-        return WRes(WResStatus.SUCCESS, {"description": description})
+    def observe_at(self, position: Position, radius: int = 20) -> WRes:
+        """Build a WorldMapObservation centred on *position* and return it."""
+        nearby: list[NearbyEntity] = []
+
+        for building in self.buildings:
+            dist = euclidean(position, building.position)
+            if dist <= radius:
+                dx = building.position[0] - position[0]
+                dy = building.position[1] - position[1]
+                nearby.append(
+                    NearbyEntity(
+                        entity_type="building",
+                        name=building.name,
+                        relative_position=(dx, dy),
+                        distance=dist,
+                    )
+                )
+
+        for player in self.players:
+            dist = euclidean(position, player.position)
+            if dist == 0:
+                # Skip the observing player (same tile)
+                continue
+            if dist <= radius:
+                dx = player.position[0] - position[0]
+                dy = player.position[1] - position[1]
+                nearby.append(
+                    NearbyEntity(
+                        entity_type="player",
+                        name=player.name,
+                        relative_position=(dx, dy),
+                        distance=dist,
+                    )
+                )
+
+        obs = WorldMapObservation(
+            player_position=position,
+            nearby_entities=nearby,
+            radius=radius,
+        )
+        return WRes(WResStatus.SUCCESS, {"observation": obs})
 
     def craft(self) -> None:
         """Craft something (stub)."""
