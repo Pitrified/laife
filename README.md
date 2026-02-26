@@ -151,7 +151,8 @@ The new planning will have more feedback received in the history.
 - [ ] : Add typed `WResXXX` classes for world responses, instead of the generic `WRes` with a dict payload
    Or at least define schemas for the payloads of the different world responses, build the payloads as pydantic models and validate when receiving them.
    And we can maybe just use `response: BaseModel` in `WRes`, and just have the different schemas defined.
-- [ ] : Add an ActionPickerInput basemodelkw, receive that in invoke; required prompt vars can be inferred from the fields of the input model and the prompt template loaded can be validated to ensure it contains them all.
+- [x] : Add an ActionPickerInput BaseModelKw, receive that in invoke; required prompt vars can be inferred from the fields of the input model and the prompt template loaded can be validated to ensure it contains them all.
+- [ ] : Make the vector-able entities uniform, so that we have common ways to build the prompt and place them in the vector db
 
 ### Startup Entities
 
