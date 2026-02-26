@@ -81,6 +81,10 @@ class Player:
         )
         self.history = MissionHistory()
 
+    def render_state(self) -> str:
+        """Return a string representation of the player's state for rendering."""
+        return f"{self.name} at {self.position} - {self.state}"
+
     # ------------------------------------------------------------------
     # Agent loop
     # ------------------------------------------------------------------
@@ -118,7 +122,7 @@ class Player:
             mission=self.mission,
             history=self.history,
             observation=self.last_observation,
-            player_state=str(self.position),
+            player_state=self.render_state(),
         )
         alg.log(f"PLAYER.play {self.name}: picked {action}")
         self.state = PlayerState.IDLE
