@@ -22,13 +22,13 @@ ref: `.venv/lib/python3.13/site-packages/langchain_chroma/vectorstores.py`
 
 Mirror the `chat/config/` and `embeddings/config/` pattern for vector stores:
 
-- `VectorStoreConfig` — abstract base with a `create_vector_store()` factory
-- `ChromaConfig` — concrete Chroma subclass (local, persistent, or server)
+- `VectorStoreConfig` - abstract base with a `create_vector_store()` factory
+- `ChromaConfig` - concrete Chroma subclass (local, persistent, or server)
 - Update `EntityStore` to accept a `VectorStoreConfig` instead of a raw `CChroma`
 
 ## Design
 
-### 1. `VectorStoreConfig` — `src/laife/llm_services/vectorstores/config/base.py`
+### 1. `VectorStoreConfig` - `src/laife/llm_services/vectorstores/config/base.py`
 
 ```python
 from abc import ABC, abstractmethod
@@ -47,11 +47,11 @@ class VectorStoreConfig(BaseModelKwargs, ABC):
     def create_vector_store(self) -> CChroma: ...
 ```
 
-Fields kept to a minimum — only the two that are truly provider-agnostic.
+Fields kept to a minimum - only the two that are truly provider-agnostic.
 `embeddings_config` is forwarded to the concrete store the same way `CChroma.__init__`
 already accepts it today.
 
-### 2. `ChromaConfig` — `src/laife/llm_services/vectorstores/config/chroma.py`
+### 2. `ChromaConfig` - `src/laife/llm_services/vectorstores/config/chroma.py`
 
 Covers the three common Chroma deployment modes (in-memory, local persistent, server):
 
@@ -85,7 +85,7 @@ class ChromaConfig(VectorStoreConfig):
 Fields are nullable so that unused deployment modes don't pollute the config.
 `CChroma` already ignores `None` kwargs when forwarding to `Chroma.__init__`.
 
-### 3. Update `EntityStore` — `src/laife/llm_services/vectorstores/entity_store.py`
+### 3. Update `EntityStore` - `src/laife/llm_services/vectorstores/entity_store.py`
 
 Replace the `CChroma` constructor arg with `VectorStoreConfig`:
 

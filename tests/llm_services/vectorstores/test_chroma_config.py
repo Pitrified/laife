@@ -1,4 +1,4 @@
-"""Unit tests for ChromaConfig — no network or disk I/O required."""
+"""Unit tests for ChromaConfig - no network or disk I/O required."""
 
 from laife.llm_services.vectorstores.cchroma import CChroma
 from laife.llm_services.vectorstores.config.base import VectorStoreConfig
@@ -27,7 +27,7 @@ def test_chroma_config_is_vector_store_config() -> None:
 
 
 # ---------------------------------------------------------------------------
-# create_vector_store  — ephemeral in-memory Chroma
+# create_vector_store  - ephemeral in-memory Chroma
 # ---------------------------------------------------------------------------
 
 

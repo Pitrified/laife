@@ -67,8 +67,8 @@ Replace the bare `building_type: str` field with `building_type: BuildingType`.
 
 5. **Update call-sites**
    - `src/laife/entities/world_runner.py` (or wherever buildings are
-     constructed) — pass a `BuildingType` object instead of a bare string
-   - rendering code that reads `size` — now reads `building.building_type.size`
+     constructed) - pass a `BuildingType` object instead of a bare string
+   - rendering code that reads `size` - now reads `building.building_type.size`
 
 6. **Update tests**
    - any test that builds a `Building(...)` directly needs to supply a

@@ -9,9 +9,9 @@ The player brain is responsible for in general interacting with the language mod
 - `entities/action.py`: `BaseAction`, `ActionMove`, `ActionBuild`, `ActionCraft`, `ActionPlan`, `Actions` union, `ActionEnvelope`, `MissingPromptVariablesError`, `ActionPicker(chat_config, prompt_str)` ✅
 - `entities/world_channel.py`: `WReq`, `WRes`, `WRecBuild`, `WRecObserve` ✅
 - `entities/world_runner.py`: `WorldRunner` with `describe_world()` stub ✅
-- `llm/player_brain.py`: `PlayerBrainConfig`, `PlayerBrain(config)` — owns `ActionPicker`; `think(mission, history, observation, player_state) -> BaseAction` fully wired ✅
+- `llm/player_brain.py`: `PlayerBrainConfig`, `PlayerBrain(config)` - owns `ActionPicker`; `think(mission, history, observation, player_state) -> BaseAction` fully wired ✅
 - `llm/prompt_loader.py`: `PromptLoaderConfig`, `PromptLoader`, `NoPromptVersionFoundError` ✅
-- `llm/mission.py`: `Mission`, `MissionHistory`, `MissionHistoryEntry`, `MissionStatus` — `to_prompt()` on all of them
+- `llm/mission.py`: `Mission`, `MissionHistory`, `MissionHistoryEntry`, `MissionStatus` - `to_prompt()` on all of them
 - `entities/player.py`: `Player` with `play()` loop (observe-then-think); `think()` calls `brain.think()`; `observe()` refreshes `last_observation`; `PlayerBrainConfig` built from `LaifeParams` ✅
 - `llm_services/chat/config/base.py`: `ChatConfig(BaseModelKwargs)` with `create_chat_model()`
 - `params/laife_paths.py`: `LaifePaths` with `src_fol`, `root_fol`, `prompts_fol`, etc. via `LaifeParams` singleton ✅
@@ -21,11 +21,11 @@ The player brain is responsible for in general interacting with the language mod
 
 ## Implementation plan
 
-### Phase 1 — PromptLoader infrastructure ✅
+### Phase 1 - PromptLoader infrastructure ✅
 
 **Files:** `src/laife/llm/prompt_loader.py`, `src/laife/prompts/player_brain/v1.jinja`
 
-1. ✅ Created `src/laife/prompts/player_brain/v1.jinja` — system prompt template with placeholders for mission, history, observation, player_state; leave rendering for later phases
+1. ✅ Created `src/laife/prompts/player_brain/v1.jinja` - system prompt template with placeholders for mission, history, observation, player_state; leave rendering for later phases
 2. ✅ Added `prompts_fol` to `LaifePaths.load_common_config_pre()` pointing to `src/laife/prompts/`; also updated `__str__`
 3. ✅ Created `PromptLoaderConfig(BaseModel)` with fields: `base_prompt_fol: Path`, `prompt_name: str`, `version: str` (default `"auto"`)
    - expected file path: `base_prompt_fol / prompt_name / f"v{version}.jinja"`
@@ -36,7 +36,7 @@ The player brain is responsible for in general interacting with the language mod
 
 ---
 
-### Phase 2 — PlayerBrainConfig + refactored PlayerBrain ✅
+### Phase 2 - PlayerBrainConfig + refactored PlayerBrain ✅
 
 **Files:** `src/laife/llm/player_brain.py`
 
@@ -52,11 +52,11 @@ The player brain is responsible for in general interacting with the language mod
 
 ---
 
-### Phase 3 — ActionObserve + player observation state ✅
+### Phase 3 - ActionObserve + player observation state ✅
 
 **Files:** `src/laife/entities/action.py`, `src/laife/entities/player.py`, `src/laife/entities/world_runner.py`, `src/laife/entities/world_channel.py`
 
-1. ✅ Added `ActionObserve(BaseAction)` to `action.py` — no extra fields beyond `reason`
+1. ✅ Added `ActionObserve(BaseAction)` to `action.py` - no extra fields beyond `reason`
 2. ✅ Added `ActionObserve` to the `Actions` union
 3. ✅ `Player.__init__`: added `self.last_observation: str = ""`
 4. ✅ `Player.play()` match block: added `case ActionObserve() as act: wrsp = await self.observe(act)` (before other cases)
@@ -76,38 +76,38 @@ So the `ActionObserve` is not a possible action for the brain to choose.
 
 ---
 
-### Phase 4 — ActionPicker context enrichment ✅
+### Phase 4 - ActionPicker context enrichment ✅
 
 **Files:** `src/laife/entities/action.py`
 
 1. ✅ Removed `action_template_str` and `action_prompt_template` module-level variables
 2. ✅ Updated `ActionPicker` dataclass: added `prompt_str: str` field; `__post_init__` builds `ChatPromptTemplate` from it using `template_format="jinja2"`, validates required variables (`mission`, `history`, `observation`, `player_state`) via `MissingPromptVariablesError`
 3. ✅ Updated `invoke` / `ainvoke` signatures to accept `mission`, `history`, `observation`, `player_state` and pass all four into the chain
-4. ✅ ~~Inject `actions_schema` into the prompt~~ — not needed. `with_structured_output(ActionEnvelope)` already delivers the full field definitions to the model via the API's tool/function-calling mechanism. A raw JSON schema string in the prompt would be redundant and noisy. Describe actions semantically in the Jinja template if clarity is needed.
+4. ✅ ~~Inject `actions_schema` into the prompt~~ - not needed. `with_structured_output(ActionEnvelope)` already delivers the full field definitions to the model via the API's tool/function-calling mechanism. A raw JSON schema string in the prompt would be redundant and noisy. Describe actions semantically in the Jinja template if clarity is needed.
 
-#### Phase 4.1 — ActionPicker input ✅
+#### Phase 4.1 - ActionPicker input ✅
 
 1. ✅ Added `ActionPickerInput(BaseModelKwargs)` to `action.py` with fields `mission`, `history`, `observation`, `player_state: str`
-2. ✅ Replaced hardcoded `_REQUIRED_PROMPT_VARS` frozenset with `frozenset(ActionPickerInput.model_fields)` — single source of truth
-3. ✅ Updated `ActionPicker.invoke(action_input: ActionPickerInput)` / `ainvoke(action_input: ActionPickerInput)` — call `action_input.to_kw()` to feed the chain
+2. ✅ Replaced hardcoded `_REQUIRED_PROMPT_VARS` frozenset with `frozenset(ActionPickerInput.model_fields)` - single source of truth
+3. ✅ Updated `ActionPicker.invoke(action_input: ActionPickerInput)` / `ainvoke(action_input: ActionPickerInput)` - call `action_input.to_kw()` to feed the chain
 4. ✅ Updated `PlayerBrain.think()` to construct `ActionPickerInput` and pass it to `ainvoke`
 5. ✅ Updated `test_think_passes_correct_kwargs` to assert via `ActionPickerInput`
 
 ---
 
-### Phase 5 — Wire Player.think() through PlayerBrain ✅
+### Phase 5 - Wire Player.think() through PlayerBrain ✅
 
 **Files:** `src/laife/entities/player.py`, `src/laife/llm/player_brain.py`
 
 1. ✅ `PlayerBrain.__init__`: instantiates `ActionPicker(chat_config=config.chat_config, prompt_str=loaded_prompt)`; removed stale `self.llm` (owned by `ActionPicker` now)
 2. ✅ `PlayerBrain.think(mission, history, observation, player_state) -> BaseAction`: calls `self.action_picker.ainvoke(...)` and returns the action
-3. ✅ `Player.__init__`: constructs `PlayerBrainConfig` from `LaifeParams()` — `ChatParams(env_type).default` for the chat config, `prompts_fol / "player_brain"` for the prompt loader
+3. ✅ `Player.__init__`: constructs `PlayerBrainConfig` from `LaifeParams()` - `ChatParams(env_type).default` for the chat config, `prompts_fol / "player_brain"` for the prompt loader
 4. ✅ `Player.think()`: replaced hardcoded `ActionMove` stub with `await self.brain.think(mission, history, last_observation, position)`
 5. ✅ `Player.play()`: calls `await self.observe()` at the top of every loop iteration before calling `think()`
 
 ---
 
-### Phase 6 — Tests ✅
+### Phase 6 - Tests ✅
 
 **Files:** `tests/llm/test_prompt_loader.py`, `tests/llm/test_player_brain.py`
 

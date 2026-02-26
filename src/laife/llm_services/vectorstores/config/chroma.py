@@ -7,11 +7,11 @@ from laife.llm_services.vectorstores.config.base import VectorStoreConfig
 class ChromaConfig(VectorStoreConfig):
     """Config for a local or server-backed Chroma vector store.
 
-    Three deployment modes are supported — pick the fields that apply:
+    Three deployment modes are supported - pick the fields that apply:
 
-    * **In-memory / ephemeral** — leave all optional fields as ``None``.
-    * **Local persistent** — set ``persist_directory``.
-    * **Remote server** — set ``host`` and optionally ``port`` / ``ssl``.
+    * **In-memory / ephemeral** - leave all optional fields as ``None``.
+    * **Local persistent** - set ``persist_directory``.
+    * **Remote server** - set ``host`` and optionally ``port`` / ``ssl``.
     """
 
     # local persistent store ------------------------------------------------

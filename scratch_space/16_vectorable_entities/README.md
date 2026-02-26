@@ -2,8 +2,8 @@
 
 Some entities can be generated dynamically by the player and accepted as valid by the world:
 
-- `BuildingType` — no vector coupling today; needs it added
-- `Utensil` — already has `to_document` / `from_document`, but is tightly coupled to `CChroma`
+- `BuildingType` - no vector coupling today; needs it added
+- `Utensil` - already has `to_document` / `from_document`, but is tightly coupled to `CChroma`
 
 ## Problem
 
@@ -19,7 +19,7 @@ A separate store object owns the vector DB and all I/O with it.
 
 ## Design
 
-### 1. `Vectorable` protocol — `src/laife/entities/vectorable.py`
+### 1. `Vectorable` protocol - `src/laife/entities/vectorable.py`
 
 A small `Protocol` (or ABC) that both `Utensil` and `BuildingType` will satisfy:
 
@@ -33,19 +33,19 @@ class Vectorable(Protocol):
 
 `to_document` must write `entity_type` into `doc.metadata` as a discriminator.
 
-### 2. Refactor `Utensil` — `src/laife/entities/utensil.py`
+### 2. Refactor `Utensil` - `src/laife/entities/utensil.py`
 
 - Remove `vector_db: CChroma` from `__init__`
 - Remove `add_to_vdb()`
-- Remove `vector_db` arg from `from_document` — it returns a plain `Utensil`
+- Remove `vector_db` arg from `from_document` - it returns a plain `Utensil`
 
-### 3. Add `to_document` / `from_document` to `BuildingType` — `src/laife/entities/building.py`
+### 3. Add `to_document` / `from_document` to `BuildingType` - `src/laife/entities/building.py`
 
 `BuildingType` is a Pydantic `BaseModel`; add the two methods directly on the class.
 `entity_type` metadata value → `"building_type"`.
 `size` is a tuple; store as `"size_w"` / `"size_h"` integers in metadata.
 
-### 4. `EntityStore` — `src/laife/llm_services/vectorstores/entity_store.py`
+### 4. `EntityStore` - `src/laife/llm_services/vectorstores/entity_store.py`
 
 Single class that wraps `CChroma` and knows how to round-trip `Vectorable` objects:
 
@@ -63,7 +63,7 @@ class EntityStore:
         """Filtered similarity search by entity_type metadata."""
 ```
 
-No `load_all` for now — retrieval is always query-driven.
+No `load_all` for now - retrieval is always query-driven.
 
 ### 5. Registry / dispatcher (optional, later)
 
@@ -75,12 +75,12 @@ collection.
 
 | File                                                  | Change                                                |
 | ----------------------------------------------------- | ----------------------------------------------------- |
-| `src/laife/entities/vectorable.py`                    | create — `Vectorable` protocol                        |
+| `src/laife/entities/vectorable.py`                    | create - `Vectorable` protocol                        |
 | `src/laife/entities/utensil.py`                       | remove `vector_db` arg, remove `add_to_vdb`           |
 | `src/laife/entities/building.py`                      | add `to_document` / `from_document` to `BuildingType` |
-| `src/laife/llm_services/vectorstores/entity_store.py` | create — `EntityStore`                                |
+| `src/laife/llm_services/vectorstores/entity_store.py` | create - `EntityStore`                                |
 | `src/laife/entities/__init__.py`                      | export `Vectorable`, keep `Utensil`                   |
-| `tests/entities/test_vectorable.py`                   | create — unit tests, no live DB needed                |
+| `tests/entities/test_vectorable.py`                   | create - unit tests, no live DB needed                |
 
 ## Constraints
 
