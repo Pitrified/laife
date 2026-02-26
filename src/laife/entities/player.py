@@ -8,7 +8,6 @@ from laife.config.types import Position
 from laife.entities.action import ActionBuild
 from laife.entities.action import ActionCraft
 from laife.entities.action import ActionMove
-from laife.entities.action import ActionObserve
 from laife.entities.action import ActionPlan
 from laife.entities.action import BaseAction
 from laife.entities.world_channel import WRecObserve
@@ -91,12 +90,9 @@ class Player:
         while True:
             alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
             # Refresh observation before deciding
-            await self.observe(ActionObserve(reason="Observing surroundings before acting."))
+            await self.observe()
             action = await self.think()
             match action:
-                case ActionObserve() as act:
-                    # TODO: remove this, always observe beforehand
-                    wrsp = await self.observe(act)
                 case ActionMove() as act:
                     wrsp = await self.move(act)
                 case ActionBuild() as act:
@@ -128,7 +124,7 @@ class Player:
         self.state = PlayerState.IDLE
         return action
 
-    async def observe(self, action: ActionObserve) -> WRes:  # noqa: ARG002
+    async def observe(self) -> WRes:
         """Request a world observation and cache it in last_observation."""
         alg.log(f"PLAYER.observe {self.name}: requesting observation")
         wreq = WRecObserve(response_queue=self.input_queue)

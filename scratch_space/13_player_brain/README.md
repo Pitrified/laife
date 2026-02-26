@@ -6,7 +6,7 @@ The player brain is responsible for in general interacting with the language mod
 
 ## Current state of the codebase
 
-- `entities/action.py`: `BaseAction`, `ActionMove`, `ActionBuild`, `ActionCraft`, `ActionPlan`, `ActionObserve`, `Actions` union, `ActionEnvelope`, `MissingPromptVariablesError`, `ActionPicker(chat_config, prompt_str)` ✅
+- `entities/action.py`: `BaseAction`, `ActionMove`, `ActionBuild`, `ActionCraft`, `ActionPlan`, `Actions` union, `ActionEnvelope`, `MissingPromptVariablesError`, `ActionPicker(chat_config, prompt_str)` ✅
 - `entities/world_channel.py`: `WReq`, `WRes`, `WRecBuild`, `WRecObserve` ✅
 - `entities/world_runner.py`: `WorldRunner` with `describe_world()` stub ✅
 - `llm/player_brain.py`: `PlayerBrainConfig`, `PlayerBrain(config)` — owns `ActionPicker`; `think(mission, history, observation, player_state) -> BaseAction` fully wired ✅
@@ -63,16 +63,16 @@ The player brain is responsible for in general interacting with the language mod
 5. ✅ `Player.observe(action: ActionObserve) -> WRes`: sends a `WRecObserve` to world, sets `self.last_observation = wrsp.response_data["description"]`, returns `WRes`
 6. ✅ `WorldRunner.describe_world()`: stub returning placeholder description; `WRecObserve` added to `world_channel.py` and routed in `handle_player_input()`
 
-#### Phase 3.1 ActionObserve not needed
+#### Phase 3.1 ActionObserve not needed ✅
 
 As we always `await self.observe` in `play` loop,
 the player always has the `last_observation` updated before calling `think()`.
 So the `ActionObserve` is not a possible action for the brain to choose.
 
-1. Remove `ActionObserve` from `action.py`
-2. Remove `case ActionObserve()` from `Player.play()`
-3. Update `Player.observe()` to not need an action input, just connect to the world and update `last_observation`
-4. Update this readme accordingly
+1. ✅ Removed `ActionObserve` from `action.py` (class + `Actions` union)
+2. ✅ Removed `case ActionObserve()` from `Player.play()`
+3. ✅ Updated `Player.observe()` to take no arguments
+4. ✅ Updated this readme accordingly
 
 ---
 
@@ -95,7 +95,7 @@ So the `ActionObserve` is not a possible action for the brain to choose.
 2. ✅ `PlayerBrain.think(mission, history, observation, player_state) -> BaseAction`: calls `self.action_picker.ainvoke(...)` and returns the action
 3. ✅ `Player.__init__`: constructs `PlayerBrainConfig` from `LaifeParams()` — `ChatParams(env_type).default` for the chat config, `prompts_fol / "player_brain"` for the prompt loader
 4. ✅ `Player.think()`: replaced hardcoded `ActionMove` stub with `await self.brain.think(mission, history, last_observation, position)`
-5. ✅ `Player.play()`: dispatches `ActionObserve` at the top of every loop iteration before calling `think()`
+5. ✅ `Player.play()`: calls `await self.observe()` at the top of every loop iteration before calling `think()`
 
 ---
 

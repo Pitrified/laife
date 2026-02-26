@@ -51,11 +51,7 @@ class ActionPlan(BaseAction):
     """Plan the next steps for the mission."""
 
 
-class ActionObserve(BaseAction):
-    """Request a description of the current surroundings from the world."""
-
-
-Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan | ActionObserve
+Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan
 
 
 class ActionEnvelope(BaseModel):
