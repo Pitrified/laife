@@ -4,6 +4,9 @@ import asyncio
 import random
 
 from laife.entities.building import Building
+from laife.entities.building_types import FACTORY
+from laife.entities.building_types import FARM
+from laife.entities.building_types import HOUSE
 from laife.entities.player import Player
 from laife.entities.world_runner import WorldRunner
 from laife.rendering.world_renderer import WorldRenderer
@@ -31,28 +34,25 @@ def setup_world(runner: WorldRunner) -> None:
     # a house
     b = Building(
         name="Alex's House",
-        building_type="house",
+        building_type=HOUSE,
         description="This house belongs to Alex.",
         position=(300, 100),
-        size=(120, 40),
     )
     alg.log(f"W: Adding building >>>\n{b.to_prompt(player_pov)}\n<<<")
     runner.add_building(b)
     # a farm
     b = Building(
         name="Big ol Farm",
-        building_type="farm",
+        building_type=FARM,
         position=(200, 400),
-        size=(120, 40),
     )
     alg.log(f"W: Adding building >>>\n{b.to_prompt(player_pov)}\n<<<")
     runner.add_building(b)
     # a factory
     b = Building(
         name="Utensil shop",
-        building_type="factory",
+        building_type=FACTORY,
         position=(500, 800),
-        size=(120, 40),
     )
     alg.log(f"W: Adding building >>>\n{b.to_prompt(player_pov)}\n<<<")
     runner.add_building(b)
@@ -60,9 +60,8 @@ def setup_world(runner: WorldRunner) -> None:
     # add a building that collides with the house (should be rejected)
     b = Building(
         name="Colliding House",
-        building_type="house",
+        building_type=HOUSE,
         position=(300, 100),
-        size=(120, 40),
     )
     resp = runner.add_building(b)
     alg.log(f"W: Add colliding building response: {resp}")

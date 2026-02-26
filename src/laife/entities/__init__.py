@@ -1,6 +1,8 @@
 """Entities package - public API."""
 
 from laife.entities.building import Building
+from laife.entities.building import BuildingType
+from laife.entities.building_types import BUILDING_TYPES
 from laife.entities.player import Player
 from laife.entities.player import PlayerState
 from laife.entities.utils.geometry import aabb_collides
@@ -12,6 +14,8 @@ from laife.rendering.world_renderer import WorldRenderer
 __all__ = [  # noqa: RUF022
     # data / logic
     "Building",
+    "BuildingType",
+    "BUILDING_TYPES",
     "Player",
     "PlayerState",
     "WorldRunner",
