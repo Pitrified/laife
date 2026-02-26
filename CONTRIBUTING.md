@@ -4,7 +4,7 @@
 
 ### Pygame
 
-might need SDL to solve
+might need SDL to solve this error:
 
 `RuntimeError: Unable to run "sdl-config". Please make sure a development version of SDL is installed.`
 
@@ -19,40 +19,29 @@ sudo apt install -y \
     libfreetype6-dev \
     libportmidi-dev \
     libjpeg-dev \
-    libpng-dev 
+    libpng-dev
 ```
-
 
 ### Install package
 
 ```bash
-poetry install
+uv sync --all-extras --all-groups
 ```
 
-edit the chromadb package to deal with the old sqlite3 version
+### API key
 
-`~/.cache/pypoetry/virtualenvs/laife-IdkopDz3-py3.11/lib/python3.11/site-packages/chromadb/__init__.py`
-
-around line 86 where the import fails
-
-```
-            __import__("pysqlite3")
-            import sys
-            sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
-```
-
-### Openai key
-
-place the openai key in `src/laife/config/credentials.py`:
-
-```python
-from pydantic.v1 import SecretStr
-
-OPENAI_API_KEY = SecretStr("your-openai-api-key")
-```
+place the API keys in `~/cred/laife/.env`, refer to `nokeys.env` for required keys.
 
 ### Run the game
 
 ```bash
-poetry run python game/main.py
+uv run python game/main.py
+```
+
+### Run tests, lint, type-check
+
+```bash
+uv run pytest                # run tests
+uv run ruff check .          # lint (ruff, ALL rules enabled - see ruff.toml)
+uv run pyright               # type-check (src/ and tests/ only)
 ```

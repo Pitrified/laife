@@ -2,7 +2,7 @@
 
 ## Project overview
 
-lAIfe is an LLM-driven life-simulation game built on Pygame + asyncio. Players are autonomous AI agents that perceive the world, plan missions, and issue actions; the game engine validates and executes those actions. Python 3.13, managed with **uv** (not poetry - CONTRIBUTING.md is outdated).
+lAIfe is an LLM-driven life-simulation game built on Pygame + asyncio. Players are autonomous AI agents that perceive the world, plan missions, and issue actions; the game engine validates and executes those actions. Python 3.13, managed with **uv**.
 
 ## Running & tooling
 
