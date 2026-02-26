@@ -1,5 +1,8 @@
 """Building entity - pure data, no pygame dependency."""
 
+from typing import Self
+
+from langchain_core.documents import Document
 from pydantic import BaseModel
 
 from laife.config.types import Position
@@ -13,6 +16,34 @@ class BuildingType(BaseModel):
     building_type: str
     description: str
     size: Size
+
+    def to_prompt(self) -> str:
+        """Return a short prompt describing the building type."""
+        return f"{self.building_type}: {self.description}"
+
+    def to_document(self) -> Document:
+        """Serialize the building type to a LangChain Document."""
+        meta = {
+            "building_type": self.building_type,
+            "description": self.description,
+            "size_w": self.size[0],
+            "size_h": self.size[1],
+            "entity_type": "building_type",
+        }
+        return Document(
+            page_content=self.to_prompt(),
+            metadata=meta,
+        )
+
+    @classmethod
+    def from_document(cls, doc: Document) -> Self:
+        """Reconstruct a BuildingType from a LangChain Document."""
+        meta = doc.metadata
+        return cls(
+            building_type=meta["building_type"],
+            description=meta["description"],
+            size=(meta["size_w"], meta["size_h"]),
+        )
 
 
 class Building(BaseModel):

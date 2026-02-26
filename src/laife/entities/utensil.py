@@ -2,8 +2,6 @@
 
 from langchain_core.documents import Document
 
-from laife.llm_services.vectorstores.cchroma import CChroma
-
 
 class Utensil:
     """An utensil the player can use."""
@@ -12,14 +10,10 @@ class Utensil:
         self,
         name: str,
         description: str,
-        vector_db: CChroma,
     ) -> None:
-        """Initialize an utensil with a name, description and vector DB."""
+        """Initialize an utensil with a name and description."""
         self.name = name
         self.description = description
-        self.vector_db = vector_db
-
-        self.add_to_vdb()
 
     def __str__(self) -> str:
         """Return the utensil's display name."""
@@ -46,15 +40,9 @@ class Utensil:
         )
 
     @classmethod
-    def from_document(cls, doc: Document, vector_db: CChroma) -> "Utensil":
-        """Create an utensil from a document."""
+    def from_document(cls, doc: Document) -> "Utensil":
+        """Reconstruct an utensil from a LangChain Document."""
         return cls(
             name=doc.metadata["name"],
             description=doc.metadata["description"],
-            vector_db=vector_db,
         )
-
-    def add_to_vdb(self) -> None:
-        """Add the utensil to the vector db."""
-        utensil_doc = self.to_document()
-        self.vector_db.add_documents([utensil_doc])

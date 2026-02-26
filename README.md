@@ -153,6 +153,9 @@ The new planning will have more feedback received in the history.
    And we can maybe just use `response: BaseModel` in `WRes`, and just have the different schemas defined.
 - [x] : Add an ActionPickerInput BaseModelKw, receive that in invoke; required prompt vars can be inferred from the fields of the input model and the prompt template loaded can be validated to ensure it contains them all.
 - [ ] : Make the vector-able entities uniform, so that we have common ways to build the prompt and place them in the vector db
+- [ ] : Add a structured logger with a whole bunch of info from the game loop/missions/actions, to be able to analyze the game play and debug better
+   - [ ] : Add a dashboard to visualize the logs and analyze the game play
+   - [ ] : Enhance UI of game window to show more info, also interactive with mouse
 
 ### Startup Entities
 
