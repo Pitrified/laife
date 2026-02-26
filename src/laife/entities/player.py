@@ -22,7 +22,6 @@ from laife.llm.player_brain import PlayerBrain
 from laife.llm.player_brain import PlayerBrainConfig
 from laife.llm.prompt_loader import PromptLoaderConfig
 from laife.params.laife_params import get_laife_params
-from laife.params.llm_services.chat import ChatParams
 from laife.ui.alog import alg
 
 
@@ -68,7 +67,7 @@ class Player:
         laife_params = get_laife_params()
         self.brain = PlayerBrain(
             PlayerBrainConfig(
-                chat_config=ChatParams(laife_params.env_type).default,
+                chat_config=laife_params.llm_services.chat.default,
                 prompt_loader_config=PromptLoaderConfig(
                     base_prompt_fol=laife_params.paths.prompts_fol,
                     prompt_name="player_brain",
