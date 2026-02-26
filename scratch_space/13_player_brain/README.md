@@ -63,6 +63,17 @@ The player brain is responsible for in general interacting with the language mod
 5. ✅ `Player.observe(action: ActionObserve) -> WRes`: sends a `WRecObserve` to world, sets `self.last_observation = wrsp.response_data["description"]`, returns `WRes`
 6. ✅ `WorldRunner.describe_world()`: stub returning placeholder description; `WRecObserve` added to `world_channel.py` and routed in `handle_player_input()`
 
+#### Phase 3.1 ActionObserve not needed
+
+As we always `await self.observe` in `play` loop,
+the player always has the `last_observation` updated before calling `think()`.
+So the `ActionObserve` is not a possible action for the brain to choose.
+
+1. Remove `ActionObserve` from `action.py`
+2. Remove `case ActionObserve()` from `Player.play()`
+3. Update `Player.observe()` to not need an action input, just connect to the world and update `last_observation`
+4. Update this readme accordingly
+
 ---
 
 ### Phase 4 — ActionPicker context enrichment ✅
