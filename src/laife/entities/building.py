@@ -1,7 +1,6 @@
 """Building entity - pure data, no pygame dependency."""
 
-from dataclasses import dataclass
-from dataclasses import field
+from pydantic import BaseModel
 
 from laife.config.types import Position
 from laife.config.types import Size
@@ -15,15 +14,14 @@ BUILDING_DESCRIPTIONS = {
 }
 
 
-@dataclass
-class Building:
+class Building(BaseModel):
     """Pure data representation of a building (no pygame)."""
 
     name: str
     building_type: str
     position: Position
     size: Size
-    description: str | None = field(default=None)
+    description: str | None = None
 
     def __str__(self) -> str:
         """Return the string representation of the building."""

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import Enum
 import os
 
 from loguru import logger as lg
+from pydantic import BaseModel
 
 
 class EnvStageType(Enum):
@@ -89,8 +89,7 @@ class UnknownEnvStageError(Exception):
         super().__init__(message)
 
 
-@dataclass
-class EnvType:
+class EnvType(BaseModel):
     """Deployment environment type."""
 
     stage: EnvStageType
@@ -101,7 +100,7 @@ class EnvType:
         """Initialize the environment from environment variables."""
         stage = EnvStageType.from_env_var()
         location = EnvLocationType.from_env_var()
-        return EnvType(stage, location)
+        return EnvType(stage=stage, location=location)
 
     def __str__(self) -> str:
         """Return the string representation of the environment."""

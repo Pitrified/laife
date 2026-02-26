@@ -36,7 +36,7 @@ why do we use them both? can we unify the approach, possibly using pydantic mode
 ### Migrate to pydantic (easy wins)
 
 - **`EnvType`** — pure data, two enum fields, a factory classmethod. `from_env_var` as a `@classmethod` on `BaseModel` is fully supported. Free validation, no friction.
-- **`Building`** — pure data + display/prompt methods, no mutable state beyond construction. Pydantic adds field validation. `description: str | None = field(default=None)` becomes `description: str | None = None`.
+- **`Building`** — pure data + display/prompt methods, no mutable state beyond construction. Pydantic adds field validation. `description: str | None = field(default=None)` becomes `description: str | None = Field(default=None)`.
 
 ### Keep as dataclass
 
