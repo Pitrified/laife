@@ -28,6 +28,8 @@ from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
 from laife.llm.player_brain import PlayerBrain
 from laife.llm.player_brain import PlayerBrainConfig
+from laife.llm.player_planner import PlayerPlanner
+from laife.llm.player_planner import PlayerPlannerConfig
 from laife.llm.prompt_loader import PromptLoaderConfig
 from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
@@ -81,6 +83,15 @@ class Player:
                 prompt_loader_config=PromptLoaderConfig(
                     base_prompt_fol=laife_params.paths.prompts_fol,
                     prompt_name="player_brain",
+                ),
+            )
+        )
+        self.planner = PlayerPlanner(
+            PlayerPlannerConfig(
+                chat_config=laife_params.llm_services.chat.default,
+                prompt_loader_config=PromptLoaderConfig(
+                    base_prompt_fol=laife_params.paths.prompts_fol,
+                    prompt_name="player_planner",
                 ),
             )
         )
@@ -152,13 +163,27 @@ class Player:
         return wrsp
 
     async def plan(self, action: ActionPlan) -> WRes:
-        """Reflect on the mission and plan next steps."""
-        alg.log(f"PLAYER.plan {self.name}: planning for {action.reason}")
+        """Decompose the current mission into sub-missions using the planner LLM."""
+        alg.log(f"PLAYER.plan {self.name}: planning for '{action.reason}'")
         self.state = PlayerState.THINKING
-        await asyncio.sleep(1)
-        alg.log(f"PLAYER.plan {self.name}: planned")
+        result = await self.planner.ainvoke(
+            mission=self.mission,
+            history=self.history,
+            observation=self.last_observation,
+            player_state=self.render_state(),
+        )
+        for sub_objective in result.sub_missions:
+            self.mission.add_sub_mission(sub_objective)
+        self.history = MissionHistory()
+        alg.log(
+            f"PLAYER.plan {self.name}: created {len(result.sub_missions)} sub-mission(s):"
+            f" {result.sub_missions}"
+        )
         self.state = PlayerState.IDLE
-        return WRes(WResStatus.SUCCESS, {"message": "Planning completed."})
+        return WRes(
+            WResStatus.SUCCESS,
+            {"sub_missions": result.sub_missions, "reason": result.reason},
+        )
 
     async def move(self, action: ActionMove) -> WRes:
         """Move the player in delta steps, each validated by the world."""

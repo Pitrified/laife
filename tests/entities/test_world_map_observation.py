@@ -31,8 +31,10 @@ def _make_player(runner: WorldRunner, position: Position = (0, 0)) -> Player:
         "laife.entities.player",
         get_laife_params=MagicMock(return_value=MagicMock()),
         PlayerBrainConfig=MagicMock(),
+        PlayerPlannerConfig=MagicMock(),
         PromptLoaderConfig=MagicMock(),
         PlayerBrain=MagicMock(return_value=MagicMock()),
+        PlayerPlanner=MagicMock(return_value=MagicMock()),
     ):
         player = Player(
             name="tester",
@@ -217,8 +219,8 @@ def test_observe_at_skips_player_at_same_position() -> None:
 def test_observe_at_includes_other_player() -> None:
     """Other players within the radius appear as player entities."""
     runner = WorldRunner()
-    _make_player(runner, position=(0, 0))   # observing player
-    _make_player(runner, position=(5, 0))   # other player
+    _make_player(runner, position=(0, 0))  # observing player
+    _make_player(runner, position=(5, 0))  # other player
     res = runner.observe_at((0, 0), radius=20)
     obs: WorldMapObservation = res.response_data["observation"]
     player_entities = [e for e in obs.nearby_entities if e.entity_type == "player"]
