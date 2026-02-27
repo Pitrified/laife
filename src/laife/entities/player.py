@@ -11,7 +11,11 @@ from laife.entities.action import ActionCraft
 from laife.entities.action import ActionMove
 from laife.entities.action import ActionPlan
 from laife.entities.action import BaseAction
+from laife.entities.building import Building
+from laife.entities.building import BuildingType
 from laife.entities.utils.directions import cardinal_to_delta
+from laife.entities.world_channel import WRecBuild
+from laife.entities.world_channel import WRecCraft
 from laife.entities.world_channel import WRecMove
 from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
@@ -198,15 +202,46 @@ class Player:
         """Adjust the player's position by delta values."""
         self.position = (self.position[0] + dx, self.position[1] + dy)
 
-    async def build(self, action: ActionBuild) -> WRes:  # noqa: ARG002
+    async def build(self, action: ActionBuild) -> WRes:
         """Prepare and send a build request to the world."""
-        await asyncio.sleep(1)
-        return WRes(WResStatus.SUCCESS, {"message": "You built the thing."})
+        alg.log(f"PLAYER.build {self.name}: building {action.building_type}")
+        building = Building(
+            name=action.building_type,
+            building_type=BuildingType(
+                building_type=action.building_type,
+                description=action.description,
+                size=(action.size, action.size),
+            ),
+            position=self.position,
+            description=action.description,
+        )
+        wreq = WRecBuild(
+            building=building,
+            observation=self.last_observation.to_prompt(),
+            player_state=self.render_state(),
+            response_queue=self.input_queue,
+        )
+        await self.world_input_queue.put(wreq)
+        wrsp = await self.input_queue.get()
+        self.input_queue.task_done()
+        alg.log(f"PLAYER.build {self.name}: got response {wrsp}")
+        return wrsp
 
-    async def craft(self, action: ActionCraft) -> WRes:  # noqa: ARG002
-        """Prepare a craft request."""
-        await asyncio.sleep(1)
-        return WRes(WResStatus.SUCCESS, {"message": "You crafted the thing."})
+    async def craft(self, action: ActionCraft) -> WRes:
+        """Prepare and send a craft request to the world."""
+        alg.log(f"PLAYER.craft {self.name}: crafting {action.utensil_name}")
+        wreq = WRecCraft(
+            utensil_name=action.utensil_name,
+            description=action.description,
+            observation=self.last_observation.to_prompt(),
+            player_state=self.render_state(),
+            response_queue=self.input_queue,
+        )
+        await self.world_input_queue.put(wreq)
+        wrsp = await self.input_queue.get()
+        self.input_queue.task_done()
+        alg.log(f"PLAYER.craft {self.name}: got response {wrsp}")
+        return wrsp
 
     async def action_error(self, action: BaseAction) -> WRes:
         """Handle an unknown action type."""

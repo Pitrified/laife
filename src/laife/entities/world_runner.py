@@ -7,14 +7,20 @@ from laife.entities.building import Building
 from laife.entities.player import Player
 from laife.entities.utils.geometry import aabb_collides
 from laife.entities.world_channel import WRecBuild
+from laife.entities.world_channel import WRecCraft
 from laife.entities.world_channel import WRecMove
 from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
 from laife.entities.world_channel import WResStatus
+from laife.entities.world_judge import WorldActionJudge
+from laife.entities.world_judge import WorldJudgeInput
 from laife.entities.world_map_observation import NearbyEntity
 from laife.entities.world_map_observation import WorldMapObservation
 from laife.entities.world_map_observation import euclidean
+from laife.llm.prompt_loader import PromptLoader
+from laife.llm.prompt_loader import PromptLoaderConfig
+from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
 
 
@@ -34,6 +40,29 @@ class WorldRunner:
 
         # players send world-modification requests through this queue
         self.input_queue: asyncio.Queue[WReq] = asyncio.Queue()
+
+        # LLM judges for build and craft actions
+        laife_params = get_laife_params()
+        build_prompt = PromptLoader(
+            PromptLoaderConfig(
+                base_prompt_fol=laife_params.paths.prompts_fol,
+                prompt_name="world_judge_build",
+            )
+        ).load_prompt()
+        craft_prompt = PromptLoader(
+            PromptLoaderConfig(
+                base_prompt_fol=laife_params.paths.prompts_fol,
+                prompt_name="world_judge_craft",
+            )
+        ).load_prompt()
+        self.build_judge = WorldActionJudge(
+            chat_config=laife_params.llm_services.chat.default,
+            prompt_str=build_prompt,
+        )
+        self.craft_judge = WorldActionJudge(
+            chat_config=laife_params.llm_services.chat.default,
+            prompt_str=craft_prompt,
+        )
 
     # ------------------------------------------------------------------
     # Simulation loop
@@ -55,7 +84,9 @@ class WorldRunner:
         """Route the player request to the appropriate handler."""
         match player_input:
             case WRecBuild():
-                wrsp = self.add_building(player_input.building)
+                wrsp = await self.judge_and_build(player_input)
+            case WRecCraft():
+                wrsp = await self.judge_craft(player_input)
             case WRecObserve():
                 wrsp = self.observe_at(player_input.position)
             case WRecMove():
@@ -75,6 +106,39 @@ class WorldRunner:
     def add_player(self, player: Player) -> None:
         """Register a player with the world."""
         self.players.append(player)
+
+    async def judge_and_build(self, req: WRecBuild) -> WRes:
+        """Validate a build request with the LLM judge then add the building."""
+        judge_input = WorldJudgeInput(
+            action_type="build",
+            action_details=(
+                f"building_type={req.building.building_type.building_type}"
+                f", name={req.building.name}"
+                f", size={req.building.size}"
+                f", description={req.building.description}"
+            ),
+            observation=req.observation,
+            player_state=req.player_state,
+        )
+        result = await self.build_judge.ainvoke(judge_input)
+        if not result.success:
+            return WRes(WResStatus.ERROR, {"feedback": result.feedback})
+        # Judge approved - fall through to spatial check
+        spatial_res = self.add_building(req.building)
+        if spatial_res.status == WResStatus.ERROR:
+            return spatial_res
+        return WRes(WResStatus.SUCCESS, {"feedback": result.feedback})
+
+    async def judge_craft(self, req: WRecCraft) -> WRes:
+        """Validate a craft request with the LLM judge."""
+        judge_input = WorldJudgeInput(
+            action_type="craft",
+            action_details=(f"utensil_name={req.utensil_name}, description={req.description}"),
+            observation=req.observation,
+            player_state=req.player_state,
+        )
+        result = await self.craft_judge.ainvoke(judge_input)
+        return WRes(WResStatus.from_bool(success=result.success), {"feedback": result.feedback})
 
     def add_building(self, building: Building) -> WRes:
         """Add a building after checking for spatial collisions."""
@@ -151,6 +215,3 @@ class WorldRunner:
             radius=radius,
         )
         return WRes(WResStatus.SUCCESS, {"observation": obs})
-
-    def craft(self) -> None:
-        """Craft something (stub)."""

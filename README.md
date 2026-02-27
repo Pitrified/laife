@@ -158,6 +158,8 @@ The new planning will have more feedback received in the history.
 - [ ] : Add a structured logger with a whole bunch of info from the game loop/missions/actions, to be able to analyze the game play and debug better
    - [ ] : Add a dashboard to visualize the logs and analyze the game play
    - [ ] : Enhance UI of game window to show more info, also interactive with mouse
+- [ ] : The sending requests and receiving responses in player is quite repetitive, optimize it
+- [ ] : The action picker and world judge are quite similar, try to create a superclass
 
 ### Startup Entities
 

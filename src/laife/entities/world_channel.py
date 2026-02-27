@@ -19,6 +19,11 @@ class WResStatus(StrEnum):
     SUCCESS = "success"
     ERROR = "error"
 
+    @classmethod
+    def from_bool(cls, *, success: bool) -> WResStatus:
+        """Return SUCCESS when *success* is True, ERROR otherwise."""
+        return cls.SUCCESS if success else cls.ERROR
+
 
 class WRes:
     """A response from the world."""
@@ -58,12 +63,16 @@ class WRecBuild(WReq):
     def __init__(
         self,
         building: Building,
+        observation: str,
+        player_state: str,
         *args,  # noqa: ANN002
         **kwargs,  # noqa: ANN003
     ) -> None:
         """Initialize the building request."""
         super().__init__(*args, **kwargs)
         self.building = building
+        self.observation = observation
+        self.player_state = player_state
 
     def __str__(self) -> str:
         """Return the string representation of the request."""
@@ -71,6 +80,34 @@ class WRecBuild(WReq):
             f"WRecBuild(id={id(self)}"
             f", response_queue={self.response_queue}"
             f", building={self.building})"
+        )
+
+
+class WRecCraft(WReq):
+    """A craft request."""
+
+    def __init__(
+        self,
+        utensil_name: str,
+        description: str,
+        observation: str,
+        player_state: str,
+        *args,  # noqa: ANN002
+        **kwargs,  # noqa: ANN003
+    ) -> None:
+        """Initialize the craft request."""
+        super().__init__(*args, **kwargs)
+        self.utensil_name = utensil_name
+        self.description = description
+        self.observation = observation
+        self.player_state = player_state
+
+    def __str__(self) -> str:
+        """Return the string representation of the request."""
+        return (
+            f"WRecCraft(id={id(self)}"
+            f", utensil_name={self.utensil_name}"
+            f", response_queue={self.response_queue})"
         )
 
 
