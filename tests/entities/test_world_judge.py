@@ -12,11 +12,10 @@ from laife.entities.building import BuildingType
 from laife.entities.world_channel import WRecBuild
 from laife.entities.world_channel import WRecCraft
 from laife.entities.world_channel import WResStatus
-from laife.entities.world_judge import _REQUIRED_PROMPT_VARS
-from laife.entities.world_judge import MissingPromptVariablesError
 from laife.entities.world_judge import WorldActionJudge
 from laife.entities.world_judge import WorldJudgeInput
 from laife.entities.world_judge import WorldJudgeResult
+from laife.llm.structured_chain import MissingPromptVariablesError
 from laife.llm_services.chat.config.ollama import OllamaChatConfig
 
 # ---------------------------------------------------------------------------
@@ -44,7 +43,7 @@ def judge(chat_config: OllamaChatConfig) -> WorldActionJudge:
     """WorldActionJudge with __post_init__ patched to avoid LLM initialisation."""
     with patch(
         "laife.entities.world_judge.WorldActionJudge.__post_init__",
-        lambda self: setattr(self, "chain", MagicMock()),
+        lambda self: setattr(self, "_chain", MagicMock()),
     ):
         return WorldActionJudge(chat_config=chat_config, prompt_str=VALID_PROMPT)
 
@@ -89,9 +88,14 @@ def test_world_judge_input_to_kw(judge_input: WorldJudgeInput) -> None:
     assert kw["player_state"] == "Player p0 at (0, 0) - idle"
 
 
-def test_world_judge_input_fields_match_required_vars() -> None:
-    """WorldJudgeInput fields must equal the _REQUIRED_PROMPT_VARS sentinel."""
-    assert frozenset(WorldJudgeInput.model_fields) == _REQUIRED_PROMPT_VARS
+def test_world_judge_input_has_required_fields() -> None:
+    """WorldJudgeInput must declare all four prompt-variable fields."""
+    assert frozenset(WorldJudgeInput.model_fields) == {
+        "action_type",
+        "action_details",
+        "observation",
+        "player_state",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -153,50 +157,28 @@ def test_judge_invoke_returns_world_judge_result(
     judge: WorldActionJudge,
     judge_input: WorldJudgeInput,
 ) -> None:
-    """invoke() must return a WorldJudgeResult when chain returns one."""
+    """invoke() must return whatever _chain.invoke returns."""
     expected = WorldJudgeResult(success=True, feedback="Looks good.")
-    judge.chain.invoke = MagicMock(return_value=expected)
+    judge._chain.invoke = MagicMock(return_value=expected)
 
     result = judge.invoke(judge_input)
 
-    assert isinstance(result, WorldJudgeResult)
-    assert result.success is True
-
-
-def test_judge_invoke_raises_on_wrong_type(
-    judge: WorldActionJudge,
-    judge_input: WorldJudgeInput,
-) -> None:
-    """invoke() must raise TypeError when chain returns an unexpected type."""
-    judge.chain.invoke = MagicMock(return_value="unexpected string")
-
-    with pytest.raises(TypeError):
-        judge.invoke(judge_input)
+    assert result is expected
+    judge._chain.invoke.assert_called_once_with(judge_input)
 
 
 def test_judge_ainvoke_returns_world_judge_result(
     judge: WorldActionJudge,
     judge_input: WorldJudgeInput,
 ) -> None:
-    """ainvoke() must return a WorldJudgeResult when chain returns one."""
+    """ainvoke() must return whatever _chain.ainvoke returns."""
     expected = WorldJudgeResult(success=False, feedback="No station nearby.")
-    judge.chain.ainvoke = AsyncMock(return_value=expected)
+    judge._chain.ainvoke = AsyncMock(return_value=expected)
 
     result = asyncio.run(judge.ainvoke(judge_input))
 
-    assert isinstance(result, WorldJudgeResult)
-    assert result.success is False
-
-
-def test_judge_ainvoke_raises_on_wrong_type(
-    judge: WorldActionJudge,
-    judge_input: WorldJudgeInput,
-) -> None:
-    """ainvoke() must raise TypeError when chain returns an unexpected type."""
-    judge.chain.ainvoke = AsyncMock(return_value=42)
-
-    with pytest.raises(TypeError):
-        asyncio.run(judge.ainvoke(judge_input))
+    assert result is expected
+    judge._chain.ainvoke.assert_awaited_once_with(judge_input)
 
 
 # ---------------------------------------------------------------------------

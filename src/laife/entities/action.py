@@ -2,12 +2,12 @@
 
 from dataclasses import dataclass
 
-from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel
 from pydantic import Field
 
 from laife.data_models.basemodel_kwargs import BaseModelKwargs
 from laife.entities.utils.directions import CardinalDirection
+from laife.llm.structured_chain import StructuredLLMChain
 from laife.llm_services.chat.config.base import ChatConfig
 
 
@@ -65,25 +65,14 @@ class ActionPickerInput(BaseModelKwargs):
     """Input payload for ActionPicker.invoke / ainvoke.
 
     Field names define the required variables that every prompt template must
-    contain; the validation in ActionPicker.__post_init__ derives the required
-    set directly from these fields so the two can never drift apart.
+    contain; the validation in StructuredLLMChain.__post_init__ derives the
+    required set directly from these fields so the two can never drift apart.
     """
 
     mission: str
     history: str
     observation: str
     player_state: str
-
-
-_REQUIRED_PROMPT_VARS: frozenset[str] = frozenset(ActionPickerInput.model_fields)
-
-
-class MissingPromptVariablesError(ValueError):
-    """Raised when a prompt template is missing required input variables."""
-
-    def __init__(self, missing: set[str] | frozenset[str]) -> None:
-        """Initialise with the set of missing variable names."""
-        super().__init__(f"Prompt template is missing required variables: {sorted(missing)}")
 
 
 @dataclass
@@ -94,30 +83,18 @@ class ActionPicker:
     prompt_str: str
 
     def __post_init__(self) -> None:
-        """Validate the prompt template and build the LangChain chain."""
-        self.prompt_template = ChatPromptTemplate.from_messages(
-            [("system", self.prompt_str)],
-            template_format="jinja2",
+        """Build the underlying structured chain."""
+        self._chain: StructuredLLMChain[ActionPickerInput, ActionEnvelope] = StructuredLLMChain(
+            chat_config=self.chat_config,
+            prompt_str=self.prompt_str,
+            input_model=ActionPickerInput,
+            output_model=ActionEnvelope,
         )
-        missing = _REQUIRED_PROMPT_VARS - set(self.prompt_template.input_variables)
-        if missing:
-            raise MissingPromptVariablesError(missing)
-        self.model = self.chat_config.create_chat_model()
-        self.structured_llm = self.model.with_structured_output(ActionEnvelope)
-        self.chain = self.prompt_template | self.structured_llm
 
     def invoke(self, action_input: ActionPickerInput) -> BaseAction:
         """Pick an action synchronously."""
-        output = self.chain.invoke(action_input.to_kw())
-        if not isinstance(output, ActionEnvelope):
-            msg = f"Unexpected output type: {type(output)}"
-            raise TypeError(msg)
-        return output.act
+        return self._chain.invoke(action_input).act
 
     async def ainvoke(self, action_input: ActionPickerInput) -> BaseAction:
         """Pick an action asynchronously."""
-        output = await self.chain.ainvoke(action_input.to_kw())
-        if not isinstance(output, ActionEnvelope):
-            msg = f"Unexpected output type: {type(output)}"
-            raise TypeError(msg)
-        return output.act
+        return (await self._chain.ainvoke(action_input)).act
