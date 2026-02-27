@@ -70,13 +70,43 @@ class Mission(BaseModel):
         )
         self.steps.append(sm)
 
-    def to_prompt(self, *, top_prompt: bool = True) -> str:
-        """Return the mission as a prompt."""
+    def active_focus(self) -> Mission:
+        """Return the deepest active sub-mission, or self if none."""
+        for step in self.steps:
+            if step.status == MissionStatus.ACTIVE:
+                return step.active_focus()
+        return self
+
+    def advance(self) -> bool:
+        """Activate the next pending step.
+
+        Returns True if a new step was activated, False if all steps are done.
+        When all steps are done, marks self as COMPLETED and propagates upward.
+        """
+        for step in self.steps:
+            if step.status == MissionStatus.PENDING:
+                step.status = MissionStatus.ACTIVE
+                return True
+        # All steps accounted for - mark self completed and ask parent to advance
+        self.status = MissionStatus.COMPLETED
+        if self.parent_mission is not None:
+            self.parent_mission.advance()
+        return False
+
+    def to_prompt(self, *, top_prompt: bool = True, focus: Mission | None = None) -> str:
+        """Return the mission as a prompt.
+
+        Steps that match *focus* are prefixed with ``[FOCUS]`` so the LLM
+        knows exactly which sub-mission to work on.
+        """
         # current mission objective
         p = f"[M{self.sub_mission_level}] The mission is '{self.objective}' ({self.status.value})\n"
         # context of what we plan to do later/have done before
         for step in self.steps:
-            p += step.to_prompt(top_prompt=False)
+            if focus is not None and step is focus:
+                p += f"[FOCUS]{step.to_prompt(top_prompt=False, focus=focus)}"
+            else:
+                p += step.to_prompt(top_prompt=False, focus=focus)
         # context of parent mission to ground to bigger picture
         if top_prompt:
             pm = self.parent_mission

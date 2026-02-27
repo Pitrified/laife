@@ -52,7 +52,13 @@ class ActionPlan(BaseAction):
     """Plan the next steps for the mission."""
 
 
-Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan
+class ActionComplete(BaseAction):
+    """Signal that the current focus mission has been achieved."""
+
+    outcome: str = Field(..., description="One-sentence description of what was accomplished.")
+
+
+Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan | ActionComplete
 
 
 class ActionEnvelope(BaseModel):

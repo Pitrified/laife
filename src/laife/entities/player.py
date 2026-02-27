@@ -7,6 +7,7 @@ import time
 from laife.config.types import Position
 from laife.config.types import Size
 from laife.entities.action import ActionBuild
+from laife.entities.action import ActionComplete
 from laife.entities.action import ActionCraft
 from laife.entities.action import ActionMove
 from laife.entities.action import ActionPlan
@@ -115,7 +116,7 @@ class Player:
             alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
             # Refresh observation before deciding
             await self.observe()
-            action = await self.think()
+            action = await self.think(focus=self.mission.active_focus())
             match action:
                 case ActionMove() as act:
                     wrsp = await self.move(act)
@@ -125,6 +126,8 @@ class Player:
                     wrsp = await self.craft(act)
                 case ActionPlan() as act:
                     wrsp = await self.plan(act)
+                case ActionComplete() as act:
+                    wrsp = await self.complete(act)
                 case _:
                     wrsp = await self.action_error(action)
             he = MissionHistoryEntry(action=action, result=str(wrsp))
@@ -134,12 +137,17 @@ class Player:
     # Action handlers
     # ------------------------------------------------------------------
 
-    async def think(self) -> BaseAction:
-        """Decide what to do next by calling the LLM brain."""
+    async def think(self, focus: Mission | None = None) -> BaseAction:
+        """Decide what to do next by calling the LLM brain.
+
+        If *focus* is given the brain reasons about that sub-mission instead
+        of the top-level mission, keeping the LLM context tight.
+        """
         self.state = PlayerState.THINKING
-        alg.log(f"{self.name} is thinking")
+        target = focus if focus is not None else self.mission
+        alg.log(f"{self.name} is thinking about '{target.objective}'")
         action = await self.brain.think(
-            mission=self.mission,
+            mission=target,
             history=self.history,
             observation=self.last_observation,
             player_state=self.render_state(),
@@ -174,6 +182,7 @@ class Player:
         )
         for sub_objective in result.sub_missions:
             self.mission.add_sub_mission(sub_objective)
+        self.mission.advance()  # activate the first pending step immediately
         self.history = MissionHistory()
         alg.log(
             f"PLAYER.plan {self.name}: created {len(result.sub_missions)} sub-mission(s):"
@@ -184,6 +193,18 @@ class Player:
             WResStatus.SUCCESS,
             {"sub_missions": result.sub_missions, "reason": result.reason},
         )
+
+    async def complete(self, action: ActionComplete) -> WRes:
+        """Mark the active focus mission done and advance to the next step."""
+        focus = self.mission.active_focus()
+        alg.log(f"PLAYER.complete {self.name}: completing '{focus.objective}'")
+        focus.status = MissionStatus.COMPLETED
+        advanced = self.mission.advance()
+        self.history = MissionHistory()  # fresh slate for the new focus
+        next_label = self.mission.active_focus().objective if advanced else "all steps done"
+        msg = f"Completed '{focus.objective}'. Next: '{next_label}'."
+        alg.log(f"PLAYER.complete {self.name}: {msg}")
+        return WRes(WResStatus.SUCCESS, {"message": msg, "outcome": action.outcome})
 
     async def move(self, action: ActionMove) -> WRes:
         """Move the player in delta steps, each validated by the world."""
