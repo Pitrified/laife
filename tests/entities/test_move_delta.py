@@ -29,9 +29,11 @@ def _make_player(runner: WorldRunner, position: Position = (0, 0)) -> Player:
         get_laife_params=MagicMock(return_value=MagicMock()),
         PlayerBrainConfig=MagicMock(),
         PlayerPlannerConfig=MagicMock(),
+        PlayerReplierConfig=MagicMock(),
         PromptLoaderConfig=MagicMock(),
         PlayerBrain=MagicMock(return_value=MagicMock()),
         PlayerPlanner=MagicMock(return_value=MagicMock()),
+        PlayerReplier=MagicMock(return_value=MagicMock()),
     ):
         player = Player(
             name="tester",

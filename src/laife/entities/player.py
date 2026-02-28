@@ -9,6 +9,7 @@ from laife.config.types import Position
 from laife.config.types import Size
 from laife.entities.action import ActionBuild
 from laife.entities.action import ActionCraft
+from laife.entities.action import ActionInteract
 from laife.entities.action import ActionMove
 from laife.entities.action import ActionPlan
 from laife.entities.action import BaseAction
@@ -18,6 +19,7 @@ from laife.entities.utensil import Utensil
 from laife.entities.utils.directions import cardinal_to_delta
 from laife.entities.world_channel import WRecBuild
 from laife.entities.world_channel import WRecCraft
+from laife.entities.world_channel import WRecInteract
 from laife.entities.world_channel import WRecMove
 from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
@@ -25,6 +27,7 @@ from laife.entities.world_channel import WRes
 from laife.entities.world_channel import WResBuild
 from laife.entities.world_channel import WResCraft
 from laife.entities.world_channel import WResError
+from laife.entities.world_channel import WResInteract
 from laife.entities.world_channel import WResMove
 from laife.entities.world_channel import WResMoveStep
 from laife.entities.world_channel import WResObserve
@@ -39,6 +42,9 @@ from laife.llm.player_brain import PlayerBrain
 from laife.llm.player_brain import PlayerBrainConfig
 from laife.llm.player_planner import PlayerPlanner
 from laife.llm.player_planner import PlayerPlannerConfig
+from laife.llm.player_replier import PlayerReplier
+from laife.llm.player_replier import PlayerReplierConfig
+from laife.llm.player_replier import PlayerReplyInput
 from laife.llm.prompt_loader import PromptLoaderConfig
 from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
@@ -104,6 +110,15 @@ class Player:
                 ),
             )
         )
+        self.replier = PlayerReplier(
+            PlayerReplierConfig(
+                chat_config=laife_params.llm_services.chat.default,
+                prompt_loader_config=PromptLoaderConfig(
+                    base_prompt_fol=laife_params.paths.prompts_fol,
+                    prompt_name="player_reply",
+                ),
+            )
+        )
         self.mission = Mission(
             objective="Build a house",
             status=MissionStatus.ACTIVE,
@@ -114,6 +129,15 @@ class Player:
     def render_state(self) -> str:
         """Return a string representation of the player's state for rendering."""
         return f"{self.name} at {self.position} - {self.state}"
+
+    def to_prompt(self) -> str:
+        """Return a concise snapshot of this player for use in LLM prompts."""
+        return (
+            f"Name: {self.name}\n"
+            f"Type: {self.player_type}\n"
+            f"Position: {self.position}\n"
+            f"Mission: {self.mission.to_prompt()}"
+        )
 
     def inventory_to_prompt(self) -> str:
         """Return a human-readable inventory listing for use in LLM prompts."""
@@ -141,6 +165,8 @@ class Player:
                     wrsp = await self.craft(act)
                 case ActionPlan() as act:
                     wrsp = await self.plan(act)
+                case ActionInteract() as act:
+                    wrsp = await self.interact(act)
                 case _:
                     wrsp = await self.action_error(action)
             he = MissionHistoryEntry(action=action, result=str(wrsp))
@@ -293,6 +319,47 @@ class Player:
         alg.log(f"PLAYER.play {self.name}: unknown action {action}")
         await asyncio.sleep(1)
         return WResError(status=WResStatus.ERROR, message=f"unknown action {action}")
+
+    async def receive_message(
+        self,
+        sender_name: str,
+        sender_prompt: str,
+        message: str,
+    ) -> str:
+        """Generate an in-character reply to a message from another player.
+
+        This method must never put anything onto world_input_queue.
+        It is called directly by WorldRunner inside handle_player_input and
+        must remain free of all world I/O - only the external LLM call is
+        awaited.
+        """
+        result = await self.replier.ainvoke(
+            PlayerReplyInput(
+                sender_name=sender_name,
+                sender_prompt=sender_prompt,
+                message=message,
+                own_state=self.render_state(),
+                own_mission=self.mission.to_prompt(),
+                own_history=self.history.to_prompt(),
+            )
+        )
+        return result.reply
+
+    async def interact(self, action: ActionInteract) -> WResInteract | WResError:
+        """Send a natural-language message to a nearby player and await the reply."""
+        alg.log(f"PLAYER.interact {self.name}: messaging {action.target_name!r}")
+        wreq = WRecInteract(
+            sender_name=self.name,
+            sender_prompt=self.to_prompt(),
+            target_name=action.target_name,
+            message=action.message,
+            response_queue=self.input_queue,
+        )
+        await self.world_input_queue.put(wreq)
+        wrsp = cast("WResInteract", await self.input_queue.get())
+        self.input_queue.task_done()
+        alg.log(f"PLAYER.interact {self.name}: got reply {wrsp!r}")
+        return wrsp
 
     async def world_request(self) -> None:
         """Send a generic request to the world and await the response."""

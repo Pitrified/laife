@@ -8,6 +8,7 @@ from laife.entities.player import Player
 from laife.entities.utils.geometry import aabb_collides
 from laife.entities.world_channel import WRecBuild
 from laife.entities.world_channel import WRecCraft
+from laife.entities.world_channel import WRecInteract
 from laife.entities.world_channel import WRecMove
 from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
@@ -15,6 +16,7 @@ from laife.entities.world_channel import WRes
 from laife.entities.world_channel import WResBuild
 from laife.entities.world_channel import WResCraft
 from laife.entities.world_channel import WResError
+from laife.entities.world_channel import WResInteract
 from laife.entities.world_channel import WResMoveStep
 from laife.entities.world_channel import WResObserve
 from laife.entities.world_channel import WResStatus
@@ -96,6 +98,8 @@ class WorldRunner:
                 wrsp = self.observe_at(player_input.position)
             case WRecMove():
                 wrsp = self.move_player(player_input)
+            case WRecInteract():
+                wrsp = await self.route_interaction(player_input)
             case _:
                 await asyncio.sleep(1)
                 wrsp = WResError(
@@ -111,6 +115,29 @@ class WorldRunner:
     def add_player(self, player: Player) -> None:
         """Register a player with the world."""
         self.players.append(player)
+
+    async def route_interaction(self, req: WRecInteract) -> WResInteract | WResError:
+        """Route a message to the named target player and return its LLM reply.
+
+        The target's receive_message coroutine must never touch world_input_queue;
+        see Player.receive_message for the enforced contract.
+        """
+        target = next((p for p in self.players if p.name == req.target_name), None)
+        if target is None:
+            return WResError(
+                status=WResStatus.ERROR,
+                message=f"No player named {req.target_name!r} exists in the world.",
+            )
+        reply = await target.receive_message(
+            sender_name=req.sender_name,
+            sender_prompt=req.sender_prompt,
+            message=req.message,
+        )
+        return WResInteract(
+            status=WResStatus.SUCCESS,
+            target_prompt=target.to_prompt(),
+            reply=reply,
+        )
 
     async def judge_and_build(self, req: WRecBuild) -> WResBuild:
         """Validate a build request with the LLM judge then add the building."""

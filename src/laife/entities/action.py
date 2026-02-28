@@ -52,7 +52,14 @@ class ActionPlan(BaseAction):
     """Plan the next steps for the mission."""
 
 
-Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan
+class ActionInteract(BaseAction):
+    """Send a natural-language message to a nearby player."""
+
+    target_name: str = Field(..., description="Name of the player to address.")
+    message: str = Field(..., description="The message to send.")
+
+
+Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan | ActionInteract
 
 
 class ActionEnvelope(BaseModel):

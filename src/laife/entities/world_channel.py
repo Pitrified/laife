@@ -122,6 +122,17 @@ class WResError(WRes):
         return f"WResError(status={self.status}, message={self.message!r})"
 
 
+class WResInteract(WRes):
+    """Response carrying the target player's LLM-generated reply."""
+
+    target_prompt: str
+    reply: str
+
+    def __str__(self) -> str:
+        """Return the string representation of the response."""
+        return f"WResInteract(status={self.status}, reply={self.reply!r})"
+
+
 class WReq:
     """A request to the world."""
 
@@ -232,4 +243,33 @@ class WRecMove(WReq):
         """Return the string representation of the request."""
         return (
             f"WRecMove(id={id(self)}, player={self.player.name}, new_position={self.new_position})"
+        )
+
+
+class WRecInteract(WReq):
+    """Request to route a natural-language message from one player to another."""
+
+    def __init__(
+        self,
+        sender_name: str,
+        sender_prompt: str,
+        target_name: str,
+        message: str,
+        *args,  # noqa: ANN002
+        **kwargs,  # noqa: ANN003
+    ) -> None:
+        """Initialize the interact request."""
+        super().__init__(*args, **kwargs)
+        self.sender_name = sender_name
+        self.sender_prompt = sender_prompt
+        self.target_name = target_name
+        self.message = message
+
+    def __str__(self) -> str:
+        """Return the string representation of the request."""
+        return (
+            f"WRecInteract(id={id(self)}"
+            f", sender={self.sender_name!r}"
+            f", target={self.target_name!r}"
+            f", message={self.message!r})"
         )
