@@ -171,6 +171,45 @@ class Player:
                     wrsp = await self.action_error(action)
             he = MissionHistoryEntry(action=action, result=str(wrsp))
             self.history.add_history_entry(he)
+            self._update_mission_from_response(action, wrsp)
+            if self.mission.is_terminal():
+                self._start_new_mission()
+
+    # ------------------------------------------------------------------
+    # Mission lifecycle helpers
+    # ------------------------------------------------------------------
+
+    def _update_mission_from_response(self, action: BaseAction, wrsp: WRes) -> None:
+        """Update mission status based on the world response to a build or craft action.
+
+        Only ``ActionBuild`` and ``ActionCraft`` responses drive mission status
+        transitions - move, plan, and interact responses are neutral.
+        """
+        if (isinstance(action, ActionBuild) and isinstance(wrsp, WResBuild)) or (
+            isinstance(action, ActionCraft) and isinstance(wrsp, WResCraft)
+        ):
+            if wrsp.status == WResStatus.SUCCESS:
+                self.mission.record_action_success()
+            else:
+                self.mission.record_action_failure()
+
+    def _start_new_mission(self) -> None:
+        """Transition to a fresh mission after the current one reaches a terminal state.
+
+        For now the new mission reuses the same objective so the player continues
+        working toward the same goal.  When dynamic mission assignment (plan item 4)
+        is implemented, this method will delegate to the mission-generator chain.
+        """
+        old_status = self.mission.status
+        alg.log(
+            f"PLAYER {self.name}: mission '{self.mission.objective}' ended"
+            f" with status {old_status.value} - starting new mission"
+        )
+        self.mission = Mission(
+            objective=self.mission.objective,
+            status=MissionStatus.ACTIVE,
+        )
+        self.history = MissionHistory()
 
     # ------------------------------------------------------------------
     # Action handlers

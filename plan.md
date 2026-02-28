@@ -18,9 +18,9 @@ Add an `inventory: list[Utensil]` to `Player`. Track utensils obtained via craft
 
 Replace the hardcoded `"Build a house"` mission with LLM-driven mission generation based on the current world observation. On first think cycle (or when a mission completes), the player asks a "mission generator" chain to propose a goal given what it sees. This makes gameplay emergent instead of scripted.
 
-## 5. Mission lifecycle (completion and failure)
+## ~~5. Mission lifecycle (completion and failure)~~ (done)
 
-Wire up mission status transitions: after the world judge confirms a build/craft succeeded, mark the active mission `COMPLETED`. After N consecutive failures or an explicit LLM signal, mark it `FAILED` and trigger re-planning or a new mission. Without this, the player loops forever on a single mission.
+Wire up mission status transitions: after the world judge confirms a build/craft succeeded, mark the active mission `COMPLETED`. After N consecutive failures, mark it `FAILED` and start a new mission. Without this, the player loops forever on a single mission.
 
 ## 6. Starting utensils and vector DB population
 
