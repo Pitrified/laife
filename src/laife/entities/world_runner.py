@@ -12,6 +12,11 @@ from laife.entities.world_channel import WRecMove
 from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
+from laife.entities.world_channel import WResBuild
+from laife.entities.world_channel import WResCraft
+from laife.entities.world_channel import WResError
+from laife.entities.world_channel import WResMoveStep
+from laife.entities.world_channel import WResObserve
 from laife.entities.world_channel import WResStatus
 from laife.entities.world_judge import WorldActionJudge
 from laife.entities.world_judge import WorldJudgeInput
@@ -93,9 +98,9 @@ class WorldRunner:
                 wrsp = self.move_player(player_input)
             case _:
                 await asyncio.sleep(1)
-                wrsp = WRes(
-                    WResStatus.ERROR,
-                    {"message": f"unknown request {player_input}"},
+                wrsp = WResError(
+                    status=WResStatus.ERROR,
+                    message=f"unknown request {player_input}",
                 )
         return wrsp
 
@@ -107,7 +112,7 @@ class WorldRunner:
         """Register a player with the world."""
         self.players.append(player)
 
-    async def judge_and_build(self, req: WRecBuild) -> WRes:
+    async def judge_and_build(self, req: WRecBuild) -> WResBuild:
         """Validate a build request with the LLM judge then add the building."""
         judge_input = WorldJudgeInput(
             action_type="build",
@@ -122,14 +127,14 @@ class WorldRunner:
         )
         result = await self.build_judge.ainvoke(judge_input)
         if not result.success:
-            return WRes(WResStatus.ERROR, {"feedback": result.feedback})
+            return WResBuild(status=WResStatus.ERROR, feedback=result.feedback)
         # Judge approved - fall through to spatial check
         spatial_res = self.add_building(req.building)
         if spatial_res.status == WResStatus.ERROR:
             return spatial_res
-        return WRes(WResStatus.SUCCESS, {"feedback": result.feedback})
+        return WResBuild(status=WResStatus.SUCCESS, feedback=result.feedback)
 
-    async def judge_craft(self, req: WRecCraft) -> WRes:
+    async def judge_craft(self, req: WRecCraft) -> WResCraft:
         """Validate a craft request with the LLM judge."""
         judge_input = WorldJudgeInput(
             action_type="craft",
@@ -138,20 +143,23 @@ class WorldRunner:
             player_state=req.player_state,
         )
         result = await self.craft_judge.ainvoke(judge_input)
-        return WRes(WResStatus.from_bool(success=result.success), {"feedback": result.feedback})
+        return WResCraft(
+            status=WResStatus.from_bool(success=result.success),
+            feedback=result.feedback,
+        )
 
-    def add_building(self, building: Building) -> WRes:
+    def add_building(self, building: Building) -> WResBuild:
         """Add a building after checking for spatial collisions."""
         for existing in self.buildings:
             if aabb_collides(building.position, building.size, existing.position, existing.size):
-                return WRes(
-                    WResStatus.ERROR,
-                    {"message": "building collides with another building"},
+                return WResBuild(
+                    status=WResStatus.ERROR,
+                    feedback="Building collides with an existing building.",
                 )
         self.buildings.append(building)
-        return WRes(WResStatus.SUCCESS, {"message": "building added"})
+        return WResBuild(status=WResStatus.SUCCESS, feedback="Building added.")
 
-    def move_player(self, req: WRecMove) -> WRes:
+    def move_player(self, req: WRecMove) -> WResMoveStep:
         """Validate a one-step player move and return success or collision feedback.
 
         The player's position is NOT mutated here; the player updates itself
@@ -160,21 +168,21 @@ class WorldRunner:
         player_size = req.player.size
         for building in self.buildings:
             if aabb_collides(req.new_position, player_size, building.position, building.size):
-                return WRes(
-                    WResStatus.ERROR,
-                    {"obstacle": str(building), "at": req.new_position},
+                return WResMoveStep(
+                    status=WResStatus.ERROR,
+                    obstacle=str(building),
                 )
         for other in self.players:
             if other is req.player:
                 continue
             if aabb_collides(req.new_position, player_size, other.position, other.size):
-                return WRes(
-                    WResStatus.ERROR,
-                    {"obstacle": str(other), "at": req.new_position},
+                return WResMoveStep(
+                    status=WResStatus.ERROR,
+                    obstacle=str(other),
                 )
-        return WRes(WResStatus.SUCCESS, {"new_position": req.new_position})
+        return WResMoveStep(status=WResStatus.SUCCESS, new_position=req.new_position)
 
-    def observe_at(self, position: Position, radius: int = 20) -> WRes:
+    def observe_at(self, position: Position, radius: int = 20) -> WResObserve:
         """Build a WorldMapObservation centred on *position* and return it."""
         nearby: list[NearbyEntity] = []
 
@@ -214,4 +222,4 @@ class WorldRunner:
             nearby_entities=nearby,
             radius=radius,
         )
-        return WRes(WResStatus.SUCCESS, {"observation": obs})
+        return WResObserve(status=WResStatus.SUCCESS, observation=obs)

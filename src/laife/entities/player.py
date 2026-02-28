@@ -3,6 +3,7 @@
 import asyncio
 from enum import StrEnum
 import time
+from typing import cast
 
 from laife.config.types import Position
 from laife.config.types import Size
@@ -21,6 +22,13 @@ from laife.entities.world_channel import WRecMove
 from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WReq
 from laife.entities.world_channel import WRes
+from laife.entities.world_channel import WResBuild
+from laife.entities.world_channel import WResCraft
+from laife.entities.world_channel import WResError
+from laife.entities.world_channel import WResMove
+from laife.entities.world_channel import WResMoveStep
+from laife.entities.world_channel import WResObserve
+from laife.entities.world_channel import WResPlan
 from laife.entities.world_channel import WResStatus
 from laife.entities.world_map_observation import WorldMapObservation
 from laife.llm.mission import Mission
@@ -157,21 +165,21 @@ class Player:
         self.state = PlayerState.IDLE
         return action
 
-    async def observe(self) -> WRes:
+    async def observe(self) -> WResObserve:
         """Request a world observation and cache it in last_observation."""
         alg.log(f"PLAYER.observe {self.name}: requesting observation")
         wreq = WRecObserve(position=self.position, response_queue=self.input_queue)
         await self.world_input_queue.put(wreq)
-        wrsp = await self.input_queue.get()
+        wrsp = cast("WResObserve", await self.input_queue.get())
         self.input_queue.task_done()
-        self.last_observation = wrsp.response_data["observation"]
+        self.last_observation = wrsp.observation
         alg.log(
             f"PLAYER.observe {self.name}:"
             f" got observation at {self.last_observation.player_position}"
         )
         return wrsp
 
-    async def plan(self, action: ActionPlan) -> WRes:
+    async def plan(self, action: ActionPlan) -> WResPlan:
         """Decompose the current mission into sub-missions using the planner LLM."""
         alg.log(f"PLAYER.plan {self.name}: planning for '{action.reason}'")
         self.state = PlayerState.THINKING
@@ -189,12 +197,13 @@ class Player:
             f" {result.sub_missions}"
         )
         self.state = PlayerState.IDLE
-        return WRes(
-            WResStatus.SUCCESS,
-            {"sub_missions": result.sub_missions, "reason": result.reason},
+        return WResPlan(
+            status=WResStatus.SUCCESS,
+            sub_missions=result.sub_missions,
+            reason=result.reason,
         )
 
-    async def move(self, action: ActionMove) -> WRes:
+    async def move(self, action: ActionMove) -> WResMove:
         """Move the player in delta steps, each validated by the world."""
         self.state = PlayerState.MOVING
         start_position = self.position
@@ -209,20 +218,18 @@ class Player:
                 response_queue=self.input_queue,
             )
             await self.world_input_queue.put(wreq)
-            wrsp = await self.input_queue.get()
+            wrsp_step = cast("WResMoveStep", await self.input_queue.get())
             self.input_queue.task_done()
 
-            if wrsp.status == WResStatus.ERROR:
+            if wrsp_step.status == WResStatus.ERROR:
                 alg.log(f"PLAYER.move {self.name}: blocked at step {step}")
                 self.state = PlayerState.IDLE
-                return WRes(
-                    WResStatus.ERROR,
-                    {
-                        "message": (
-                            f"Blocked after {step} step(s) from {start_position}. "
-                            f"Obstacle: {wrsp.response_data.get('obstacle', 'unknown')}."
-                        ),
-                    },
+                return WResMove(
+                    status=WResStatus.ERROR,
+                    message=(
+                        f"Blocked after {step} step(s) from {start_position}. "
+                        f"Obstacle: {wrsp_step.obstacle or 'unknown'}."
+                    ),
                 )
 
             # World validated the step - player owns its position update
@@ -230,13 +237,13 @@ class Player:
 
         alg.log(f"PLAYER.move {self.name}: moved to {self.position}")
         self.state = PlayerState.IDLE
-        return WRes(WResStatus.SUCCESS, {"message": f"Moved {action.distance} step(s)."})
+        return WResMove(status=WResStatus.SUCCESS, message=f"Moved {action.distance} step(s).")
 
     def move_delta(self, dx: int, dy: int) -> None:
         """Adjust the player's position by delta values."""
         self.position = (self.position[0] + dx, self.position[1] + dy)
 
-    async def build(self, action: ActionBuild) -> WRes:
+    async def build(self, action: ActionBuild) -> WResBuild:
         """Prepare and send a build request to the world."""
         alg.log(f"PLAYER.build {self.name}: building {action.building_type}")
         building = Building(
@@ -256,12 +263,12 @@ class Player:
             response_queue=self.input_queue,
         )
         await self.world_input_queue.put(wreq)
-        wrsp = await self.input_queue.get()
+        wrsp = cast("WResBuild", await self.input_queue.get())
         self.input_queue.task_done()
         alg.log(f"PLAYER.build {self.name}: got response {wrsp}")
         return wrsp
 
-    async def craft(self, action: ActionCraft) -> WRes:
+    async def craft(self, action: ActionCraft) -> WResCraft:
         """Prepare and send a craft request to the world."""
         alg.log(f"PLAYER.craft {self.name}: crafting {action.utensil_name}")
         wreq = WRecCraft(
@@ -272,7 +279,7 @@ class Player:
             response_queue=self.input_queue,
         )
         await self.world_input_queue.put(wreq)
-        wrsp = await self.input_queue.get()
+        wrsp = cast("WResCraft", await self.input_queue.get())
         self.input_queue.task_done()
         if wrsp.status == WResStatus.SUCCESS:
             utensil = Utensil(name=action.utensil_name, description=action.description)
@@ -281,11 +288,11 @@ class Player:
         alg.log(f"PLAYER.craft {self.name}: got response {wrsp}")
         return wrsp
 
-    async def action_error(self, action: BaseAction) -> WRes:
+    async def action_error(self, action: BaseAction) -> WResError:
         """Handle an unknown action type."""
         alg.log(f"PLAYER.play {self.name}: unknown action {action}")
         await asyncio.sleep(1)
-        return WRes(WResStatus.ERROR, {"message": f"unknown action {action}"})
+        return WResError(status=WResStatus.ERROR, message=f"unknown action {action}")
 
     async def world_request(self) -> None:
         """Send a generic request to the world and await the response."""

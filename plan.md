@@ -6,7 +6,7 @@ Ordered roughly by dependency and impact: earlier items unblock later ones.
 
 Create a `Terrain` class (forest, lake, fertile land) with position, size, and terrain type. Implement `Vectorable`, `to_prompt(pov_pos)`, and `to_document()`/`from_document()`. Add terrain instances to `WorldRunner` and include them in `WorldMapObservation` so the player can perceive terrain when observing. This is the most fundamental missing piece of the world model and unblocks dynamic map composition, prompt richness, and terrain rendering.
 
-## 2. Typed world responses (`WRes` subclasses)
+## ~~2. Typed world responses (`WRes` subclasses)~~ (done)
 
 Replace the generic `response_data: dict` in `WRes` with typed pydantic subclasses (`WResBuild`, `WResCraft`, `WResObserve`, `WResMove`). This eliminates stringly-typed payloads, adds validation at the boundary, and makes the player-side response handling safer and self-documenting.
 

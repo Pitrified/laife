@@ -13,7 +13,7 @@ from laife.entities.building import BuildingType
 from laife.entities.player import Player
 from laife.entities.utils.directions import CardinalDirection
 from laife.entities.utils.directions import cardinal_to_delta
-from laife.entities.world_channel import WRes
+from laife.entities.world_channel import WResMove
 from laife.entities.world_channel import WResStatus
 from laife.entities.world_runner import WorldRunner
 
@@ -48,7 +48,7 @@ def _make_building(position: Position, size: tuple[int, int] = (1, 1)) -> Buildi
     return Building(name="wall", building_type=bt, position=position)
 
 
-async def _run_move(runner: WorldRunner, player: Player, action: ActionMove) -> WRes:
+async def _run_move(runner: WorldRunner, player: Player, action: ActionMove) -> WResMove:
     """Drive world simulation + player.move concurrently; return the move result."""
     sim = asyncio.create_task(runner.simulate())
     result = await player.move(action)
@@ -146,7 +146,7 @@ def test_move_feedback_message() -> None:
         player = _make_player(runner, position=(0, 0))
         action = ActionMove(direction=CardinalDirection.East, distance=3, reason="going east")
         wrsp = await _run_move(runner, player, action)
-        assert "Blocked" in wrsp.response_data["message"]
-        assert "Obstacle" in wrsp.response_data["message"]
+        assert "Blocked" in wrsp.message
+        assert "Obstacle" in wrsp.message
 
     asyncio.run(_run())

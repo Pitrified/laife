@@ -226,7 +226,7 @@ def test_plan_handler_resets_history(stubbed_player: Player) -> None:
 
 
 def test_plan_handler_returns_success(stubbed_player: Player) -> None:
-    """Player.plan() must return WRes(SUCCESS, ...) after planning."""
+    """Player.plan() must return WResPlan(SUCCESS, ...) after planning."""
     stubbed_player.planner.ainvoke = AsyncMock(
         return_value=PlayerPlannerResult(
             sub_missions=["Sub 1"],
@@ -237,5 +237,5 @@ def test_plan_handler_returns_success(stubbed_player: Player) -> None:
     wrsp = asyncio.run(stubbed_player.plan(ActionPlan(reason="Needs plan")))
 
     assert wrsp.status == WResStatus.SUCCESS
-    assert "sub_missions" in wrsp.response_data
-    assert "reason" in wrsp.response_data
+    assert wrsp.sub_missions == ["Sub 1"]
+    assert wrsp.reason == "One thing at a time."

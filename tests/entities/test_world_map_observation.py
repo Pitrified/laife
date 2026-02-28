@@ -182,7 +182,7 @@ def test_observe_at_empty_world() -> None:
     """observe_at() on an empty world returns an observation with no entities."""
     runner = WorldRunner()
     res = runner.observe_at((5, 5))
-    obs: WorldMapObservation = res.response_data["observation"]
+    obs = res.observation
     assert obs.player_position == (5, 5)
     assert obs.nearby_entities == []
 
@@ -192,7 +192,7 @@ def test_observe_at_includes_building_within_radius() -> None:
     runner = WorldRunner()
     runner.buildings.append(_building("Barn", (3, 0)))
     res = runner.observe_at((0, 0), radius=10)
-    obs: WorldMapObservation = res.response_data["observation"]
+    obs = res.observation
     names = [e.name for e in obs.nearby_entities]
     assert "Barn" in names
 
@@ -202,7 +202,7 @@ def test_observe_at_excludes_building_outside_radius() -> None:
     runner = WorldRunner()
     runner.buildings.append(_building("FarTower", (50, 50)))
     res = runner.observe_at((0, 0), radius=10)
-    obs: WorldMapObservation = res.response_data["observation"]
+    obs = res.observation
     assert obs.nearby_entities == []
 
 
@@ -211,7 +211,7 @@ def test_observe_at_skips_player_at_same_position() -> None:
     runner = WorldRunner()
     _make_player(runner, position=(0, 0))
     res = runner.observe_at((0, 0), radius=20)
-    obs: WorldMapObservation = res.response_data["observation"]
+    obs = res.observation
     # The observing player sits at (0,0); it should be excluded
     assert all(e.distance > 0 for e in obs.nearby_entities)
 
@@ -222,7 +222,7 @@ def test_observe_at_includes_other_player() -> None:
     _make_player(runner, position=(0, 0))  # observing player
     _make_player(runner, position=(5, 0))  # other player
     res = runner.observe_at((0, 0), radius=20)
-    obs: WorldMapObservation = res.response_data["observation"]
+    obs = res.observation
     player_entities = [e for e in obs.nearby_entities if e.entity_type == "player"]
     assert len(player_entities) == 1
     assert player_entities[0].distance == pytest.approx(5.0)
@@ -233,7 +233,7 @@ def test_observe_at_relative_positions_are_correct() -> None:
     runner = WorldRunner()
     runner.buildings.append(_building("East Wall", (10, 0)))
     res = runner.observe_at((5, 0), radius=20)
-    obs: WorldMapObservation = res.response_data["observation"]
+    obs = res.observation
     entity = obs.nearby_entities[0]
     assert entity.relative_position == (5, 0)
     assert entity.distance == pytest.approx(5.0)
@@ -244,5 +244,5 @@ def test_observe_at_distance_correct_diagonal() -> None:
     runner = WorldRunner()
     runner.buildings.append(_building("Diagonal", (3, 4)))
     res = runner.observe_at((0, 0), radius=10)
-    obs: WorldMapObservation = res.response_data["observation"]
+    obs = res.observation
     assert obs.nearby_entities[0].distance == pytest.approx(5.0)

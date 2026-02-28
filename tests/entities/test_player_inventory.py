@@ -7,7 +7,7 @@ from unittest.mock import patch
 from laife.entities.action import ActionCraft
 from laife.entities.player import Player
 from laife.entities.utensil import Utensil
-from laife.entities.world_channel import WRes
+from laife.entities.world_channel import WResCraft
 from laife.entities.world_channel import WResStatus
 from laife.entities.world_runner import WorldRunner
 
@@ -37,7 +37,7 @@ def _make_player(runner: WorldRunner) -> Player:
     return player
 
 
-async def _run_craft(runner: WorldRunner, player: Player, action: ActionCraft) -> WRes:
+async def _run_craft(runner: WorldRunner, player: Player, action: ActionCraft) -> WResCraft:
     """Drive world simulation + player.craft concurrently; return the craft result."""
     sim = asyncio.create_task(runner.simulate())
     result = await player.craft(action)
@@ -95,7 +95,7 @@ def test_craft_success_adds_utensil_to_inventory() -> None:
     )
 
     # Patch the world judge to always approve
-    ok_res = WRes(WResStatus.SUCCESS, {"feedback": "ok"})
+    ok_res = WResCraft(status=WResStatus.SUCCESS, feedback="ok")
     with patch.object(runner, "judge_craft", return_value=ok_res):
         result = asyncio.run(_run_craft(runner, player, action))
 
@@ -116,7 +116,7 @@ def test_craft_failure_does_not_add_utensil_to_inventory() -> None:
         description="Does magic",
     )
 
-    err_res = WRes(WResStatus.ERROR, {"feedback": "not possible"})
+    err_res = WResCraft(status=WResStatus.ERROR, feedback="not possible")
     with patch.object(runner, "judge_craft", return_value=err_res):
         result = asyncio.run(_run_craft(runner, player, action))
 
@@ -132,7 +132,7 @@ def test_craft_multiple_successes_accumulate_in_inventory() -> None:
     async def _run_all() -> None:
         for name in ("axe", "bucket", "hoe"):
             action = ActionCraft(reason="need it", utensil_name=name, description=f"A {name}")
-            ok_res = WRes(WResStatus.SUCCESS, {"feedback": "ok"})
+            ok_res = WResCraft(status=WResStatus.SUCCESS, feedback="ok")
             with patch.object(runner, "judge_craft", return_value=ok_res):
                 await _run_craft(runner, player, action)
 

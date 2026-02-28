@@ -5,6 +5,10 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
+from pydantic import BaseModel
+
+from laife.entities.world_map_observation import WorldMapObservation  # noqa: TC001
+
 if TYPE_CHECKING:
     import asyncio
 
@@ -25,21 +29,97 @@ class WResStatus(StrEnum):
         return cls.SUCCESS if success else cls.ERROR
 
 
-class WRes:
-    """A response from the world."""
+class WRes(BaseModel):
+    """Base typed response from the world - carries only a status code.
 
-    def __init__(
-        self,
-        status: WResStatus,
-        response_data: dict,
-    ) -> None:
-        """Initialize the response."""
-        self.status = status
-        self.response_data = response_data
+    Callers should expect a concrete subclass (WResBuild, WResCraft,
+    WResObserve, WResMoveStep, WResMove, WResPlan, or WResError) and cast
+    or isinstance-check as appropriate.
+    """
+
+    status: WResStatus
 
     def __str__(self) -> str:
         """Return the string representation of the response."""
-        return f"WRes(status={self.status}, response_data={self.response_data})"
+        return f"{self.__class__.__name__}(status={self.status})"
+
+
+class WResBuild(WRes):
+    """Typed response for a build action (success or rejection)."""
+
+    feedback: str
+
+    def __str__(self) -> str:
+        """Return the string representation of the response."""
+        return f"WResBuild(status={self.status}, feedback={self.feedback!r})"
+
+
+class WResCraft(WRes):
+    """Typed response for a craft action."""
+
+    feedback: str
+
+    def __str__(self) -> str:
+        """Return the string representation of the response."""
+        return f"WResCraft(status={self.status}, feedback={self.feedback!r})"
+
+
+class WResObserve(WRes):
+    """Typed response for a world observation request."""
+
+    observation: WorldMapObservation
+
+    def __str__(self) -> str:
+        """Return the string representation of the response."""
+        return f"WResObserve(status={self.status}, observation={self.observation})"
+
+
+class WResMoveStep(WRes):
+    """World's per-step move validation response (SUCCESS or collision ERROR)."""
+
+    new_position: tuple[int, int] | None = None
+    obstacle: str | None = None
+
+    def __str__(self) -> str:
+        """Return the string representation of the response."""
+        if self.status == WResStatus.SUCCESS:
+            return f"WResMoveStep(status={self.status}, new_position={self.new_position})"
+        return f"WResMoveStep(status={self.status}, obstacle={self.obstacle!r})"
+
+
+class WResMove(WRes):
+    """Aggregated move response returned by Player.move() to the play loop."""
+
+    message: str
+
+    def __str__(self) -> str:
+        """Return the string representation of the response."""
+        return f"WResMove(status={self.status}, message={self.message!r})"
+
+
+class WResPlan(WRes):
+    """Response from the player-local planner."""
+
+    sub_missions: list[str]
+    reason: str
+
+    def __str__(self) -> str:
+        """Return the string representation of the response."""
+        return (
+            f"WResPlan(status={self.status}"
+            f", sub_missions={self.sub_missions}"
+            f", reason={self.reason!r})"
+        )
+
+
+class WResError(WRes):
+    """Generic error response for unknown requests or internal failures."""
+
+    message: str
+
+    def __str__(self) -> str:
+        """Return the string representation of the response."""
+        return f"WResError(status={self.status}, message={self.message!r})"
 
 
 class WReq:
