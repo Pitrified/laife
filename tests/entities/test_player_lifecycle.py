@@ -34,10 +34,12 @@ def _make_player(runner: WorldRunner) -> Player:
         PlayerBrainConfig=MagicMock(),
         PlayerPlannerConfig=MagicMock(),
         PlayerReplierConfig=MagicMock(),
+        MissionGeneratorConfig=MagicMock(),
         PromptLoaderConfig=MagicMock(),
         PlayerBrain=MagicMock(return_value=MagicMock()),
         PlayerPlanner=MagicMock(return_value=MagicMock()),
         PlayerReplier=MagicMock(return_value=MagicMock()),
+        MissionGenerator=MagicMock(return_value=MagicMock()),
     ):
         player = Player(
             name="tester",
@@ -58,9 +60,12 @@ def _silence_alog() -> Generator[None]:
 
 @pytest.fixture
 def player() -> Player:
-    """Return a Player connected to a fresh WorldRunner with all LLM mocked."""
+    """Return a Player with an ACTIVE mission, connected to a fresh WorldRunner."""
     runner = WorldRunner()
-    return _make_player(runner)
+    p = _make_player(runner)
+    # Start in ACTIVE state so tests reason about transitions from a running mission.
+    p.mission.status = MissionStatus.ACTIVE
+    return p
 
 
 # ---------------------------------------------------------------------------
@@ -128,17 +133,16 @@ def test_n_build_errors_fail_mission(player: Player) -> None:
 def test_start_new_mission_resets_to_active(player: Player) -> None:
     """After a terminal mission, _start_new_mission creates a fresh ACTIVE mission."""
     player.mission.status = MissionStatus.COMPLETED
-    old_objective = player.mission.objective
-    player._start_new_mission()
+    player._start_new_mission("Craft a better axe")
     assert player.mission.status == MissionStatus.ACTIVE
-    assert player.mission.objective == old_objective
+    assert player.mission.objective == "Craft a better axe"
 
 
 def test_start_new_mission_resets_consecutive_failures(player: Player) -> None:
     """The new mission starts with consecutive_failures at zero."""
     player.mission.consecutive_failures = 5
     player.mission.status = MissionStatus.FAILED
-    player._start_new_mission()
+    player._start_new_mission("Build a watchtower")
     assert player.mission.consecutive_failures == 0
 
 
@@ -152,6 +156,6 @@ def test_start_new_mission_resets_history(player: Player) -> None:
     )
     assert len(player.history.history) == 1
     player.mission.status = MissionStatus.COMPLETED
-    player._start_new_mission()
+    player._start_new_mission("Find water")
     assert isinstance(player.history, MissionHistory)
     assert len(player.history.history) == 0

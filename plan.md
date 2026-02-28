@@ -14,7 +14,7 @@ Replace the generic `response_data: dict` in `WRes` with typed pydantic subclass
 
 Add an `inventory: list[Utensil]` to `Player`. Track utensils obtained via crafting (when `WResCraft` succeeds, place the utensil in inventory). Let the brain see the inventory in its observation prompt so it can reason about what tools are available before deciding to craft or use one.
 
-## 4. Dynamic mission assignment
+## ~~4. Dynamic mission assignment~~ (done)
 
 Replace the hardcoded `"Build a house"` mission with LLM-driven mission generation based on the current world observation. On first think cycle (or when a mission completes), the player asks a "mission generator" chain to propose a goal given what it sees. This makes gameplay emergent instead of scripted.
 

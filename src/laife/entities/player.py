@@ -38,6 +38,8 @@ from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
+from laife.llm.mission_generator import MissionGenerator
+from laife.llm.mission_generator import MissionGeneratorConfig
 from laife.llm.player_brain import PlayerBrain
 from laife.llm.player_brain import PlayerBrainConfig
 from laife.llm.player_planner import PlayerPlanner
@@ -119,9 +121,19 @@ class Player:
                 ),
             )
         )
+        self.mission_generator = MissionGenerator(
+            MissionGeneratorConfig(
+                chat_config=laife_params.llm_services.chat.default,
+                prompt_loader_config=PromptLoaderConfig(
+                    base_prompt_fol=laife_params.paths.prompts_fol,
+                    prompt_name="mission_generator",
+                ),
+            )
+        )
+        # Mission starts PENDING; the first play() iteration will generate a real objective.
         self.mission = Mission(
-            objective="Build a house",
-            status=MissionStatus.ACTIVE,
+            objective="",
+            status=MissionStatus.PENDING,
         )
         self.history = MissionHistory()
         self.inventory: list[Utensil] = []
@@ -152,9 +164,14 @@ class Player:
     async def play(self) -> None:
         """Run the agent decision loop (intended to run as an asyncio task)."""
         while True:
-            alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
             # Refresh observation before deciding
             await self.observe()
+            # Generate a mission if none is active yet or the previous one finished.
+            if self.mission.status == MissionStatus.PENDING or self.mission.is_terminal():
+                new_obj = await self._generate_mission_objective()
+                self._start_new_mission(new_obj)
+            alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
+            # Think on how to solve the mission
             action = await self.think()
             match action:
                 case ActionMove() as act:
@@ -172,8 +189,6 @@ class Player:
             he = MissionHistoryEntry(action=action, result=str(wrsp))
             self.history.add_history_entry(he)
             self._update_mission_from_response(action, wrsp)
-            if self.mission.is_terminal():
-                self._start_new_mission()
 
     # ------------------------------------------------------------------
     # Mission lifecycle helpers
@@ -193,23 +208,37 @@ class Player:
             else:
                 self.mission.record_action_failure()
 
-    def _start_new_mission(self) -> None:
-        """Transition to a fresh mission after the current one reaches a terminal state.
+    def _start_new_mission(self, objective: str) -> None:
+        """Transition to a fresh ACTIVE mission with the given objective.
 
-        For now the new mission reuses the same objective so the player continues
-        working toward the same goal.  When dynamic mission assignment (plan item 4)
-        is implemented, this method will delegate to the mission-generator chain.
+        Resets the mission history.  The *objective* string should come from
+        :meth:`_generate_mission_objective` so that goals are LLM-driven rather
+        than hardcoded.
         """
         old_status = self.mission.status
         alg.log(
             f"PLAYER {self.name}: mission '{self.mission.objective}' ended"
-            f" with status {old_status.value} - starting new mission"
+            f" with status {old_status.value} - starting new mission: '{objective}'"
         )
         self.mission = Mission(
-            objective=self.mission.objective,
+            objective=objective,
             status=MissionStatus.ACTIVE,
         )
         self.history = MissionHistory()
+
+    async def _generate_mission_objective(self) -> str:
+        """Ask the mission-generator LLM to propose an objective for the current situation.
+
+        Uses the cached observation so no extra world round-trip is needed.
+        """
+        alg.log(f"PLAYER {self.name}: generating new mission objective")
+        result = await self.mission_generator.ainvoke(
+            observation=self.last_observation,
+            player_state=self.render_state(),
+            inventory=self.inventory_to_prompt(),
+        )
+        alg.log(f"PLAYER {self.name}: proposed mission '{result.objective}' - {result.reason}")
+        return result.objective
 
     # ------------------------------------------------------------------
     # Action handlers

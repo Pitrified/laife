@@ -37,6 +37,8 @@ def _make_player(runner: WorldRunner, position: Position = (0, 0)) -> Player:
         PlayerBrain=MagicMock(return_value=MagicMock()),
         PlayerPlanner=MagicMock(return_value=MagicMock()),
         PlayerReplier=MagicMock(return_value=MagicMock()),
+        MissionGeneratorConfig=MagicMock(),
+        MissionGenerator=MagicMock(return_value=MagicMock()),
     ):
         player = Player(
             name="tester",
