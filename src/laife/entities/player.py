@@ -16,6 +16,7 @@ from laife.entities.building import Building
 from laife.entities.building import BuildingType
 from laife.entities.utils.directions import cardinal_to_delta
 from laife.entities.world_channel import WRecBuild
+from laife.entities.world_channel import WRecComplete
 from laife.entities.world_channel import WRecCraft
 from laife.entities.world_channel import WRecMove
 from laife.entities.world_channel import WRecObserve
@@ -195,9 +196,25 @@ class Player:
         )
 
     async def complete(self, action: ActionComplete) -> WRes:
-        """Mark the active focus mission done and advance to the next step."""
+        """Ask the world to verify completion; advance only on SUCCESS."""
         focus = self.mission.active_focus()
-        alg.log(f"PLAYER.complete {self.name}: completing '{focus.objective}'")
+        alg.log(f"PLAYER.complete {self.name}: requesting world verdict for '{focus.objective}'")
+        wreq = WRecComplete(
+            objective=focus.objective,
+            outcome=action.outcome,
+            observation=self.last_observation.to_prompt(),
+            player_state=self.render_state(),
+            response_queue=self.input_queue,
+        )
+        await self.world_input_queue.put(wreq)
+        wrsp = await self.input_queue.get()
+        self.input_queue.task_done()
+
+        if wrsp.status == WResStatus.ERROR:
+            # World rejected the claim - mission stays ACTIVE, brain will retry
+            alg.log(f"PLAYER.complete {self.name}: world rejected - {wrsp.response_data}")
+            return wrsp
+
         focus.status = MissionStatus.COMPLETED
         advanced = self.mission.advance()
         self.history = MissionHistory()  # fresh slate for the new focus

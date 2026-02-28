@@ -8,6 +8,8 @@ from laife.entities.action import ActionComplete
 from laife.entities.action import ActionPlan
 from laife.entities.player import Player
 from laife.entities.player import PlayerState
+from laife.entities.world_channel import WRecComplete
+from laife.entities.world_channel import WRes
 from laife.entities.world_channel import WResStatus
 from laife.entities.world_map_observation import WorldMapObservation
 from laife.llm.mission import Mission
@@ -36,6 +38,10 @@ def _stubbed_player(objective: str = "Build a house") -> Player:
     player.last_observation = WorldMapObservation.from_position((0, 0))
     player.planner = MagicMock()
     player.brain = MagicMock()
+    # Async world queue: put() is a no-op AsyncMock; input_queue is a real queue
+    player.world_input_queue = MagicMock()
+    player.world_input_queue.put = AsyncMock()
+    player.input_queue = asyncio.Queue()
     return player
 
 
@@ -225,6 +231,7 @@ def test_complete_marks_focus_done_and_advances() -> None:
     player.mission.add_sub_mission("Step A")
     player.mission.add_sub_mission("Step B")
     player.mission.steps[0].status = MissionStatus.ACTIVE
+    player.input_queue.put_nowait(WRes(WResStatus.SUCCESS, {"feedback": "world ok"}))
 
     action = ActionComplete(reason="done", outcome="Finished step A")
     asyncio.run(player.complete(action))
@@ -244,6 +251,7 @@ def test_complete_resets_history() -> None:
         action=ActionComplete(reason="r", outcome="o"), result="some result"
     )
     player.history.add_history_entry(entry)
+    player.input_queue.put_nowait(WRes(WResStatus.SUCCESS, {"feedback": "world ok"}))
 
     asyncio.run(player.complete(ActionComplete(reason="done", outcome="ok")))
 
@@ -255,6 +263,7 @@ def test_complete_returns_success() -> None:
     player = _stubbed_player()
     player.mission.add_sub_mission("Step A")
     player.mission.steps[0].status = MissionStatus.ACTIVE
+    player.input_queue.put_nowait(WRes(WResStatus.SUCCESS, {"feedback": "world ok"}))
 
     action = ActionComplete(reason="done", outcome="Step A completed")
     wrsp = asyncio.run(player.complete(action))
@@ -268,7 +277,56 @@ def test_complete_no_next_step_message() -> None:
     player = _stubbed_player()
     player.mission.add_sub_mission("Only step")
     player.mission.steps[0].status = MissionStatus.ACTIVE
+    player.input_queue.put_nowait(WRes(WResStatus.SUCCESS, {"feedback": "world ok"}))
 
     wrsp = asyncio.run(player.complete(ActionComplete(reason="done", outcome="done")))
 
     assert "all steps done" in wrsp.response_data["message"].lower()
+
+
+# ---------------------------------------------------------------------------
+# Player.complete - world round-trip tests
+# ---------------------------------------------------------------------------
+
+
+def test_complete_world_rejected() -> None:
+    """When world returns ERROR the focus mission stays ACTIVE and WRes is ERROR."""
+    player = _stubbed_player()
+    player.mission.add_sub_mission("Step A")
+    player.mission.steps[0].status = MissionStatus.ACTIVE
+    player.input_queue.put_nowait(WRes(WResStatus.ERROR, {"feedback": "not done yet"}))
+
+    wrsp = asyncio.run(player.complete(ActionComplete(reason="done", outcome="claimed done")))
+
+    assert wrsp.status == WResStatus.ERROR
+    assert player.mission.steps[0].status == MissionStatus.ACTIVE
+
+
+def test_complete_world_approved_advances() -> None:
+    """When world returns SUCCESS, focus is COMPLETED and the next step is ACTIVE."""
+    player = _stubbed_player()
+    player.mission.add_sub_mission("Step A")
+    player.mission.add_sub_mission("Step B")
+    player.mission.steps[0].status = MissionStatus.ACTIVE
+    player.input_queue.put_nowait(WRes(WResStatus.SUCCESS, {"feedback": "world confirmed"}))
+
+    asyncio.run(player.complete(ActionComplete(reason="done", outcome="built the thing")))
+
+    assert player.mission.steps[0].status == MissionStatus.COMPLETED
+    assert player.mission.steps[1].status == MissionStatus.ACTIVE
+
+
+def test_complete_sends_wrec_complete() -> None:
+    """Player.complete() sends a WRecComplete to the world queue with correct fields."""
+    player = _stubbed_player()
+    player.mission.add_sub_mission("Gather 5 logs")
+    player.mission.steps[0].status = MissionStatus.ACTIVE
+    player.input_queue.put_nowait(WRes(WResStatus.SUCCESS, {"feedback": "ok"}))
+
+    asyncio.run(player.complete(ActionComplete(reason="done", outcome="gathered 5 logs")))
+
+    put_mock: AsyncMock = player.world_input_queue.put  # type: ignore[assignment]
+    sent_req = put_mock.call_args[0][0]
+    assert isinstance(sent_req, WRecComplete)
+    assert sent_req.objective == "Gather 5 logs"
+    assert sent_req.outcome == "gathered 5 logs"

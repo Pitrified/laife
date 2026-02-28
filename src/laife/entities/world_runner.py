@@ -7,6 +7,7 @@ from laife.entities.building import Building
 from laife.entities.player import Player
 from laife.entities.utils.geometry import aabb_collides
 from laife.entities.world_channel import WRecBuild
+from laife.entities.world_channel import WRecComplete
 from laife.entities.world_channel import WRecCraft
 from laife.entities.world_channel import WRecMove
 from laife.entities.world_channel import WRecObserve
@@ -63,6 +64,16 @@ class WorldRunner:
             chat_config=laife_params.llm_services.chat.default,
             prompt_str=craft_prompt,
         )
+        complete_prompt = PromptLoader(
+            PromptLoaderConfig(
+                base_prompt_fol=laife_params.paths.prompts_fol,
+                prompt_name="world_judge_complete",
+            )
+        ).load_prompt()
+        self.complete_judge = WorldActionJudge(
+            chat_config=laife_params.llm_services.chat.default,
+            prompt_str=complete_prompt,
+        )
 
     # ------------------------------------------------------------------
     # Simulation loop
@@ -87,6 +98,8 @@ class WorldRunner:
                 wrsp = await self.judge_and_build(player_input)
             case WRecCraft():
                 wrsp = await self.judge_craft(player_input)
+            case WRecComplete():
+                wrsp = await self.judge_complete(player_input)
             case WRecObserve():
                 wrsp = self.observe_at(player_input.position)
             case WRecMove():
@@ -138,6 +151,19 @@ class WorldRunner:
             player_state=req.player_state,
         )
         result = await self.craft_judge.ainvoke(judge_input)
+        return WRes(WResStatus.from_bool(success=result.success), {"feedback": result.feedback})
+
+    async def judge_complete(self, req: WRecComplete) -> WRes:
+        """Ask the LLM judge whether the reported outcome satisfies the objective."""
+        result = await self.complete_judge.ainvoke(
+            WorldJudgeInput(
+                action_type=f"complete: {req.objective}",
+                action_details=req.outcome,
+                observation=req.observation,
+                player_state=req.player_state,
+            )
+        )
+        alg.log(f"WR.judge_complete: {result.success} - {result.feedback}")
         return WRes(WResStatus.from_bool(success=result.success), {"feedback": result.feedback})
 
     def add_building(self, building: Building) -> WRes:

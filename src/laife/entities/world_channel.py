@@ -153,3 +153,31 @@ class WRecMove(WReq):
         return (
             f"WRecMove(id={id(self)}, player={self.player.name}, new_position={self.new_position})"
         )
+
+
+class WRecComplete(WReq):
+    """Request the world to verify that a focus mission is done."""
+
+    def __init__(
+        self,
+        objective: str,
+        outcome: str,
+        observation: str,
+        player_state: str,
+        *args,  # noqa: ANN002
+        **kwargs,  # noqa: ANN003
+    ) -> None:
+        """Initialize the completion verification request."""
+        super().__init__(*args, **kwargs)
+        self.objective = objective
+        self.outcome = outcome
+        self.observation = observation
+        self.player_state = player_state
+
+    def __str__(self) -> str:
+        """Return the string representation of the request."""
+        return (
+            f"WRecComplete(id={id(self)}"
+            f", objective={self.objective!r}"
+            f", response_queue={self.response_queue})"
+        )
