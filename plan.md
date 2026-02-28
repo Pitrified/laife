@@ -10,7 +10,7 @@ Create a `Terrain` class (forest, lake, fertile land) with position, size, and t
 
 Replace the generic `response_data: dict` in `WRes` with typed pydantic subclasses (`WResBuild`, `WResCraft`, `WResObserve`, `WResMove`). This eliminates stringly-typed payloads, adds validation at the boundary, and makes the player-side response handling safer and self-documenting.
 
-## 3. Player inventory
+## 3. ~~Player inventory~~ (done)
 
 Add an `inventory: list[Utensil]` to `Player`. Track utensils obtained via crafting (when `WResCraft` succeeds, place the utensil in inventory). Let the brain see the inventory in its observation prompt so it can reason about what tools are available before deciding to craft or use one.
 

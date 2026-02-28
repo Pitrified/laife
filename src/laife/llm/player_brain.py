@@ -42,6 +42,7 @@ class PlayerBrain:
         history: MissionHistory,
         observation: WorldMapObservation,
         player_state: str,
+        inventory: str,
     ) -> BaseAction:
         """Ask the LLM to pick the next action given full context."""
         return await self.action_picker.ainvoke(
@@ -50,5 +51,6 @@ class PlayerBrain:
                 history=history.to_prompt(),
                 observation=observation.to_prompt(),
                 player_state=player_state,
+                inventory=inventory,
             )
         )

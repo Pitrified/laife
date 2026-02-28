@@ -13,6 +13,7 @@ from laife.entities.action import ActionPlan
 from laife.entities.action import BaseAction
 from laife.entities.building import Building
 from laife.entities.building import BuildingType
+from laife.entities.utensil import Utensil
 from laife.entities.utils.directions import cardinal_to_delta
 from laife.entities.world_channel import WRecBuild
 from laife.entities.world_channel import WRecCraft
@@ -100,10 +101,17 @@ class Player:
             status=MissionStatus.ACTIVE,
         )
         self.history = MissionHistory()
+        self.inventory: list[Utensil] = []
 
     def render_state(self) -> str:
         """Return a string representation of the player's state for rendering."""
         return f"{self.name} at {self.position} - {self.state}"
+
+    def inventory_to_prompt(self) -> str:
+        """Return a human-readable inventory listing for use in LLM prompts."""
+        if not self.inventory:
+            return "Empty - no utensils carried."
+        return "\n".join(f"- {u.to_prompt()}" for u in self.inventory)
 
     # ------------------------------------------------------------------
     # Agent loop
@@ -143,6 +151,7 @@ class Player:
             history=self.history,
             observation=self.last_observation,
             player_state=self.render_state(),
+            inventory=self.inventory_to_prompt(),
         )
         alg.log(f"PLAYER.play {self.name}: picked {action}")
         self.state = PlayerState.IDLE
@@ -265,6 +274,10 @@ class Player:
         await self.world_input_queue.put(wreq)
         wrsp = await self.input_queue.get()
         self.input_queue.task_done()
+        if wrsp.status == WResStatus.SUCCESS:
+            utensil = Utensil(name=action.utensil_name, description=action.description)
+            self.inventory.append(utensil)
+            alg.log(f"PLAYER.craft {self.name}: added {utensil.name} to inventory")
         alg.log(f"PLAYER.craft {self.name}: got response {wrsp}")
         return wrsp
 

@@ -73,6 +73,7 @@ class ActionPickerInput(BaseModelKwargs):
     history: str
     observation: str
     player_state: str
+    inventory: str
 
 
 @dataclass
