@@ -1,6 +1,8 @@
 """Tests for Player mission lifecycle - completion and failure transitions."""
 
+import asyncio
 from collections.abc import Generator
+from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -12,10 +14,14 @@ from laife.entities.action import ActionMove
 from laife.entities.action import ActionPlan
 from laife.entities.player import Player
 from laife.entities.utils.directions import CardinalDirection
+from laife.entities.world_channel import WRecObserve
 from laife.entities.world_channel import WResBuild
 from laife.entities.world_channel import WResCraft
+from laife.entities.world_channel import WResError
 from laife.entities.world_channel import WResMove
+from laife.entities.world_channel import WResObserve
 from laife.entities.world_channel import WResStatus
+from laife.entities.world_map_observation import WorldMapObservation
 from laife.entities.world_runner import WorldRunner
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
@@ -53,8 +59,8 @@ def _make_player(runner: WorldRunner) -> Player:
 
 @pytest.fixture(autouse=True)
 def _silence_alog() -> Generator[None]:
-    """Prevent alg.log from trying to create asyncio tasks outside an event loop."""
-    with patch("laife.entities.player.alg"):
+    """Prevent alg.log / slog from writing outside an event loop during tests."""
+    with patch("laife.entities.player.alg"), patch("laife.entities.player.slog"):
         yield
 
 
@@ -159,3 +165,47 @@ def test_start_new_mission_resets_history(player: Player) -> None:
     player._start_new_mission("Find water")
     assert isinstance(player.history, MissionHistory)
     assert len(player.history.history) == 0
+
+
+# ---------------------------------------------------------------------------
+# _world_request
+# ---------------------------------------------------------------------------
+
+
+def test_world_request_queues_and_returns(player: Player) -> None:
+    """_world_request must put once, get once, call task_done once, and return wrsp."""
+
+    async def _run() -> WResObserve:
+        obs = WResObserve(
+            status=WResStatus.SUCCESS,
+            observation=WorldMapObservation.from_position((0, 0)),
+        )
+        player.world_input_queue.put = AsyncMock()
+        player.input_queue.get = AsyncMock(return_value=obs)
+        player.input_queue.task_done = MagicMock()
+
+        wreq = WRecObserve(position=(0, 0), response_queue=player.input_queue)
+        result = await player._world_request(wreq, WResObserve)
+        player.world_input_queue.put.assert_awaited_once_with(wreq)
+        player.input_queue.get.assert_awaited_once()
+        player.input_queue.task_done.assert_called_once()
+        return result
+
+    result = asyncio.run(_run())
+    assert isinstance(result, WResObserve)
+
+
+def test_world_request_raises_on_wrong_type(player: Player) -> None:
+    """_world_request must raise TypeError when the response type does not match."""
+
+    async def _run() -> None:
+        wrong = WResError(status=WResStatus.ERROR, message="oops")
+        player.world_input_queue.put = AsyncMock()
+        player.input_queue.get = AsyncMock(return_value=wrong)
+        player.input_queue.task_done = MagicMock()
+
+        wreq = WRecObserve(position=(0, 0), response_queue=player.input_queue)
+        with pytest.raises(TypeError, match="WResObserve"):
+            await player._world_request(wreq, WResObserve)
+
+    asyncio.run(_run())

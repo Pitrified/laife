@@ -2,9 +2,13 @@
 
 Ordered roughly by dependency and impact: earlier items unblock later ones.
 
-## 1. Terrain entity
+## ~~1. Terrain entity~~ (done)
 
 Create a `Terrain` class (forest, lake, fertile land) with position, size, and terrain type. Implement `Vectorable`, `to_prompt(pov_pos)`, and `to_document()`/`from_document()`. Add terrain instances to `WorldRunner` and include them in `WorldMapObservation` so the player can perceive terrain when observing. This is the most fundamental missing piece of the world model and unblocks dynamic map composition, prompt richness, and terrain rendering.
+
+### 1.1 Terrain meta
+
+We are saving the `Terrain` in the vector DB, we probably just want to add a `TerrainType`. Like `BuildingType`.
 
 ## ~~2. Typed world responses (`WRes` subclasses)~~ (done)
 
@@ -26,18 +30,18 @@ Wire up mission status transitions: after the world judge confirms a build/craft
 
 Define the four starter utensils (bucket, axe, hammer, hoe) and seed them into the Chroma vector store alongside the building types. Give the brain a retrieval step so it can look up relevant utensils/buildings before choosing an action, making its decisions grounded in actual world data.
 
-## 7. Terrain rendering
+## ~~7. Terrain rendering~~ (done)
 
 Render terrain regions as tiled/colored backgrounds in `WorldRenderer`, replacing the flat black fill. Map each `TerrainType` to a tile color or sprite. This gives immediate visual feedback that the world has varied geography, and is a prerequisite for prettier map visuals.
 
-## 8. Player-to-player interaction
+## ~~8. Player-to-player interaction~~ (done, proposal for v2 ready)
 
 Add `ActionInteract` to the action union. When a player picks it, the world delivers the target player's `to_prompt()` and routes a natural-language message between the two. This opens the door to cooperative mission-solving and emergent social behavior.
 
-## 9. Structured game logger
+## ~~9. Structured game logger~~ (done)
 
 Replace `Alog` with a structured logger (JSON lines or similar) recording every action, world response, mission transition, and LLM call with timing. Add log levels and file output. This is necessary for debugging multi-agent runs and later building an analytics dashboard.
 
-## 10. Refactor repetitive player request pattern
+## ~~10. Refactor repetitive player request pattern~~ (done)
 
 Extract the "build request, send to world, await response, handle status, record history" boilerplate in `Player` into a generic helper (e.g., `async _world_request(req: WReq) -> WRes`). Cuts duplication across the move/build/craft handlers and makes adding new action types cheaper.

@@ -2,10 +2,12 @@
 
 from typing import Protocol
 from typing import Self
+from typing import runtime_checkable
 
 from langchain_core.documents import Document
 
 
+@runtime_checkable
 class Vectorable(Protocol):
     """Structural protocol for entities that can round-trip through a Document.
 

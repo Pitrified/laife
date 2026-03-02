@@ -44,10 +44,16 @@ class WorldMapObservation(BaseModel):
         lines.append(f"Nearby entities (within {self.radius} tiles):")
         for entity in self.nearby_entities:
             direction = pospos2cardinal_direction(_ORIGIN, entity.relative_position)
-            lines.append(
-                f'- {entity.entity_type.capitalize()} "{entity.name}"'
-                f" is to the {direction.value} (distance {entity.distance:.1f})."
-            )
+            if entity.entity_type == "terrain":
+                lines.append(
+                    f'- Terrain "{entity.name}"'
+                    f" lies to the {direction.value} (distance {entity.distance:.1f})."
+                )
+            else:
+                lines.append(
+                    f'- {entity.entity_type.capitalize()} "{entity.name}"'
+                    f" is to the {direction.value} (distance {entity.distance:.1f})."
+                )
         return "\n".join(lines)
 
 

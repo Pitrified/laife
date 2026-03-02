@@ -3,7 +3,6 @@
 import asyncio
 from enum import StrEnum
 import time
-from typing import cast
 
 from laife.config.types import Position
 from laife.config.types import Size
@@ -48,6 +47,10 @@ from laife.llm.player_replier import PlayerReplier
 from laife.llm.player_replier import PlayerReplierConfig
 from laife.llm.player_replier import PlayerReplyInput
 from laife.llm.prompt_loader import PromptLoaderConfig
+from laife.meta.log_events import EVT_ACTION
+from laife.meta.log_events import EVT_MISSION_TRANSITION
+from laife.meta.log_events import EVT_WORLD_RESPONSE
+from laife.meta.logger import slog
 from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
 
@@ -207,6 +210,11 @@ class Player:
                 self.mission.record_action_success()
             else:
                 self.mission.record_action_failure()
+            slog.bind(
+                event=EVT_MISSION_TRANSITION,
+                player=self.name,
+                to_status=self.mission.status.value,
+            ).info(EVT_MISSION_TRANSITION)
 
     def _start_new_mission(self, objective: str) -> None:
         """Transition to a fresh ACTIVE mission with the given objective.
@@ -256,16 +264,30 @@ class Player:
             inventory=self.inventory_to_prompt(),
         )
         alg.log(f"PLAYER.play {self.name}: picked {action}")
+        slog.bind(event=EVT_ACTION, player=self.name, action=str(action)).info(EVT_ACTION)
         self.state = PlayerState.IDLE
         return action
+
+    async def _world_request[T: WRes](self, wreq: WReq, response_type: type[T]) -> T:
+        """Send *wreq* to the world, assert the response type, and return it.
+
+        Raises ``TypeError`` if the world returns an unexpected response type.
+        The world channel is expected to be reliable; a type mismatch signals
+        a world implementation bug and should fail loudly.
+        """
+        await self.world_input_queue.put(wreq)
+        wrsp = await self.input_queue.get()
+        self.input_queue.task_done()
+        if not isinstance(wrsp, response_type):
+            msg = f"Expected {response_type.__name__}, got {type(wrsp).__name__}"
+            raise TypeError(msg)
+        return wrsp
 
     async def observe(self) -> WResObserve:
         """Request a world observation and cache it in last_observation."""
         alg.log(f"PLAYER.observe {self.name}: requesting observation")
         wreq = WRecObserve(position=self.position, response_queue=self.input_queue)
-        await self.world_input_queue.put(wreq)
-        wrsp = cast("WResObserve", await self.input_queue.get())
-        self.input_queue.task_done()
+        wrsp = await self._world_request(wreq, WResObserve)
         self.last_observation = wrsp.observation
         alg.log(
             f"PLAYER.observe {self.name}:"
@@ -311,9 +333,7 @@ class Player:
                 new_position=new_pos,
                 response_queue=self.input_queue,
             )
-            await self.world_input_queue.put(wreq)
-            wrsp_step = cast("WResMoveStep", await self.input_queue.get())
-            self.input_queue.task_done()
+            wrsp_step = await self._world_request(wreq, WResMoveStep)
 
             if wrsp_step.status == WResStatus.ERROR:
                 alg.log(f"PLAYER.move {self.name}: blocked at step {step}")
@@ -356,10 +376,14 @@ class Player:
             player_state=self.render_state(),
             response_queue=self.input_queue,
         )
-        await self.world_input_queue.put(wreq)
-        wrsp = cast("WResBuild", await self.input_queue.get())
-        self.input_queue.task_done()
+        wrsp = await self._world_request(wreq, WResBuild)
         alg.log(f"PLAYER.build {self.name}: got response {wrsp}")
+        slog.bind(
+            event=EVT_WORLD_RESPONSE,
+            player=self.name,
+            kind="build",
+            status=wrsp.status.value,
+        ).info(EVT_WORLD_RESPONSE)
         return wrsp
 
     async def craft(self, action: ActionCraft) -> WResCraft:
@@ -372,14 +396,18 @@ class Player:
             player_state=self.render_state(),
             response_queue=self.input_queue,
         )
-        await self.world_input_queue.put(wreq)
-        wrsp = cast("WResCraft", await self.input_queue.get())
-        self.input_queue.task_done()
+        wrsp = await self._world_request(wreq, WResCraft)
         if wrsp.status == WResStatus.SUCCESS:
             utensil = Utensil(name=action.utensil_name, description=action.description)
             self.inventory.append(utensil)
             alg.log(f"PLAYER.craft {self.name}: added {utensil.name} to inventory")
         alg.log(f"PLAYER.craft {self.name}: got response {wrsp}")
+        slog.bind(
+            event=EVT_WORLD_RESPONSE,
+            player=self.name,
+            kind="craft",
+            status=wrsp.status.value,
+        ).info(EVT_WORLD_RESPONSE)
         return wrsp
 
     async def action_error(self, action: BaseAction) -> WResError:
@@ -413,7 +441,7 @@ class Player:
         )
         return result.reply
 
-    async def interact(self, action: ActionInteract) -> WResInteract | WResError:
+    async def interact(self, action: ActionInteract) -> WResInteract:
         """Send a natural-language message to a nearby player and await the reply."""
         alg.log(f"PLAYER.interact {self.name}: messaging {action.target_name!r}")
         wreq = WRecInteract(
@@ -423,9 +451,7 @@ class Player:
             message=action.message,
             response_queue=self.input_queue,
         )
-        await self.world_input_queue.put(wreq)
-        wrsp = cast("WResInteract", await self.input_queue.get())
-        self.input_queue.task_done()
+        wrsp = await self._world_request(wreq, WResInteract)
         alg.log(f"PLAYER.interact {self.name}: got reply {wrsp!r}")
         return wrsp
 

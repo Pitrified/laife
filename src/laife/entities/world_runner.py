@@ -5,6 +5,7 @@ import asyncio
 from laife.config.types import Position
 from laife.entities.building import Building
 from laife.entities.player import Player
+from laife.entities.terrain import Terrain
 from laife.entities.utils.geometry import aabb_collides
 from laife.entities.world_channel import WRecBuild
 from laife.entities.world_channel import WRecCraft
@@ -27,6 +28,8 @@ from laife.entities.world_map_observation import WorldMapObservation
 from laife.entities.world_map_observation import euclidean
 from laife.llm.prompt_loader import PromptLoader
 from laife.llm.prompt_loader import PromptLoaderConfig
+from laife.meta.log_events import EVT_WORLD_REQUEST
+from laife.meta.logger import slog
 from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
 
@@ -44,6 +47,7 @@ class WorldRunner:
         # authoritative entity lists (no pygame data structures)
         self.players: list[Player] = []
         self.buildings: list[Building] = []
+        self.terrains: list[Terrain] = []
 
         # players send world-modification requests through this queue
         self.input_queue: asyncio.Queue[WReq] = asyncio.Queue()
@@ -82,6 +86,10 @@ class WorldRunner:
             alg.log("W: awaiting player input")
             player_input = await self.input_queue.get()
             alg.log(f"W: Got player input: {player_input}")
+            slog.bind(
+                event=EVT_WORLD_REQUEST,
+                kind=type(player_input).__name__,
+            ).debug(EVT_WORLD_REQUEST)
             wrsp = await self.handle_player_input(player_input)
             self.input_queue.task_done()
             await player_input.response_queue.put(wrsp)
@@ -115,6 +123,10 @@ class WorldRunner:
     def add_player(self, player: Player) -> None:
         """Register a player with the world."""
         self.players.append(player)
+
+    def add_terrain(self, terrain: Terrain) -> None:
+        """Add a terrain region to the world."""
+        self.terrains.append(terrain)
 
     async def route_interaction(self, req: WRecInteract) -> WResInteract | WResError:
         """Route a message to the named target player and return its LLM reply.
@@ -239,6 +251,20 @@ class WorldRunner:
                     NearbyEntity(
                         entity_type="player",
                         name=player.name,
+                        relative_position=(dx, dy),
+                        distance=dist,
+                    )
+                )
+
+        for terrain in self.terrains:
+            dist = euclidean(position, terrain.position)
+            if dist <= radius:
+                dx = terrain.position[0] - position[0]
+                dy = terrain.position[1] - position[1]
+                nearby.append(
+                    NearbyEntity(
+                        entity_type="terrain",
+                        name=terrain.name,
                         relative_position=(dx, dy),
                         distance=dist,
                     )

@@ -6,10 +6,18 @@ import time
 
 import pygame
 
+from laife.entities.terrain import TerrainType
 from laife.entities.world_runner import WorldRunner
 from laife.rendering.building_sprite import BuildingSprite
 from laife.rendering.player_sprite import PlayerSprite
 from laife.ui.alog import alg
+
+_TERRAIN_COLORS: dict[TerrainType, tuple[int, int, int]] = {
+    TerrainType.FOREST: (34, 85, 34),
+    TerrainType.LAKE: (70, 130, 180),
+    TerrainType.FERTILE_LAND: (107, 142, 35),
+    TerrainType.PLAIN: (210, 180, 140),
+}
 
 
 class WorldRenderer:
@@ -107,6 +115,13 @@ class WorldRenderer:
     # Drawing
     # ------------------------------------------------------------------
 
+    def _draw_terrains(self) -> None:
+        """Draw all terrain regions as coloured rectangles behind other entities."""
+        for terrain in self.runner.terrains:
+            color = _TERRAIN_COLORS.get(terrain.terrain_type, (80, 80, 80))
+            rect = pygame.Rect(terrain.position, terrain.size)
+            pygame.draw.rect(self.screen, color, rect)
+
     def should_redraw(self) -> bool:
         """Return True when the throttle period has elapsed."""
         return time.time() > self.redraw_deadline
@@ -116,10 +131,11 @@ class WorldRenderer:
         self.redraw_deadline = time.time() + self.redraw_period_sec
 
     def redraw(self) -> None:
-        """Clear the screen, draw all sprites, and flip the display."""
+        """Clear the screen, draw terrain, draw all sprites, and flip the display."""
         if not self.should_redraw():
             return
-        self.screen.fill((0, 0, 0))
+        self.screen.fill((50, 50, 50))
+        self._draw_terrains()
         self.player_sprites.draw(self.screen)
         self.building_sprites.draw(self.screen)
         pygame.display.flip()
