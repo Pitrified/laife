@@ -45,3 +45,7 @@ Replace `Alog` with a structured logger (JSON lines or similar) recording every 
 ## ~~10. Refactor repetitive player request pattern~~ (done)
 
 Extract the "build request, send to world, await response, handle status, record history" boilerplate in `Player` into a generic helper (e.g., `async _world_request(req: WReq) -> WRes`). Cuts duplication across the move/build/craft handlers and makes adding new action types cheaper.
+
+## 11. Save received messages in player memory
+
+When a player receives an `ActionInteract` message, save the content and sender in a new `interactions: list[Interaction]` field on `Player`. This allows the brain to recall past interactions when deciding how to respond to new ones, enabling more coherent multi-agent conversations.
