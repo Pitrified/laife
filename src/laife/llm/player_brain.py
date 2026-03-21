@@ -2,6 +2,9 @@
 
 import time
 
+from llm_core.chat.config.base import ChatConfig
+from llm_core.prompts.prompt_loader import PromptLoader
+from llm_core.prompts.prompt_loader import PromptLoaderConfig
 from pydantic import BaseModel
 
 from laife.entities.action import ActionPicker
@@ -10,9 +13,6 @@ from laife.entities.action import BaseAction
 from laife.entities.world_map_observation import WorldMapObservation
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
-from laife.llm.prompt_loader import PromptLoader
-from laife.llm.prompt_loader import PromptLoaderConfig
-from laife.llm_services.chat.config.base import ChatConfig
 from laife.meta.log_events import EVT_LLM_CALL
 from laife.meta.logger import slog
 

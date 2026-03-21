@@ -2,11 +2,10 @@
 
 from pathlib import Path
 
+from llm_core.prompts.prompt_loader import NoPromptVersionFoundError
+from llm_core.prompts.prompt_loader import PromptLoader
+from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
-
-from laife.llm.prompt_loader import NoPromptVersionFoundError
-from laife.llm.prompt_loader import PromptLoader
-from laife.llm.prompt_loader import PromptLoaderConfig
 
 
 @pytest.fixture

@@ -6,6 +6,9 @@ from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from llm_core.chains.structured_chain import MissingPromptVariablesError
+from llm_core.chat.config.ollama import OllamaChatConfig
+from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
 
 from laife.entities.world_map_observation import WorldMapObservation
@@ -13,9 +16,6 @@ from laife.llm.mission_generator import MissionGenerator
 from laife.llm.mission_generator import MissionGeneratorConfig
 from laife.llm.mission_generator import MissionGeneratorInput
 from laife.llm.mission_generator import MissionGeneratorResult
-from laife.llm.prompt_loader import PromptLoaderConfig
-from laife.llm.structured_chain import MissingPromptVariablesError
-from laife.llm_services.chat.config.ollama import OllamaChatConfig
 
 # ---------------------------------------------------------------------------
 # Constants / shared helpers
@@ -106,11 +106,7 @@ def test_generator_construction_valid_prompt(prompt_dir: Path) -> None:
             prompt_name="mission_generator",
         ),
     )
-    with patch(
-        "laife.llm.mission_generator.StructuredLLMChain.__post_init__",
-        lambda _: None,
-    ):
-        gen = MissionGenerator(config=config)
+    gen = MissionGenerator(config=config)
     assert gen.config is config
 
 

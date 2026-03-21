@@ -2,12 +2,13 @@
 
 from typing import TYPE_CHECKING
 
-from laife.llm_services.vectorstores.config.chroma import ChromaConfig
+from llm_core.vectorstores.config.chroma import ChromaConfig
+
 from laife.params.env_type import EnvType
 from laife.params.llm_services.embeddings import EmbeddingsParams
 
 if TYPE_CHECKING:
-    from laife.llm_services.vectorstores.config.base import VectorStoreConfig
+    from llm_core.vectorstores.config.base import VectorStoreConfig
 
 
 class SearchParams:
@@ -30,6 +31,7 @@ class SearchParams:
     def load_common_params_pre(self) -> None:
         """Load the common params."""
         self.chroma = ChromaConfig(
+            collection_name="laife",
             embeddings_config=self.embeddings_params.default,
         )
         self.default: VectorStoreConfig = self.chroma

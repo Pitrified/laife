@@ -4,6 +4,8 @@ import asyncio
 from enum import StrEnum
 import time
 
+from llm_core.prompts.prompt_loader import PromptLoaderConfig
+
 from laife.config.types import Position
 from laife.config.types import Size
 from laife.entities.action import ActionBuild
@@ -49,7 +51,6 @@ from laife.llm.player_planner import PlayerPlannerConfig
 from laife.llm.player_replier import PlayerReplier
 from laife.llm.player_replier import PlayerReplierConfig
 from laife.llm.player_replier import PlayerReplyInput
-from laife.llm.prompt_loader import PromptLoaderConfig
 from laife.meta.log_events import EVT_ACTION
 from laife.meta.log_events import EVT_MISSION_TRANSITION
 from laife.meta.log_events import EVT_WORLD_RESPONSE

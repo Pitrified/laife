@@ -4,8 +4,9 @@ import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
-from unittest.mock import patch
 
+from llm_core.chat.config.ollama import OllamaChatConfig
+from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
 
 from laife.entities.action import ActionMove
@@ -17,8 +18,6 @@ from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionStatus
 from laife.llm.player_brain import PlayerBrain
 from laife.llm.player_brain import PlayerBrainConfig
-from laife.llm.prompt_loader import PromptLoaderConfig
-from laife.llm_services.chat.config.ollama import OllamaChatConfig
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
@@ -73,12 +72,8 @@ def test_player_brain_config_instantiation(brain_config: PlayerBrainConfig) -> N
 
 @pytest.fixture
 def brain(brain_config: PlayerBrainConfig) -> PlayerBrain:
-    """PlayerBrain with ActionPicker.__post_init__ patched to avoid LLM calls."""
-    with patch(
-        "laife.entities.action.ActionPicker.__post_init__",
-        lambda self: setattr(self, "chain", MagicMock()),
-    ):
-        return PlayerBrain(brain_config)
+    """PlayerBrain built from config (no LLM calls made during construction)."""
+    return PlayerBrain(brain_config)
 
 
 def test_think_returns_action_from_picker(brain: PlayerBrain) -> None:

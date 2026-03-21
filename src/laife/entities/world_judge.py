@@ -2,11 +2,11 @@
 
 from dataclasses import dataclass
 
+from llm_core.chains.structured_chain import StructuredLLMChain
+from llm_core.chat.config.base import ChatConfig
 from pydantic import BaseModel
 
 from laife.data_models.basemodel_kwargs import BaseModelKwargs
-from laife.llm.structured_chain import StructuredLLMChain
-from laife.llm_services.chat.config.base import ChatConfig
 
 
 class WorldJudgeInput(BaseModelKwargs):

@@ -6,6 +6,9 @@ from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from llm_core.chains.structured_chain import MissingPromptVariablesError
+from llm_core.chat.config.ollama import OllamaChatConfig
+from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
 
 from laife.entities.action import ActionMove
@@ -23,9 +26,6 @@ from laife.llm.player_planner import PlayerPlanner
 from laife.llm.player_planner import PlayerPlannerConfig
 from laife.llm.player_planner import PlayerPlannerInput
 from laife.llm.player_planner import PlayerPlannerResult
-from laife.llm.prompt_loader import PromptLoaderConfig
-from laife.llm.structured_chain import MissingPromptVariablesError
-from laife.llm_services.chat.config.ollama import OllamaChatConfig
 
 # ---------------------------------------------------------------------------
 # Constants / shared helpers

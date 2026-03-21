@@ -5,13 +5,13 @@ from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from llm_core.chains.structured_chain import MissingPromptVariablesError
+from llm_core.chains.structured_chain import StructuredLLMChain
+from llm_core.chat.config.ollama import OllamaChatConfig
 from pydantic import BaseModel
 import pytest
 
 from laife.data_models.basemodel_kwargs import BaseModelKwargs
-from laife.llm.structured_chain import MissingPromptVariablesError
-from laife.llm.structured_chain import StructuredLLMChain
-from laife.llm_services.chat.config.ollama import OllamaChatConfig
 
 # ---------------------------------------------------------------------------
 # Test models
@@ -45,8 +45,8 @@ def chat_config() -> OllamaChatConfig:
 def chain(chat_config: OllamaChatConfig) -> StructuredLLMChain[_SampleInput, _SampleOutput]:
     """StructuredLLMChain with __post_init__ patched to avoid LLM initialisation."""
     with patch(
-        "laife.llm.structured_chain.StructuredLLMChain.__post_init__",
-        lambda self: setattr(self, "chain", MagicMock()),
+        "llm_core.chains.structured_chain.StructuredLLMChain.__post_init__",
+        lambda self: setattr(self, "_chain", MagicMock()),
     ):
         return StructuredLLMChain(
             chat_config=chat_config,
@@ -99,7 +99,7 @@ def test_chain_raises_on_missing_prompt_vars(chat_config: OllamaChatConfig) -> N
 
 def test_chain_accepts_complete_prompt(chat_config: OllamaChatConfig) -> None:
     """StructuredLLMChain must not raise when all required variables are present."""
-    with patch("laife.llm.structured_chain.StructuredLLMChain.__post_init__", lambda _: None):
+    with patch("llm_core.chains.structured_chain.StructuredLLMChain.__post_init__", lambda _: None):
         c = StructuredLLMChain(
             chat_config=chat_config,
             prompt_str=VALID_PROMPT,

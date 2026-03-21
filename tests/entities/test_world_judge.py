@@ -5,6 +5,8 @@ from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from llm_core.chains.structured_chain import MissingPromptVariablesError
+from llm_core.chat.config.ollama import OllamaChatConfig
 import pytest
 
 from laife.entities.building import Building
@@ -15,8 +17,6 @@ from laife.entities.world_channel import WResStatus
 from laife.entities.world_judge import WorldActionJudge
 from laife.entities.world_judge import WorldJudgeInput
 from laife.entities.world_judge import WorldJudgeResult
-from laife.llm.structured_chain import MissingPromptVariablesError
-from laife.llm_services.chat.config.ollama import OllamaChatConfig
 
 # ---------------------------------------------------------------------------
 # Shared fixtures / constants

@@ -2,11 +2,11 @@
 
 import inspect
 
+from llm_core.vectorstores.vectorable import Vectorable
 import pytest
 
 from laife.entities.terrain import Terrain
 from laife.entities.terrain import TerrainType
-from laife.entities.vectorable import Vectorable
 
 # ---------------------------------------------------------------------------
 # Fixtures

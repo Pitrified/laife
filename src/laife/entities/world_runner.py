@@ -2,6 +2,9 @@
 
 import asyncio
 
+from llm_core.prompts.prompt_loader import PromptLoader
+from llm_core.prompts.prompt_loader import PromptLoaderConfig
+
 from laife.config.types import Position
 from laife.entities.building import Building
 from laife.entities.player import Player
@@ -28,8 +31,6 @@ from laife.entities.world_judge import WorldJudgeInput
 from laife.entities.world_map_observation import NearbyEntity
 from laife.entities.world_map_observation import WorldMapObservation
 from laife.entities.world_map_observation import euclidean
-from laife.llm.prompt_loader import PromptLoader
-from laife.llm.prompt_loader import PromptLoaderConfig
 from laife.meta.log_events import EVT_WORLD_REQUEST
 from laife.meta.logger import slog
 from laife.params.laife_params import get_laife_params

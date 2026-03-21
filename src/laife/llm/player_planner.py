@@ -2,6 +2,10 @@
 
 from dataclasses import dataclass
 
+from llm_core.chains.structured_chain import StructuredLLMChain
+from llm_core.chat.config.base import ChatConfig
+from llm_core.prompts.prompt_loader import PromptLoader
+from llm_core.prompts.prompt_loader import PromptLoaderConfig
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -9,10 +13,6 @@ from laife.data_models.basemodel_kwargs import BaseModelKwargs
 from laife.entities.world_map_observation import WorldMapObservation
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
-from laife.llm.prompt_loader import PromptLoader
-from laife.llm.prompt_loader import PromptLoaderConfig
-from laife.llm.structured_chain import StructuredLLMChain
-from laife.llm_services.chat.config.base import ChatConfig
 
 
 class PlayerPlannerInput(BaseModelKwargs):

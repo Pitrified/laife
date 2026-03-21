@@ -2,14 +2,15 @@
 
 from typing import TYPE_CHECKING
 
-from laife.llm_services.embeddings.config.azure_openai import AzureOpenAIEmbeddingsConfig
-from laife.llm_services.embeddings.config.huggingface import HuggingFaceEmbeddingsConfig
-from laife.llm_services.embeddings.config.ollama import OllamaEmbeddingsConfig
-from laife.llm_services.embeddings.config.openai import OpenAIEmbeddingsConfig
+from llm_core.embeddings.config.azure_openai import AzureOpenAIEmbeddingsConfig
+from llm_core.embeddings.config.huggingface import HuggingFaceEmbeddingsConfig
+from llm_core.embeddings.config.ollama import OllamaEmbeddingsConfig
+from llm_core.embeddings.config.openai import OpenAIEmbeddingsConfig
+
 from laife.params.env_type import EnvType
 
 if TYPE_CHECKING:
-    from laife.llm_services.embeddings.config.base import EmbeddingsConfig
+    from llm_core.embeddings.config.base import EmbeddingsConfig
 
 
 class EmbeddingsParams:

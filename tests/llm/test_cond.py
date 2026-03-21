@@ -1,71 +1,62 @@
-"""Test cond module."""
+"""Tests for the cond module (now backed by llm_core.vectorstores.cond)."""
 
-import pytest
-
-from laife.llm_services.vectorstores.cond import CompCond
-from laife.llm_services.vectorstores.cond import CompOp
-from laife.llm_services.vectorstores.cond import InclusionCond
-from laife.llm_services.vectorstores.cond import InclusionOp
-from laife.llm_services.vectorstores.cond import LogicalCond
-from laife.llm_services.vectorstores.cond import LogicalOp
+from llm_core.vectorstores.cond import CompCond
+from llm_core.vectorstores.cond import CompOp
+from llm_core.vectorstores.cond import InclusionCond
+from llm_core.vectorstores.cond import InclusionOp
+from llm_core.vectorstores.cond import LogicalCond
+from llm_core.vectorstores.cond import LogicalOp
 
 
 def test_comp_cond() -> None:
-    """Verify CompCond outputs correct dicts for EQ and GT operators."""
-    # Test equality condition
+    """CompCond stores field, op, and value correctly."""
     cond = CompCond("age", CompOp.EQ, 30)
-    assert cond.to_dict() == {"age": 30}
+    assert cond.field == "age"
+    assert cond.op == CompOp.EQ
+    assert cond.value == 30
 
-    # Test greater than condition
-    cond = CompCond("age", CompOp.GT, 30)
-    assert cond.to_dict() == {"age": {"$gt": 30}}
+    cond_gt = CompCond("age", CompOp.GT, 30)
+    assert cond_gt.op == CompOp.GT
 
 
 def test_inclusion_cond() -> None:
-    """Check InclusionCond produces correct $in and $nin mappings."""
-    # Test inclusion condition
-    cond = InclusionCond("name", InclusionOp.IN, "John", "Jane")
-    assert cond.to_dict() == {"name": {"$in": ["John", "Jane"]}}
+    """InclusionCond stores field, op, and values list correctly."""
+    cond = InclusionCond("name", InclusionOp.IN, ["John", "Jane"])
+    assert cond.field == "name"
+    assert cond.op == InclusionOp.IN
+    assert cond.values == ["John", "Jane"]
 
-    # Test exclusion condition
-    cond = InclusionCond("name", InclusionOp.NIN, "John", "Jane")
-    assert cond.to_dict() == {"name": {"$nin": ["John", "Jane"]}}
+    cond_nin = InclusionCond("name", InclusionOp.NIN, ["John", "Jane"])
+    assert cond_nin.op == InclusionOp.NIN
 
 
 def test_logical_cond() -> None:
-    """Ensure LogicalCond composes sub-conditions with $and and $or."""
-    # Test logical AND condition
+    """LogicalCond composes sub-conditions with AND and OR operators."""
     comp_cond1 = CompCond("age", CompOp.GT, 30)
     comp_cond2 = CompCond("name", CompOp.EQ, "John")
-    logical_cond = LogicalCond(LogicalOp.AND, comp_cond1, comp_cond2)
-    assert logical_cond.to_dict() == {"$and": [{"age": {"$gt": 30}}, {"name": "John"}]}
+    logical_cond = LogicalCond(LogicalOp.AND, [comp_cond1, comp_cond2])
+    assert logical_cond.op == LogicalOp.AND
+    assert logical_cond.children == [comp_cond1, comp_cond2]
 
-    # Test logical OR condition
-    inclusion_cond1 = InclusionCond("name", InclusionOp.IN, "John", "Jane")
-    inclusion_cond2 = InclusionCond("age", InclusionOp.NIN, 20, 30)
-    logical_cond = LogicalCond(LogicalOp.OR, inclusion_cond1, inclusion_cond2)
-    assert logical_cond.to_dict() == {
-        "$or": [{"name": {"$in": ["John", "Jane"]}}, {"age": {"$nin": [20, 30]}}]
-    }
+    logical_or = LogicalCond(LogicalOp.OR, [comp_cond1, comp_cond2])
+    assert logical_or.op == LogicalOp.OR
 
 
-def test_inclusion_cond_with_empty_values() -> None:
-    """Raise ValueError when InclusionCond is created without values."""
-    # Test inclusion condition with empty values
-    msg = "Values cannot be empty."
-    with pytest.raises(ValueError, match=msg):
-        _ = InclusionCond("name", InclusionOp.IN)
+def test_logical_cond_via_operator_overloading() -> None:
+    """Operator & produces a flat AND condition."""
+    a = CompCond("age", CompOp.GT, 30)
+    b = CompCond("name", CompOp.EQ, "John")
+    result = a & b
+    assert isinstance(result, LogicalCond)
+    assert result.op == LogicalOp.AND
+    assert result.children == [a, b]
 
 
-def test_logical_cond_with_no_and_single_condition() -> None:
-    """Validate LogicalCond enforces minimum condition counts for operators."""
-    # Test logical AND condition with a single condition
-    comp_cond = CompCond("age", CompOp.GT, 30)
-    msg = "Conditions must be more than one."
-    with pytest.raises(ValueError, match=msg):
-        _ = LogicalCond(LogicalOp.AND, comp_cond)
-
-    # Test logical OR condition with no conditions
-    msg = "Conditions cannot be empty."
-    with pytest.raises(ValueError, match=msg):
-        _ = LogicalCond(LogicalOp.OR)
+def test_logical_cond_or_via_operator_overloading() -> None:
+    """Operator | produces a flat OR condition."""
+    a = InclusionCond("name", InclusionOp.IN, ["John", "Jane"])
+    b = CompCond("age", CompOp.GT, 20)
+    result = a | b
+    assert isinstance(result, LogicalCond)
+    assert result.op == LogicalOp.OR
+    assert result.children == [a, b]
