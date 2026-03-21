@@ -52,6 +52,10 @@ class MissionStatus(Enum):
     COMPLETED = "completed"
 
 
+MAX_MISSION_FAILURES: int = 5
+"""Number of consecutive build/craft failures before a mission is marked FAILED."""
+
+
 class Mission(BaseModel):
     """A mission composed of ordered mission steps."""
 
@@ -60,6 +64,8 @@ class Mission(BaseModel):
     status: MissionStatus = MissionStatus.PENDING
     steps: list[Mission] = Field(default_factory=list)
     parent_mission: Mission | None = None
+    consecutive_failures: int = 0
+    max_failures: int = MAX_MISSION_FAILURES
 
     def add_sub_mission(self, objective: str) -> None:
         """Add a sub-mission to the mission."""
@@ -92,6 +98,25 @@ class Mission(BaseModel):
         if self.parent_mission is not None:
             self.parent_mission.advance()
         return False
+
+    def record_action_success(self) -> None:
+        """Record a successful build or craft action and mark the mission COMPLETED."""
+        self.consecutive_failures = 0
+        self.status = MissionStatus.COMPLETED
+
+    def record_action_failure(self) -> None:
+        """Record a failed build or craft action.
+
+        Increments the consecutive failure counter.  When the counter reaches
+        ``max_failures`` the mission is marked ``FAILED``.
+        """
+        self.consecutive_failures += 1
+        if self.consecutive_failures >= self.max_failures:
+            self.status = MissionStatus.FAILED
+
+    def is_terminal(self) -> bool:
+        """Return True when the mission has reached a final state (COMPLETED or FAILED)."""
+        return self.status in (MissionStatus.COMPLETED, MissionStatus.FAILED)
 
     def to_prompt(self, *, top_prompt: bool = True, focus: Mission | None = None) -> str:
         """Return the mission as a prompt.

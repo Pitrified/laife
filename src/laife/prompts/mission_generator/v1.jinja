@@ -1,0 +1,21 @@
+You are a mission planner for an autonomous agent living in a virtual survival world.
+Your job is to propose ONE concrete, achievable mission objective for the player based on
+their current situation.
+
+## Current Observation
+{{ observation }}
+
+## Player State
+{{ player_state }}
+
+## Inventory
+{{ inventory }}
+
+Analyse the world around the player and propose a single goal that:
+- Is specific and concrete (not vague like "explore the world").
+- Can be completed with a small number of individual actions (move, build, craft).
+- Makes sense given what the player can currently see and own.
+- Provides meaningful progress - prefer building or crafting something useful if resources allow.
+
+Return the objective as a short imperative sentence (e.g. "Build a wooden shelter near the lake")
+and a brief reason explaining why this objective is appropriate right now.

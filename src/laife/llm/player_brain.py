@@ -1,5 +1,7 @@
 """Brain of a player."""
 
+import time
+
 from pydantic import BaseModel
 
 from laife.entities.action import ActionPicker
@@ -11,6 +13,8 @@ from laife.llm.mission import MissionHistory
 from laife.llm.prompt_loader import PromptLoader
 from laife.llm.prompt_loader import PromptLoaderConfig
 from laife.llm_services.chat.config.base import ChatConfig
+from laife.meta.log_events import EVT_LLM_CALL
+from laife.meta.logger import slog
 
 
 class PlayerBrainConfig(BaseModel):
@@ -42,13 +46,22 @@ class PlayerBrain:
         history: MissionHistory,
         observation: WorldMapObservation,
         player_state: str,
+        inventory: str,
     ) -> BaseAction:
         """Ask the LLM to pick the next action given full context."""
-        return await self.action_picker.ainvoke(
+        t0 = time.monotonic()
+        result = await self.action_picker.ainvoke(
             ActionPickerInput(
                 mission=mission.to_prompt(),
                 history=history.to_prompt(),
                 observation=observation.to_prompt(),
                 player_state=player_state,
+                inventory=inventory,
             )
         )
+        slog.bind(
+            event=EVT_LLM_CALL,
+            model=self.config.chat_config.model,
+            elapsed=round(time.monotonic() - t0, 3),
+        ).info(EVT_LLM_CALL)
+        return result

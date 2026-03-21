@@ -29,6 +29,7 @@ VALID_PROMPT = (
     "History: {{ history }}\n"
     "Observation: {{ observation }}\n"
     "State: {{ player_state }}\n"
+    "Inventory: {{ inventory }}\n"
 )
 
 
@@ -96,6 +97,7 @@ def test_think_returns_action_from_picker(brain: PlayerBrain) -> None:
             history=MissionHistory(),
             observation=WorldMapObservation.from_position((0, 0)),
             player_state="(10, 20)",
+            inventory="Empty - no utensils carried.",
         )
     )
 
@@ -124,6 +126,7 @@ def test_think_passes_correct_kwargs(brain: PlayerBrain) -> None:
             history=history,
             observation=observation,
             player_state=player_state,
+            inventory="Empty - no utensils carried.",
         )
     )
 
@@ -133,5 +136,6 @@ def test_think_passes_correct_kwargs(brain: PlayerBrain) -> None:
             history=history.to_prompt(),
             observation=observation.to_prompt(),
             player_state=player_state,
+            inventory="Empty - no utensils carried.",
         )
     )

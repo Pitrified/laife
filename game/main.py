@@ -8,13 +8,19 @@ from laife.entities.building_types import FACTORY
 from laife.entities.building_types import FARM
 from laife.entities.building_types import HOUSE
 from laife.entities.player import Player
+from laife.entities.terrain_types import TERRAINS
 from laife.entities.world_runner import WorldRunner
+from laife.meta.logger import configure_logging
 from laife.rendering.world_renderer import WorldRenderer
 from laife.ui.alog import alg
 
 
 def setup_world(runner: WorldRunner) -> None:
-    """Populate the world with players and buildings."""
+    """Populate the world with terrain, players, and buildings."""
+    # seed terrain regions
+    for terrain in TERRAINS:
+        runner.add_terrain(terrain)
+
     player = Player(
         "p0",
         position=(random.randint(0, 800), random.randint(0, 600)),  # noqa: S311
@@ -69,6 +75,9 @@ def setup_world(runner: WorldRunner) -> None:
 
 async def main() -> None:
     """Run main function."""
+    # 0. Structured file logger - call before anything else
+    configure_logging(level="INFO")
+
     # 1. Pure-logic runner (no pygame)
     runner = WorldRunner()
 

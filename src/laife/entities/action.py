@@ -58,7 +58,14 @@ class ActionComplete(BaseAction):
     outcome: str = Field(..., description="One-sentence description of what was accomplished.")
 
 
-Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan | ActionComplete
+class ActionInteract(BaseAction):
+    """Send a natural-language message to a nearby player."""
+
+    target_name: str = Field(..., description="Name of the player to address.")
+    message: str = Field(..., description="The message to send.")
+
+
+Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan | ActionComplete | ActionInteract
 
 
 class ActionEnvelope(BaseModel):
@@ -79,6 +86,7 @@ class ActionPickerInput(BaseModelKwargs):
     history: str
     observation: str
     player_state: str
+    inventory: str
 
 
 @dataclass
