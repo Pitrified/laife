@@ -8,7 +8,7 @@ dependencies = [
     "ipykernel>=6.29.5",
     "ipywidgets>=8.1.3",
     "langgraph>=0.2.27",
-    "llm-core[all] @ file:///home/pmn/repos/llm-core",
+    "llm-core[all] @ git+https://github.com/Pitrified/llm-core@v0.1.0",
     "loguru>=0.7.2",
     "pygame>=2.6.0",
     "pysqlite3-binary>=0.5.3.post1",
