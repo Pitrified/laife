@@ -7,14 +7,6 @@ repo_url: https://github.com/Pitrified/laife
 
 docs_dir: docs
 
-# Library pages link to source files under ../../src with relative paths, so the
-# links resolve when the docs are read on GitHub. Those targets live outside
-# docs_dir, so mkdocs cannot resolve them against the built site; silence the
-# resulting "not found" warnings instead of dropping the GitHub-correct links.
-validation:
-  links:
-    not_found: ignore
-
 theme:
   name: material
   palette:

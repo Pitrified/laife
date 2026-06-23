@@ -1,7 +1,7 @@
 # Getting started
 
 How to set up `lAIfe` locally and run it.
-This page summarizes the setup; [CONTRIBUTING](../../CONTRIBUTING.md) owns the full instructions and the system packages needed for pygame.
+This page summarizes the setup; [CONTRIBUTING](https://github.com/Pitrified/laife/blob/main/CONTRIBUTING.md) owns the full instructions and the system packages needed for pygame.
 
 ## Install
 
@@ -12,13 +12,13 @@ uv sync --all-extras --all-groups
 ```
 
 Pygame needs SDL2 development libraries on the host.
-If `uv sync` fails on the SDL2 build, install them as described in [CONTRIBUTING](../../CONTRIBUTING.md).
+If `uv sync` fails on the SDL2 build, install them as described in [CONTRIBUTING](https://github.com/Pitrified/laife/blob/main/CONTRIBUTING.md).
 
 ## Credentials
 
 LLM and embedding calls need API keys.
-Place them in `~/cred/laife/.env`; the required keys are listed in [`nokeys.env`](../../nokeys.env).
-They are loaded by `load_env` in [`src/laife/params/load_env.py`](../../src/laife/params/load_env.py).
+Place them in `~/cred/laife/.env`; the required keys are listed in [`nokeys.env`](https://github.com/Pitrified/laife/blob/main/nokeys.env).
+They are loaded by `load_env` in [`src/laife/params/load_env.py`](https://github.com/Pitrified/laife/blob/main/src/laife/params/load_env.py).
 
 ## Run the game
 
@@ -28,7 +28,7 @@ uv run python game/main.py
 
 A pygame window opens with the world, the players, and the buildings.
 Press `q` to quit.
-The entry point [`game/main.py`](../../game/main.py) shows how the world is assembled; see [the architecture guide](architecture.md) for what each piece does.
+The entry point [`game/main.py`](https://github.com/Pitrified/laife/blob/main/game/main.py) shows how the world is assembled; see [the architecture guide](architecture.md) for what each piece does.
 
 ## Checks
 

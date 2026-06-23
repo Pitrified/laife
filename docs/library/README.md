@@ -1,6 +1,6 @@
 # Library
 
-High-level documentation for the code under [`src/laife/`](../../src/laife).
+High-level documentation for the code under [`src/laife/`](https://github.com/Pitrified/laife/tree/main/src/laife).
 Each page mirrors one package and links to the source files for detail.
 For cross-cutting explanations see [the guides](../guides/README.md).
 

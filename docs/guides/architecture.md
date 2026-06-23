@@ -5,7 +5,7 @@ Everything runs as concurrent asyncio tasks coordinated through queues.
 
 ## The three concurrent tasks
 
-[`game/main.py`](../../game/main.py) starts three kinds of coroutine with `asyncio.gather`:
+[`game/main.py`](https://github.com/Pitrified/laife/blob/main/game/main.py) starts three kinds of coroutine with `asyncio.gather`:
 
 - the world simulation loop, one `WorldRunner.simulate`;
 - the renderer, one `WorldRenderer.render`;
@@ -22,7 +22,7 @@ The world validates every request, runs deterministic checks such as collision, 
 The world never tells a player what to do; it only answers requests.
 
 This request and response contract is typed.
-Requests and responses live in [`entities/world_channel.py`](../../src/laife/entities/world_channel.py) as `WReq` and `WRes` subclasses, so payloads are validated at the boundary instead of passed as loose dicts.
+Requests and responses live in [`entities/world_channel.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_channel.py) as `WReq` and `WRes` subclasses, so payloads are validated at the boundary instead of passed as loose dicts.
 
 ## A player is an agent
 

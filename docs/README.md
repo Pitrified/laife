@@ -9,15 +9,15 @@ Each player observes what is around it, thinks about a mission, and asks the wor
 The world is the only authority: it validates every request, runs collision and judging, and answers with a typed response.
 Nothing is scripted; missions, plans, and conversations all emerge from the LLM calls.
 
-For the game pitch and the running list of ideas and features see the [project README](../README.md).
-For local setup see [CONTRIBUTING](../CONTRIBUTING.md).
+For the game pitch and the running list of ideas and features see the [project README](https://github.com/Pitrified/laife/blob/main/README.md).
+For local setup see [CONTRIBUTING](https://github.com/Pitrified/laife/blob/main/CONTRIBUTING.md).
 
 ## Documentation map
 
 The docs are split in two trees.
 
 - [`guides/`](guides/README.md) - cross-cutting explanations: how to run the game, the overall architecture, the game loop, the LLM chains, and configuration.
-- [`library/`](library/README.md) - one page per source module under [`src/laife/`](../src/laife), describing what each module is for and linking to the code.
+- [`library/`](library/README.md) - one page per source module under [`src/laife/`](https://github.com/Pitrified/laife/tree/main/src/laife), describing what each module is for and linking to the code.
 
 ## Start here
 
@@ -46,9 +46,9 @@ To produce the static site once, with the same strict checks as CI:
 uv run mkdocs build --strict
 ```
 
-Pushing to `main` publishes the site to GitHub Pages through [the docs workflow](../.github/workflows/docs.yml).
+Pushing to `main` publishes the site to GitHub Pages through [the docs workflow](https://github.com/Pitrified/laife/blob/main/.github/workflows/docs.yml).
 
 ## Conventions
 
 All docs follow [the docs standards](standards.md).
-The code follows the conventions in the repo [Copilot instructions](../.github/copilot-instructions.md).
+The code follows the conventions in the repo [Copilot instructions](https://github.com/Pitrified/laife/blob/main/.github/copilot-instructions.md).

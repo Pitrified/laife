@@ -8,7 +8,7 @@ The commands assume you run them from the repo root.
 
 ## 1. Every package has a library page
 
-The [library tree](../library/README.md) mirrors [`src/laife/`](../../src/laife) one to one.
+The [library tree](../library/README.md) mirrors [`src/laife/`](https://github.com/Pitrified/laife/tree/main/src/laife) one to one.
 When a package is added or removed, the library pages must follow.
 This command lists the difference between the source packages and the library pages; empty output means they match.
 
@@ -26,17 +26,17 @@ A line indented with a tab comes from the second list (an extra page); a flush-l
 
 ## 2. No dead links to source files
 
-Library pages link to source files with relative `../../src/...` paths.
-A rename or move on the code side leaves those links dangling.
-This command extracts every referenced source path and reports the ones that no longer exist.
+Links to files outside `docs/` are absolute GitHub URLs on `main` (see [the standards](../standards.md)), since a relative path would break on the published site.
+Those URLs are not checked by the build, so a rename or move on the code side leaves them dangling silently.
+This command extracts the repo-relative path from every such URL and reports the ones that no longer exist locally.
 
 ```bash
-grep -rhoE '\.\./\.\./src/laife[A-Za-z0-9_/]*\.py' docs/library/*.md docs/guides/*.md \
-  | sed 's#\.\./\.\./##' | sort -u \
+grep -rhoE 'https://github.com/Pitrified/laife/(blob|tree)/main/[A-Za-z0-9_./-]+' docs \
+  | sed -E 's#.*/main/##' | sort -u \
   | while read -r p; do [ -e "$p" ] || echo "MISSING: $p"; done
 ```
 
-The `sed` rewrites each `../../src/...` link to a path relative to the repo root, so the existence test runs from where you invoke it.
+The `sed` strips the URL prefix up to `main/`, leaving a path relative to the repo root, so the existence test runs from where you invoke it.
 
 ## 3. New pages follow the standards
 
@@ -51,14 +51,15 @@ Headers and filenames are quick to eyeball; there is no reliable one-liner that 
 
 ## 4. The site still builds strict
 
-The build is the final gate, and it is what CI runs through [the docs workflow](../../.github/workflows/docs.yml).
+The build is the final gate, and it is what CI runs through [the docs workflow](https://github.com/Pitrified/laife/blob/main/.github/workflows/docs.yml).
 Strict mode turns broken internal links and bad references into errors.
 
 ```bash
 uv run mkdocs build --strict
 ```
 
-Relative links to source files point outside the site and would warn, but [`mkdocs.yml`](../../mkdocs.yml) silences exactly those through its `validation` block, so a clean strict build means the internal navigation and the API reference are sound.
+All in-site links are relative paths between doc pages, and links to repo files are absolute GitHub URLs, so nothing points outside the site with a relative path.
+A clean strict build therefore means the internal navigation and the API reference are sound; it does not check the external GitHub URLs, which is what check 2 is for.
 
 ## 5. Tricky points stay documented
 

@@ -19,8 +19,10 @@ Follow these guidelines when maintaining the docs.
 
 ## Markdown & links
 
-- Links are relative paths between pages, so they resolve on GitHub as well as the built site.
-- Link to code files with relative paths too, for the same reason.
+- Links between doc pages are relative paths, so they resolve on GitHub and on the published site.
+- Links to files outside `docs/` (source code, `README`, configs) use absolute GitHub URLs on `main`:
+  `https://github.com/Pitrified/laife/blob/main/<path>` for files, `.../tree/main/<path>` for directories.
+  A relative path to a file outside `docs/` resolves on GitHub but breaks on the published site, which contains only `docs/`, so do not use one.
 - Guides should not be full of code blocks; explain the concept in prose and link to the code.
   Reserve fenced blocks for short commands or snippets the reader needs verbatim.
 - Tag every fenced block with its language.

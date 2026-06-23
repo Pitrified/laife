@@ -22,26 +22,26 @@ A player turn follows six steps.
 
 ## Observation
 
-The observation is a [`WorldMapObservation`](../../src/laife/entities/world_map_observation.py).
+The observation is a [`WorldMapObservation`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_map_observation.py).
 It lists nearby entities with their type, name, relative position, and distance, and renders to text for the prompt with directions like "to the south".
 Positions are converted to cardinal directions relative to the observer, so the LLM reasons in spatial language rather than raw coordinates.
 
 ## Actions
 
-The brain returns one [`BaseAction`](../../src/laife/entities/action.py) subclass: move, build, craft, interact, complete, or plan.
+The brain returns one [`BaseAction`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/action.py) subclass: move, build, craft, interact, complete, or plan.
 Each action carries a `reason` and the fields specific to it.
 Actions are intentions, not guarantees: a good action moves the mission forward, possibly across several turns.
 
 ## Requests and responses
 
-Requests and responses are defined in [`entities/world_channel.py`](../../src/laife/entities/world_channel.py).
+Requests and responses are defined in [`entities/world_channel.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_channel.py).
 Every response carries a status, and concrete subclasses carry typed payloads, for example a build response, a craft response, or an error.
 Movement is special: a move is applied in steps, each validated by the deterministic collision check, so a player cannot walk through a building.
 
 ## Validation and judging
 
 Deterministic rules, such as collision between axis-aligned boxes, are checked by the world directly.
-Whether a build or craft actually satisfies the mission is a judgement call, so the world delegates it to an LLM judge in [`entities/world_judge.py`](../../src/laife/entities/world_judge.py).
+Whether a build or craft actually satisfies the mission is a judgement call, so the world delegates it to an LLM judge in [`entities/world_judge.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_judge.py).
 The judge's verdict and feedback flow back to the player as part of the response.
 
 ## Missions
