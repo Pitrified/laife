@@ -1,0 +1,115 @@
+site_name: lAIfe
+site_description: Fully unscripted life simulation.
+site_url: https://github.com/Pitrified/laife
+
+repo_name: Pitrified/laife
+repo_url: https://github.com/Pitrified/laife
+
+docs_dir: docs
+
+# Library pages link to source files under ../../src with relative paths, so the
+# links resolve when the docs are read on GitHub. Those targets live outside
+# docs_dir, so mkdocs cannot resolve them against the built site; silence the
+# resulting "not found" warnings instead of dropping the GitHub-correct links.
+validation:
+  links:
+    not_found: ignore
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.annotate
+    - content.code.copy
+    - navigation.expand
+    - navigation.indexes
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.suggest
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          inventories:
+            - https://docs.python.org/3/objects.inv
+          options:
+            docstring_section_style: list # or "table"
+            docstring_style: "google"
+            merge_init_into_class: true
+            separate_signature: true
+            show_root_heading: true
+            show_signature_annotations: true
+            show_source: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            summary: true
+  - api-autonav:
+      modules:
+        - src/laife
+      exclude_private: false
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - toc:
+      permalink: true
+
+nav:
+  - Home: README.md
+  - Guides:
+      - guides/README.md
+      - Getting started: guides/getting_started.md
+      - Architecture: guides/architecture.md
+      - Game loop: guides/game_loop.md
+      - LLM chains: guides/llm_chains.md
+      - Params and config: guides/params_config.md
+      - Glossary: guides/glossary.md
+      - Docs maintenance: guides/docs_maintenance.md
+  - Library:
+      - library/README.md
+      - entities: library/entities.md
+      - llm: library/llm.md
+      - prompts: library/prompts.md
+      - rendering: library/rendering.md
+      - params: library/params.md
+      - config: library/config.md
+      - embed: library/embed.md
+      - meta: library/meta.md
+      - ui: library/ui.md
+      - data_models: library/data_models.md
+  - API Reference: reference/
+  - Standards: standards.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Pitrified/laife

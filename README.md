@@ -14,6 +14,12 @@ press `q` to quit the game.
 
 Check the [CONTRIBUTING.md](CONTRIBUTING.md) for instructions on how to set up the local development environment.
 
+## Documentation
+
+The full documentation lives in [`docs/`](docs/README.md): guides on the architecture, the game loop, the LLM chains, and configuration, plus a per-module library reference.
+It is published as a site at https://pitrified.github.io/laife/, rebuilt on every push to `main`.
+See [`docs/README.md`](docs/README.md) for how to build and serve it locally.
+
 ## Ideas
 
 There are players, that do things in the environment via actions.
