@@ -13,6 +13,18 @@ uv run ruff check .          # lint (ruff, ALL rules enabled - see ruff.toml)
 uv run pyright               # type-check (src/ and tests/ only)
 ```
 
+A `Makefile` wraps these common commands; prefer the targets directly when one fits the task (`make help` lists them):
+
+```bash
+make sync       # install all dependencies (extras and groups)
+make run        # run the game
+make test       # run tests
+make lint       # lint with ruff
+make format     # format with ruff
+make typecheck  # type-check with pyright
+make docs       # serve the docs locally with MkDocs
+```
+
 Credentials live at `~/cred/laife/.env` (loaded by `load_env()` in `src/laife/params/load_env.py`). See `nokeys.env` for required keys (`OPENAI_API_KEY`, `AZURE_OPENAI_*`).
 
 ## Architecture layers

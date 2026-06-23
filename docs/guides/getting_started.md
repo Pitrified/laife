@@ -39,3 +39,19 @@ uv run pytest
 uv run ruff check .
 uv run pyright
 ```
+
+## Makefile shortcuts
+
+A `Makefile` wraps the common commands.
+Run `make help` to list every target.
+
+```bash
+make sync          # install all dependencies (extras and groups)
+make run           # run the game
+make test          # run tests
+make lint          # lint with ruff
+make format        # format with ruff
+make typecheck     # type-check with pyright
+make docs          # serve the docs locally with MkDocs
+make dev-llm-core  # install llm-core from a local editable path
+```

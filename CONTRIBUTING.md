@@ -25,7 +25,7 @@ sudo apt install -y \
 ### Install package
 
 ```bash
-uv sync --all-extras --all-groups
+make sync
 ```
 
 ### API key
@@ -35,13 +35,15 @@ place the API keys in `~/cred/laife/.env`, refer to `nokeys.env` for required ke
 ### Run the game
 
 ```bash
-uv run python game/main.py
+make run
 ```
 
 ### Run tests, lint, type-check
 
 ```bash
-uv run pytest                # run tests
-uv run ruff check .          # lint (ruff, ALL rules enabled - see ruff.toml)
-uv run pyright               # type-check (src/ and tests/ only)
+make test       # run tests
+make lint       # lint with ruff (ALL rules enabled - see ruff.toml)
+make typecheck  # type-check with pyright (src/ and tests/ only)
 ```
+
+Run `make help` to list every available target.

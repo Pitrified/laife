@@ -5,10 +5,11 @@ Let's make AI rule the world!
 ## Run the game
 
 ```bash
-uv run game/main.py
+make run
 ```
 
 press `q` to quit the game.
+Run `make help` to list every available target (run, tests, lint, docs, ...).
 
 ## Setup
 
