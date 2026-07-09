@@ -14,7 +14,7 @@ game loop, reading the existing JSON-lines struct log. Analysis and decisions in
 | #  | Phase                          | Plan                                          | Status  |
 | -- | ------------------------------ | --------------------------------------------- | ------- |
 | 1  | struct log analysis            | [`01_struct_log_analysis.md`](01_struct_log_analysis.md) | done |
-| 2  | textual tui inspector          | [`02_textual_tui.md`](02_textual_tui.md)      | planned |
+| 2  | textual tui inspector          | [`02_textual_tui.md`](02_textual_tui.md)      | done |
 | 3  | pause / step the game loop     | [`03_loop_pause.md`](03_loop_pause.md)        | planned |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
@@ -35,3 +35,16 @@ Append-only. Newest at the bottom.
 - 2026-07-09 : phase 2 plan detailed in `02_textual_tui.md` (dependency,
   subpackage layout, `log_reader.tail_jsonl` + `tui.py` split, filter/focus
   design, testing approach). Status stays `planned` - not yet implemented.
+- 2026-07-09 : phase 2 done - built the Textual inspector as planned. New
+  `tui` dependency group (`textual>=0.60`) and `make tui` target; new
+  subpackage `src/laife/observability/` with `log_reader.py` (pure
+  `tail_jsonl` async generator, no Textual dependency, unit-tested against
+  fixture `.jsonl` files) and `tui.py` (`ObservabilityApp`: a `DataTable`
+  fed by a reader worker -> `asyncio.Queue` -> UI worker pair, with player
+  filter, event-type filter, the `(player, turn)` focus-turn feature phase 1
+  unlocked, and a follow-tail toggle). Tested with Textual's headless
+  `App.run_test()` pilot, plus a manual smoke run against a real
+  `cache/game_*.jsonl` confirming a build turn's
+  `llm_call -> action -> world_request -> world_response ->
+  mission_transition` chain groups correctly under focus-turn. Full
+  test/lint/typecheck suite green (195 tests).

@@ -1,4 +1,4 @@
-.PHONY: help sync run lint format typecheck test docs dev-llm-core
+.PHONY: help sync run tui lint format typecheck test docs dev-llm-core
 
 MAKEFLAGS += --no-print-directory
 .DEFAULT_GOAL := help
@@ -23,6 +23,9 @@ sync:  ## Install all dependencies (extras and groups)
 
 run:  ## Run the game
 	uv run game/main.py
+
+tui:  ## Run the observability TUI (tails the newest cache/game_*.jsonl)
+	uv run python -m laife.observability.tui
 
 ########
 # LINT #

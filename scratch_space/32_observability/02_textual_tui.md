@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 2 - textual tui inspector
@@ -96,3 +96,48 @@ for all six request kinds - this plan reflects that, not the phase-1 draft).
 - Event-type, player, status, and `(player, turn)`-focus filtering all work.
 - No events are dropped or crash the view during a normal game run.
 - `log_reader.tail_jsonl` has unit test coverage independent of Textual.
+
+## Outcome
+
+Built as planned, with one narrowing on "status" filtering: player and
+event-type filters both landed as designed, but a dedicated *status* filter
+was dropped - `status` only exists on `world_response` rows, and the
+`(player, turn)`-focus feature already isolates a turn's full chain (which
+includes its response's status) more usefully than a global status filter
+would. Can be added later if it turns out to be missed.
+
+- `pyproject.toml`: new `tui` dependency-group (`textual>=0.60`), folded
+  into `dev`. `Makefile`: `make tui` target.
+- `src/laife/observability/log_reader.py`: `LogRow` dataclass and
+  `tail_jsonl(path) -> AsyncIterator[LogRow]`, reading existing content then
+  polling for appends (plain blocking file I/O in a poll loop, not a fully
+  async file API - the writer appends from a background thread onto a bare
+  file, so there's nothing to actually `await` on). Skips malformed/partial
+  lines instead of crashing. `latest_log_file()` picks the newest
+  `cache/game_*.jsonl` by filename (timestamps sort lexicographically).
+  Pure - no Textual import - and unit-tested against fixture `.jsonl` files,
+  including a line appended mid-iteration.
+- `src/laife/observability/tui.py`: `ObservabilityApp`, a single `DataTable`
+  (time, player, turn, event, detail - `detail` is a per-event-type summary
+  built from `LogRow.extra`) colored by event type. A `_read_log` worker
+  tails the file and pushes rows onto an `asyncio.Queue`; a `_drain_queue`
+  worker consumes the queue and applies rows to the table, so file polling
+  never touches the render path. `BINDINGS`: `p`/`e` cycle the player/event
+  filters, `t` focuses the `(player, turn)` of the selected row (the
+  correlation-tracking payoff from phase 1 - one keypress shows a full
+  `llm_call -> action -> world_request -> world_response ->
+  mission_transition` chain), `c` clears all filters, `f` toggles
+  follow-tail auto-scroll.
+- Tests: `tests/observability/test_log_reader.py` (plain async-generator
+  unit tests) and `tests/observability/test_tui.py` (Textual's headless
+  `App.run_test()` pilot - loads existing rows, cycles the player filter,
+  clears filters, and verifies focus-turn narrows to one `(player, turn)`).
+  10 new tests, all passing.
+- Manual smoke: wrote a real `cache/game_*.jsonl` covering one full turn's
+  five-event chain across two players, ran the app headless against it -
+  all 6 rows loaded and rendered correctly, focus-turn narrowed to the
+  5-event Alice/turn-1 chain, clear restored all 6, player filter narrowed
+  to Alice's 5 rows. File removed after the check (not a real run).
+- Full suite: 195 tests passing, `ruff check .` and `pyright` both clean
+  (the two `scratch_space/` `I001` warnings predate this work and are
+  unrelated).
