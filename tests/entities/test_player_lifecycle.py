@@ -26,6 +26,7 @@ from laife.entities.world_runner import WorldRunner
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
+from laife.meta.log_events import EVT_WORLD_RESPONSE
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -209,3 +210,101 @@ def test_world_request_raises_on_wrong_type(player: Player) -> None:
             await player._world_request(wreq, WResObserve)
 
     asyncio.run(_run())
+
+
+def test_world_request_stamps_player_name_and_turn(player: Player) -> None:
+    """_world_request must stamp its own name and current turn onto the outgoing request."""
+
+    async def _run() -> None:
+        obs = WResObserve(
+            status=WResStatus.SUCCESS,
+            observation=WorldMapObservation.from_position((0, 0)),
+        )
+        player.world_input_queue.put = AsyncMock()
+        player.input_queue.get = AsyncMock(return_value=obs)
+        player.input_queue.task_done = MagicMock()
+        player.turn = 7
+
+        wreq = WRecObserve(position=(0, 0), response_queue=player.input_queue)
+        await player._world_request(wreq, WResObserve)
+
+        assert wreq.player_name == player.name
+        assert wreq.turn == 7
+
+    asyncio.run(_run())
+
+
+def test_world_request_logs_world_response_with_player_and_turn(player: Player) -> None:
+    """_world_request must emit EVT_WORLD_RESPONSE with player, turn, kind, and status."""
+
+    async def _run() -> None:
+        obs = WResObserve(
+            status=WResStatus.SUCCESS,
+            observation=WorldMapObservation.from_position((0, 0)),
+        )
+        player.world_input_queue.put = AsyncMock()
+        player.input_queue.get = AsyncMock(return_value=obs)
+        player.input_queue.task_done = MagicMock()
+        player.turn = 3
+
+        wreq = WRecObserve(position=(0, 0), response_queue=player.input_queue)
+        with patch("laife.entities.player.slog") as mock_slog:
+            await player._world_request(wreq, WResObserve)
+
+        mock_slog.bind.assert_called_once_with(
+            event=EVT_WORLD_RESPONSE,
+            player=player.name,
+            turn=3,
+            kind="WResObserve",
+            status=WResStatus.SUCCESS.value,
+        )
+        mock_slog.bind.return_value.info.assert_called_once_with(EVT_WORLD_RESPONSE)
+
+    asyncio.run(_run())
+
+
+# ---------------------------------------------------------------------------
+# play() - turn counter
+# ---------------------------------------------------------------------------
+
+
+class _StopPlayError(Exception):
+    """Sentinel raised to break out of Player.play()'s infinite loop in tests."""
+
+
+def test_turn_starts_at_zero(player: Player) -> None:
+    """A freshly constructed player starts at turn 0."""
+    assert player.turn == 0
+
+
+def test_play_increments_turn_each_iteration(player: Player) -> None:
+    """Turn increments by exactly one per play() loop iteration."""
+
+    async def _run() -> None:
+        obs = WResObserve(
+            status=WResStatus.SUCCESS,
+            observation=WorldMapObservation.from_position((0, 0)),
+        )
+        player.world_input_queue.put = AsyncMock()
+        player.input_queue.get = AsyncMock(return_value=obs)
+        player.input_queue.task_done = MagicMock()
+
+        # distance=0 makes move() a no-op world-request-wise, isolating the
+        # test to the turn counter without needing to mock move collisions.
+        move_action = ActionMove(reason="x", direction=CardinalDirection.East, distance=0)
+        call_count = 0
+
+        async def _fake_think(*_args: object, **_kwargs: object) -> ActionMove:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 4:
+                raise _StopPlayError
+            return move_action
+
+        player.brain.think = _fake_think
+
+        with pytest.raises(_StopPlayError):
+            await player.play()
+
+    asyncio.run(_run())
+    assert player.turn == 4
