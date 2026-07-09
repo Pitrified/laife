@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 1 - struct log analysis
@@ -47,3 +47,38 @@ plumbing. Context: [`00-start.md`](00-start.md).
 - The catalogue above is recorded (in this file or a short doc) and confirmed
   against the live `.jsonl`.
 - A go/no-go decision exists on adding correlation id + turn number.
+
+## Outcome
+
+Go, and implemented (this phase grew from "decide" to "decide and land it" -
+the decision was unambiguous and the edit was small and centralized). Final
+catalogue, superseding the draft above:
+
+- Event constants (`src/laife/meta/log_events.py`): `action`, `world_response`,
+  `mission_transition`, `llm_call`, `world_request`. `llm_result` was listed in
+  the original draft but nothing ever emitted it - removed as dead code.
+- All five now log at `INFO` (`world_request` was the odd one out at `DEBUG`,
+  invisible under the default log level - fixed).
+- Per-event payload, now uniform: every event carries `player` and `turn`.
+  - `action`: `player`, `turn`, `action`
+  - `world_response`: `player`, `turn`, `kind` (response class name, e.g.
+    `WResBuild` - now emitted for all six request kinds, not just build/craft),
+    `status`
+  - `mission_transition`: `player`, `turn`, `to_status`
+  - `llm_call`: `player`, `turn`, `model`, `elapsed`
+  - `world_request`: `player`, `turn`, `kind` (request class name, e.g.
+    `WRecBuild`, pairs with the matching `WRes*` on `world_response`)
+- Correlation decision: **go**. Chose `(player: str, turn: int)` over a
+  `request_id`/UUID - `Player.play()` already runs one full
+  think -> act -> respond -> mission-update cycle per loop iteration
+  sequentially, so a per-player monotonic `turn` counter is a natural,
+  zero-infra correlation key. Stamped once in the single choke point every
+  world round trip already passes through, `Player._world_request()`
+  (`src/laife/entities/player.py`), and threaded into `PlayerBrain.think()`
+  for `llm_call`. `(player, turn)` now ties `llm_call` -> `action` ->
+  `world_request` -> `world_response` -> `mission_transition` together for
+  one turn - verified manually against a real `cache/game_*.jsonl`.
+- PII/secret check: none - this is a sandboxed simulation with synthetic
+  players, no real user data ever enters the log.
+- Landed in commit `f7411a3` ("Add player/turn correlation to the structured
+  log"), full test/lint/typecheck suite green.

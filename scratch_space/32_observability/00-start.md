@@ -46,7 +46,11 @@ and it competes with the game for the same event loop and frame budget.
 - Do we add a correlation id (and turn/tick number) at the `slog.bind` sites so
   a single interaction (`llm_call` -> `action` -> `world_request` ->
   `world_response`) can be reconstructed end to end? Currently there is none.
+  ANS: yes - `(player, turn)`, a per-player monotonic counter, stamped once in
+  `Player._world_request()`. See [`01_struct_log_analysis.md`](01_struct_log_analysis.md#outcome).
+  Landed in commit `f7411a3`.
 - Is there any PII/secret risk in serialized records (LLM prompts, keys) before
-  a UI renders them?
+  a UI renders them? ANS: no - sandboxed simulation, synthetic players, no real
+  user data.
 - Should pause/step be driven from a pygame `KEYDOWN`, or from the decoupled
-  inspector itself (control queue / endpoint)?
+  inspector itself (control queue / endpoint)? Still open - phase 3.
