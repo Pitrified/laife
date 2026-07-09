@@ -48,3 +48,11 @@ Append-only. Newest at the bottom.
   `llm_call -> action -> world_request -> world_response ->
   mission_transition` chain groups correctly under focus-turn. Full
   test/lint/typecheck suite green (195 tests).
+- 2026-07-09 : phase 3 plan detailed in `03_loop_pause.md`. Key decisions:
+  pause unit is one player turn (gate at the top of `Player.play()`, world
+  runner never gated to avoid deadlocking in-flight turns); trigger from
+  pygame `KEYDOWN` (space toggle, `n` step) rather than TUI-driven IPC -
+  resolves the open question in `00-start.md`. New `SimControl`
+  (asyncio.Condition over running/step_permits) in
+  `src/laife/entities/sim_control.py`, one `EVT_SIM_CONTROL` marker event
+  with a `state` field. Status stays `planned` - not yet implemented.

@@ -53,4 +53,8 @@ and it competes with the game for the same event loop and frame budget.
   a UI renders them? ANS: no - sandboxed simulation, synthetic players, no real
   user data.
 - Should pause/step be driven from a pygame `KEYDOWN`, or from the decoupled
-  inspector itself (control queue / endpoint)? Still open - phase 3.
+  inspector itself (control queue / endpoint)? ANS: pygame `KEYDOWN` - the
+  renderer already has an event pump, and TUI-driven control would need
+  cross-process IPC for no payoff yet. The pause markers still land in the
+  `.jsonl`, so the TUI shows them without wiring. See
+  [`03_loop_pause.md`](03_loop_pause.md#decisions).
