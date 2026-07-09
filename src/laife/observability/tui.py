@@ -6,6 +6,7 @@ coupling. Run with ``make tui`` or ``uv run python -m laife.observability.tui``.
 """
 
 import asyncio
+from collections.abc import Callable
 from pathlib import Path
 from typing import ClassVar
 
@@ -34,21 +35,31 @@ EVENT_COLORS = {
     "world_request": "yellow",
     "world_response": "green",
     "mission_transition": "magenta",
+    "sim_control": "red",
+}
+
+
+# Per-event-type builders for the detail column; unknown events fall back
+# to a plain k=v dump of the row's extras.
+_DETAIL_BUILDERS: dict[str, Callable[[LogRow], str]] = {
+    "action": lambda row: str(row.extra.get("action", "")),
+    "world_request": lambda row: str(row.extra.get("kind", "")),
+    "world_response": lambda row: (
+        f"{row.extra.get('kind', '')} status={row.extra.get('status', '')}"
+    ),
+    "mission_transition": lambda row: f"to_status={row.extra.get('to_status', '')}",
+    "llm_call": lambda row: (
+        f"model={row.extra.get('model', '')} elapsed={row.extra.get('elapsed', '')}"
+    ),
+    "sim_control": lambda row: f"state={row.extra.get('state', '')}",
 }
 
 
 def _detail(row: LogRow) -> str:
     """Build a one-line, event-specific summary from a row's extra fields."""
-    if row.event == "action":
-        return str(row.extra.get("action", ""))
-    if row.event == "world_request":
-        return str(row.extra.get("kind", ""))
-    if row.event == "world_response":
-        return f"{row.extra.get('kind', '')} status={row.extra.get('status', '')}"
-    if row.event == "mission_transition":
-        return f"to_status={row.extra.get('to_status', '')}"
-    if row.event == "llm_call":
-        return f"model={row.extra.get('model', '')} elapsed={row.extra.get('elapsed', '')}"
+    builder = _DETAIL_BUILDERS.get(row.event or "")
+    if builder is not None:
+        return builder(row)
     return ", ".join(f"{k}={v}" for k, v in row.extra.items())
 
 

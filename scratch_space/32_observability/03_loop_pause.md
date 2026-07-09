@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 3 - pause / step the game loop
@@ -109,3 +109,68 @@ Best paired with the inspector from
 - Pause/resume/step are visible in the struct log and readable in the TUI.
 - Project verification suite passes (`uv run pytest && uv run ruff check . &&
   uv run pyright`).
+
+## Outcome
+
+Built as planned, with three deviations from the plan's sketch, all found
+while implementing:
+
+- **`asyncio.Event` pulse instead of `asyncio.Condition`.** The trigger
+  methods (`pause`/`resume`/`toggle`/`step`) must be synchronous so the
+  pygame event pump can call them directly, but `Condition.notify_all`
+  requires holding the lock (`async with`). `SimControl` instead pulses a
+  single `asyncio.Event`; waiters loop and re-check `running` /
+  `step_permits` after waking. Same semantics, sync-trigger friendly.
+- **The step marker is emitted at consumption, not from `step()`.**
+  `wait_turn` emits `state="step"` with the `(player, turn)` actually being
+  released - the log then records *which* player advanced, which a marker
+  from `step()` could not know. `pause()`/`resume()` emit their markers
+  directly (and repeated calls are silent no-ops).
+- **`resume()` drops unconsumed step permits.** Found by the smoke run: a
+  permit banked while paused would otherwise survive the resume and leak a
+  spurious step into a later pause.
+
+What landed:
+
+- `src/laife/entities/sim_control.py`: `SimControl` (pure asyncio, no
+  pygame), `wait_turn` gate + sync `pause`/`resume`/`toggle`/`step`,
+  `paused` property, `EVT_SIM_CONTROL` markers.
+- `src/laife/meta/log_events.py`: `EVT_SIM_CONTROL = "sim_control"`.
+- `src/laife/entities/player.py`: optional `sim_control` ctor param
+  (default `None` keeps every existing test/stub working); `play()` awaits
+  `wait_turn(self.name, self.turn + 1)` at the top of the loop, before the
+  turn increment.
+- `src/laife/rendering/world_renderer.py`: optional `sim_control` param;
+  `K_SPACE` -> `toggle_pause()` (updates the caption to
+  `lAIfe simulation [PAUSED]` and back), `K_n` -> `step()`. The render loop
+  never pauses.
+- `game/main.py`: one `SimControl` wired into the renderer and both players.
+- `src/laife/observability/tui.py`: `sim_control` colored red; the detail
+  column shows `state=...`. The if-chain in `_detail` hit ruff's PLR0911
+  (too many returns) with the new branch and was restructured into a
+  `_DETAIL_BUILDERS` dispatch dict.
+- Tests: `tests/entities/test_sim_control.py` - 9 tests covering the
+  transparent-while-running gate, pause/resume blocking, toggle, step
+  releasing exactly one of two waiters, step-while-running and
+  permit-drop-on-resume no-ops, and the emitted markers (patched `slog`,
+  same pattern as `test_player_lifecycle.py`).
+- Smoke: `make run` needs a live LLM backend and a focused window, so the
+  manual smoke ran headless instead - the real
+  `configure_logging -> slog -> jsonl -> tail_jsonl -> TUI _detail` path
+  end-to-end (markers land and render as `state=paused/step/resumed`, the
+  step row carrying `(Alice, 4)`), plus the pygame key wiring under
+  `SDL_VIDEODRIVER=dummy` with synthetic `KEYDOWN` events (space pauses,
+  caption updates, `n` banks a permit, space resumes). Script not kept.
+- Verification: 204 tests passing, `ruff check` and `pyright` clean (the
+  two `scratch_space/` I001 warnings predate this work).
+
+## Missing
+
+- The plan's interactive smoke (`make run`, press space/`n` against a live
+  game) was not performed - it needs a live LLM backend and a focused
+  pygame window, neither available in the implementing session. The
+  headless smoke covered the same code paths (key events, gate, markers,
+  TUI rendering) but not the real-run feel: that in-flight LLM turns
+  visibly finish before the freeze, and that stepping paces a real
+  turn chain. Run it once on a box with the game running before leaning
+  on the feature.

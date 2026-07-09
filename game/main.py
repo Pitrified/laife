@@ -8,6 +8,7 @@ from laife.entities.building_types import FACTORY
 from laife.entities.building_types import FARM
 from laife.entities.building_types import HOUSE
 from laife.entities.player import Player
+from laife.entities.sim_control import SimControl
 from laife.entities.terrain_types import TERRAINS
 from laife.entities.world_runner import WorldRunner
 from laife.meta.logger import configure_logging
@@ -15,7 +16,7 @@ from laife.rendering.world_renderer import WorldRenderer
 from laife.ui.alog import alg
 
 
-def setup_world(runner: WorldRunner) -> None:
+def setup_world(runner: WorldRunner, sim_control: SimControl) -> None:
     """Populate the world with terrain, players, and buildings."""
     # seed terrain regions
     for terrain in TERRAINS:
@@ -26,6 +27,7 @@ def setup_world(runner: WorldRunner) -> None:
         position=(random.randint(0, 800), random.randint(0, 600)),  # noqa: S311
         player_type="inu",
         world_input_queue=runner.input_queue,
+        sim_control=sim_control,
     )
     runner.add_player(player)
     player = Player(
@@ -33,6 +35,7 @@ def setup_world(runner: WorldRunner) -> None:
         position=(random.randint(0, 800), random.randint(0, 600)),  # noqa: S311
         player_type="inu",
         world_input_queue=runner.input_queue,
+        sim_control=sim_control,
     )
     runner.add_player(player)
 
@@ -81,11 +84,14 @@ async def main() -> None:
     # 1. Pure-logic runner (no pygame)
     runner = WorldRunner()
 
+    # 1b. Pause/step gate: renderer triggers it, players block on it
+    sim_control = SimControl()
+
     # 2. Renderer initialises pygame - must be created before any sprite loading
-    renderer = WorldRenderer(runner)
+    renderer = WorldRenderer(runner, sim_control)
 
     # 3. Populate world with plain data objects (no pygame needed here)
-    setup_world(runner)
+    setup_world(runner, sim_control)
 
     # 4. Run everything concurrently
     await asyncio.gather(

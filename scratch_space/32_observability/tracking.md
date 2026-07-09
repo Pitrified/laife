@@ -15,7 +15,7 @@ game loop, reading the existing JSON-lines struct log. Analysis and decisions in
 | -- | ------------------------------ | --------------------------------------------- | ------- |
 | 1  | struct log analysis            | [`01_struct_log_analysis.md`](01_struct_log_analysis.md) | done |
 | 2  | textual tui inspector          | [`02_textual_tui.md`](02_textual_tui.md)      | done |
-| 3  | pause / step the game loop     | [`03_loop_pause.md`](03_loop_pause.md)        | planned |
+| 3  | pause / step the game loop     | [`03_loop_pause.md`](03_loop_pause.md)        | done |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
@@ -56,3 +56,22 @@ Append-only. Newest at the bottom.
   (asyncio.Condition over running/step_permits) in
   `src/laife/entities/sim_control.py`, one `EVT_SIM_CONTROL` marker event
   with a `state` field. Status stays `planned` - not yet implemented.
+- 2026-07-09 : phase 3 done - `SimControl` landed in
+  `src/laife/entities/sim_control.py` and wired through `Player.play()`
+  (optional gate, default `None`), the renderer (`K_SPACE` toggle with a
+  `[PAUSED]` caption, `K_n` step), `game/main.py`, and the TUI (red
+  `sim_control` rows). Deviations from the plan, found while implementing:
+  an `asyncio.Event` pulse replaced the planned `asyncio.Condition` so the
+  triggers stay synchronous for the pygame pump; the step marker is emitted
+  at consumption carrying the released `(player, turn)`; `resume()` drops
+  unconsumed step permits (a banked permit would otherwise leak a spurious
+  step into a later pause - caught by the smoke run). 9 new unit tests;
+  manual smoke ran headless (real jsonl round trip + `SDL_VIDEODRIVER=dummy`
+  synthetic keys) since `make run` needs a live LLM backend. Full suite
+  green: 204 tests, ruff and pyright clean. See
+  [`03_loop_pause.md`](03_loop_pause.md#outcome).
+- 2026-07-10 : recorded what phase 3 did not cover (see
+  [`03_loop_pause.md`](03_loop_pause.md#missing)): the interactive
+  `make run` smoke - space/`n` against a live game with a real LLM backend
+  - was not performed; the headless smoke covered the code paths but not
+  the real-run feel. To be done once on a box with the game running.

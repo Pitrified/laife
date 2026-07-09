@@ -16,6 +16,7 @@ from laife.entities.action import ActionPlan
 from laife.entities.action import BaseAction
 from laife.entities.building import Building
 from laife.entities.building import BuildingType
+from laife.entities.sim_control import SimControl
 from laife.entities.utensil import Utensil
 from laife.entities.utils.directions import cardinal_to_delta
 from laife.entities.world_channel import WRecBuild
@@ -77,6 +78,7 @@ class Player:
         world_input_queue: asyncio.Queue[WReq],
         state: PlayerState = PlayerState.IDLE,
         size: Size = (1, 1),
+        sim_control: SimControl | None = None,
     ) -> None:
         """Create the player.
 
@@ -94,6 +96,9 @@ class Player:
         # communication channels
         self.world_input_queue: asyncio.Queue[WReq] = world_input_queue
         self.input_queue: asyncio.Queue[WRes] = asyncio.Queue()
+
+        # optional pause/step gate; None means the loop runs ungated
+        self.sim_control: SimControl | None = sim_control
 
         # observation, will be stale for a tick
         self.last_observation: WorldMapObservation = WorldMapObservation.from_position(position)
@@ -173,6 +178,9 @@ class Player:
     async def play(self) -> None:
         """Run the agent decision loop (intended to run as an asyncio task)."""
         while True:
+            # Hold here while paused; the turn about to start is self.turn + 1.
+            if self.sim_control is not None:
+                await self.sim_control.wait_turn(self.name, self.turn + 1)
             self.turn += 1
             # Refresh observation before deciding
             await self.observe()

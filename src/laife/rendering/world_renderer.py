@@ -6,6 +6,7 @@ import time
 
 import pygame
 
+from laife.entities.sim_control import SimControl
 from laife.entities.terrain import TerrainType
 from laife.entities.world_runner import WorldRunner
 from laife.rendering.building_sprite import BuildingSprite
@@ -36,13 +37,15 @@ class WorldRenderer:
 
     WIDTH = 1200
     HEIGHT = 900
+    CAPTION = "lAIfe simulation"
 
-    def __init__(self, runner: WorldRunner) -> None:
+    def __init__(self, runner: WorldRunner, sim_control: SimControl | None = None) -> None:
         """Initialise pygame and build initial sprite collections."""
         self.runner = runner
+        self.sim_control = sim_control
 
         pygame.init()
-        pygame.display.set_caption("lAIfe simulation")
+        pygame.display.set_caption(self.CAPTION)
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
 
         self.redraw_period_sec = 1
@@ -95,7 +98,7 @@ class WorldRenderer:
     # ------------------------------------------------------------------
 
     def check_events(self) -> None:
-        """Poll pygame events and react to quit gestures."""
+        """Poll pygame events and react to quit and pause/step gestures."""
         for event in pygame.event.get():
             match event.type:
                 case pygame.QUIT:
@@ -104,6 +107,23 @@ class WorldRenderer:
                     match event.key:
                         case pygame.K_q:
                             self.quit()
+                        case pygame.K_SPACE:
+                            self.toggle_pause()
+                        case pygame.K_n:
+                            if self.sim_control is not None:
+                                self.sim_control.step()
+
+    def toggle_pause(self) -> None:
+        """Toggle the simulation pause gate and reflect the state in the caption.
+
+        The render loop itself never pauses - the screen stays live and the
+        event pump keeps accepting keys while the sim is held.
+        """
+        if self.sim_control is None:
+            return
+        self.sim_control.toggle()
+        suffix = " [PAUSED]" if self.sim_control.paused else ""
+        pygame.display.set_caption(f"{self.CAPTION}{suffix}")
 
     def quit(self) -> None:
         """Tear down pygame and exit the process."""
