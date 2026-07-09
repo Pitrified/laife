@@ -154,10 +154,20 @@ class WReq:
     ) -> None:
         """Initialize the request."""
         self.response_queue = response_queue
+        # Correlation metadata stamped by Player._world_request before the
+        # request is enqueued; lets the struct log tie a request back to the
+        # player turn that issued it.  Named player_name (not player) because
+        # WRecMove already has a `player` attribute holding the actual Player
+        # instance it's moving.
+        self.player_name: str = ""
+        self.turn: int = -1
 
     def __str__(self) -> str:
         """Return the string representation of the request."""
-        return f"WReq(id={id(self)}, response_queue={self.response_queue})"
+        return (
+            f"WReq(id={id(self)}, player_name={self.player_name!r}, turn={self.turn}"
+            f", response_queue={self.response_queue})"
+        )
 
 
 class WRecBuild(WReq):

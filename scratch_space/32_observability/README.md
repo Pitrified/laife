@@ -1,5 +1,5 @@
 ---
-status: draft
+status: draft - correlation tracking done (item 1) - ui and pause/step pending (items 2-3)
 ---
 
 # Observability
@@ -49,26 +49,29 @@ we decouple completely
 
    - Inventory the event types. They are constants in
      `src/laife/meta/log_events.py`: `action`, `world_response`,
-     `mission_transition`, `llm_call`, `llm_result`, `world_request`. Every
-     structured record carries `event=<one of these>` plus loguru's own
-     `time`, `level`, `message`. `world_request` is emitted at `DEBUG`; the
-     rest at `INFO` - so the file `level` determines whether requests even
-     appear.
+     `mission_transition`, `llm_call`, `world_request`. Every structured
+     record carries `event=<one of these>` plus loguru's own `time`, `level`,
+     `message`. All five now log at `INFO` (`world_request` used to be the
+     odd one out at `DEBUG`, see below). The unused `llm_result` constant
+     that used to be listed here was removed - nothing ever emitted it.
    - Map the per-event payload (the fields passed to `slog.bind(...)`), since
      these are exactly what the UI filters and groups on:
-     - `action`: `player`, `action`
-     - `world_response`: `player`, `kind` (build/craft/...), `status`
-     - `mission_transition`: `player`, `to_status`
-     - `llm_call`: `model`, `elapsed`
-     - `world_request`: `kind` (request class name)
-   - Identify the natural filter axes from the above: **player** (present on
-     most player-side events, absent on `world_request`/`llm_call`),
+     - `action`: `player`, `turn`, `action`
+     - `world_response`: `player`, `turn`, `kind` (response class name, e.g.
+       `WResBuild`), `status`
+     - `mission_transition`: `player`, `turn`, `to_status`
+     - `llm_call`: `player`, `turn`, `model`, `elapsed`
+     - `world_request`: `player`, `turn`, `kind` (request class name, e.g.
+       `WRecBuild` - pairs with the matching `WRes*` on `world_response`)
+   - Identify the natural filter axes from the above: **player**, **turn**,
      **event type**, **status** (success/failure on responses and missions),
-     and **time**. Note the gaps to close before the UI is useful: there is no
-     correlation id tying an `llm_call` -> resulting `action` -> `world_request`
-     -> `world_response` together, and no tick/turn number. Decide whether to
-     add a `player`/`turn`/`request_id` field at the bind sites so the
-     observability view can reconstruct a single interaction end to end.
+     and **time**. Closed: `player`/`turn` are now on every event, stamped
+     once in `Player._world_request()` (the single choke point all world
+     round trips already went through) and threaded into `PlayerBrain.think()`
+     for `llm_call`, so `(player, turn)` ties `llm_call` -> `action` ->
+     `world_request` -> `world_response` -> `mission_transition` together for
+     one turn. `world_response` is also now emitted generically for all six
+     request kinds instead of only build/craft.
    - Confirm there is no PII/secret leakage in serialized records (e.g. LLM
      prompts or keys) before anything renders them.
 

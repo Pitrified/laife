@@ -47,6 +47,8 @@ class PlayerBrain:
         observation: WorldMapObservation,
         player_state: str,
         inventory: str,
+        player: str = "",
+        turn: int = -1,
     ) -> BaseAction:
         """Ask the LLM to pick the next action given full context."""
         t0 = time.monotonic()
@@ -61,6 +63,8 @@ class PlayerBrain:
         )
         slog.bind(
             event=EVT_LLM_CALL,
+            player=player,
+            turn=turn,
             model=self.config.chat_config.model,
             elapsed=round(time.monotonic() - t0, 3),
         ).info(EVT_LLM_CALL)

@@ -42,6 +42,7 @@ def _stubbed_player(objective: str = "Build a house") -> Player:
     player.world_input_queue = MagicMock()
     player.world_input_queue.put = AsyncMock()
     player.input_queue = asyncio.Queue()
+    player.turn = 0
     return player
 
 

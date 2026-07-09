@@ -101,8 +101,10 @@ class WorldRunner:
             alg.log(f"W: Got player input: {player_input}")
             slog.bind(
                 event=EVT_WORLD_REQUEST,
+                player=player_input.player_name,
+                turn=player_input.turn,
                 kind=type(player_input).__name__,
-            ).debug(EVT_WORLD_REQUEST)
+            ).info(EVT_WORLD_REQUEST)
             wrsp = await self.handle_player_input(player_input)
             self.input_queue.task_done()
             await player_input.response_queue.put(wrsp)

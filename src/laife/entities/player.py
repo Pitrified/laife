@@ -2,7 +2,6 @@
 
 import asyncio
 from enum import StrEnum
-import time
 
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 
@@ -144,6 +143,9 @@ class Player:
         )
         self.history = MissionHistory()
         self.inventory: list[Utensil] = []
+        # Monotonic per-player counter, incremented once per play() iteration;
+        # correlates the struct log entries produced by a single turn.
+        self.turn: int = 0
 
     def render_state(self) -> str:
         """Return a string representation of the player's state for rendering."""
@@ -171,6 +173,7 @@ class Player:
     async def play(self) -> None:
         """Run the agent decision loop (intended to run as an asyncio task)."""
         while True:
+            self.turn += 1
             # Refresh observation before deciding
             await self.observe()
             # Generate a mission if none is active yet or the previous one finished.
@@ -219,6 +222,7 @@ class Player:
             slog.bind(
                 event=EVT_MISSION_TRANSITION,
                 player=self.name,
+                turn=self.turn,
                 to_status=self.mission.status.value,
             ).info(EVT_MISSION_TRANSITION)
 
@@ -273,9 +277,13 @@ class Player:
             observation=self.last_observation,
             player_state=self.render_state(),
             inventory=self.inventory_to_prompt(),
+            player=self.name,
+            turn=self.turn,
         )
         alg.log(f"PLAYER.play {self.name}: picked {action}")
-        slog.bind(event=EVT_ACTION, player=self.name, action=str(action)).info(EVT_ACTION)
+        slog.bind(
+            event=EVT_ACTION, player=self.name, turn=self.turn, action=str(action)
+        ).info(EVT_ACTION)
         self.state = PlayerState.IDLE
         return action
 
@@ -286,12 +294,21 @@ class Player:
         The world channel is expected to be reliable; a type mismatch signals
         a world implementation bug and should fail loudly.
         """
+        wreq.player_name = self.name
+        wreq.turn = self.turn
         await self.world_input_queue.put(wreq)
         wrsp = await self.input_queue.get()
         self.input_queue.task_done()
         if not isinstance(wrsp, response_type):
             msg = f"Expected {response_type.__name__}, got {type(wrsp).__name__}"
             raise TypeError(msg)
+        slog.bind(
+            event=EVT_WORLD_RESPONSE,
+            player=self.name,
+            turn=self.turn,
+            kind=type(wrsp).__name__,
+            status=wrsp.status.value,
+        ).info(EVT_WORLD_RESPONSE)
         return wrsp
 
     async def observe(self) -> WResObserve:
@@ -421,12 +438,6 @@ class Player:
         )
         wrsp = await self._world_request(wreq, WResBuild)
         alg.log(f"PLAYER.build {self.name}: got response {wrsp}")
-        slog.bind(
-            event=EVT_WORLD_RESPONSE,
-            player=self.name,
-            kind="build",
-            status=wrsp.status.value,
-        ).info(EVT_WORLD_RESPONSE)
         return wrsp
 
     async def craft(self, action: ActionCraft) -> WResCraft:
@@ -445,12 +456,6 @@ class Player:
             self.inventory.append(utensil)
             alg.log(f"PLAYER.craft {self.name}: added {utensil.name} to inventory")
         alg.log(f"PLAYER.craft {self.name}: got response {wrsp}")
-        slog.bind(
-            event=EVT_WORLD_RESPONSE,
-            player=self.name,
-            kind="craft",
-            status=wrsp.status.value,
-        ).info(EVT_WORLD_RESPONSE)
         return wrsp
 
     async def action_error(self, action: BaseAction) -> WResError:
@@ -497,19 +502,6 @@ class Player:
         wrsp = await self._world_request(wreq, WResInteract)
         alg.log(f"PLAYER.interact {self.name}: got reply {wrsp!r}")
         return wrsp
-
-    async def world_request(self) -> None:
-        """Send a generic request to the world and await the response."""
-        alg.log(f"PWR {self.name}: requesting")
-        wreq = WReq(response_queue=self.input_queue)
-        request_start = time.time()
-        alg.log(f"PWR: world input queue len: {self.world_input_queue.qsize()}")
-        await self.world_input_queue.put(wreq)
-        answer = await self.input_queue.get()
-        alg.log(f"PWR player input queue len: {self.input_queue.qsize()}")
-        request_end = time.time()
-        alg.log(f"PWR {self.name}: got answer {answer} in {request_end - request_start:.6f}s")
-        self.input_queue.task_done()
 
     def __str__(self) -> str:
         """Return a concise human-readable representation of the player."""
