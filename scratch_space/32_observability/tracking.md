@@ -16,8 +16,13 @@ game loop, reading the existing JSON-lines struct log. Analysis and decisions in
 | 1  | struct log analysis            | [`01_struct_log_analysis.md`](01_struct_log_analysis.md) | done |
 | 2  | textual tui inspector          | [`02_textual_tui.md`](02_textual_tui.md)      | done |
 | 3  | pause / step the game loop     | [`03_loop_pause.md`](03_loop_pause.md)        | done |
+| 4  | inspector fine-tuning          | [`04_fine_tunes.md`](04_fine_tunes.md)        | planned |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
+
+Not a phase: [`05_random_warnings.md`](05_random_warnings.md) - unrelated
+startup/shutdown warnings (SystemExit on quit, pydantic V1 on py3.14, pygame
+AVX2). Spun out as a separate future cleanup, not part of the inspector.
 
 ## Log
 
@@ -90,3 +95,15 @@ Append-only. Newest at the bottom.
   green. This closes the last outstanding item across phases 1-3; the
   observability effort is complete. See
   [`03_loop_pause.md`](03_loop_pause.md#missing).
+- 2026-07-10 : phase 4 planned from the post-smoke fine-tune notes
+  ([`04_fine_tunes.md`](04_fine_tunes.md)). Three grounded findings: the
+  `action` event logs `str(action)` which omits the action type (pydantic
+  v2 `__str__` drops the class name); `world_request`/`world_response` pairs
+  are two rows where one would do (the request carries only `kind`); and
+  only the brain's action-picker emits `llm_call` - the planner, replier,
+  and mission generator each make an unlogged LLM call. Goals: add
+  `action_type`, collapse the request/response pair render-side, close the
+  three `llm_call` gaps (with a `stage` field), and refresh the phase-1/2
+  docs. Status `planned` - not yet implemented. The startup/shutdown
+  warnings ([`05_random_warnings.md`](05_random_warnings.md)) are spun out as
+  a separate future cleanup, not a phase of this feature.
