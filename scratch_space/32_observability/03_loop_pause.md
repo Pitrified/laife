@@ -166,11 +166,9 @@ What landed:
 
 ## Missing
 
-- The plan's interactive smoke (`make run`, press space/`n` against a live
-  game) was not performed - it needs a live LLM backend and a focused
-  pygame window, neither available in the implementing session. The
-  headless smoke covered the same code paths (key events, gate, markers,
-  TUI rendering) but not the real-run feel: that in-flight LLM turns
-  visibly finish before the freeze, and that stepping paces a real
-  turn chain. Run it once on a box with the game running before leaning
-  on the feature.
+- ~~The plan's interactive smoke (`make run`, press space/`n` against a live
+  game) was not performed~~ - done 2026-07-10 on a box with a live LLM
+  backend: `make run` + `make tui` together, space/`n` against the focused
+  pygame window, all green. This closes the last outstanding item; the
+  feature is now confirmed end-to-end (headless code paths plus the
+  real-run feel).

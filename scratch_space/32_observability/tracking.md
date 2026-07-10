@@ -75,3 +75,18 @@ Append-only. Newest at the bottom.
   `make run` smoke - space/`n` against a live game with a real LLM backend
   - was not performed; the headless smoke covered the code paths but not
   the real-run feel. To be done once on a box with the game running.
+- 2026-07-10 : unblocked the interactive smoke. `make run` was crashing at
+  `Player` construction with `MissingPromptVariablesError: ['sender_name']`
+  - a pre-existing bug (not from phases 1-3; `player_replier.py` last
+  touched in `c6ee7af "migrate to llm_core"`): `PlayerReplyInput` requires
+  `sender_name` and it is plumbed through `world_runner`/`WRecInteract`/
+  `receive_message`, but `prompts/player_reply/v1.jinja` never referenced
+  it, and `StructuredLLMChain` validates every input field against the
+  prompt. Fixed by naming the sender in the template header
+  (`## The player addressing you ({{ sender_name }})`). Game now runs past
+  construction; suite still 204 passed.
+- 2026-07-10 : phase 3 interactive smoke performed - `make run` + `make tui`
+  against a live LLM backend, space/`n` on the focused pygame window, all
+  green. This closes the last outstanding item across phases 1-3; the
+  observability effort is complete. See
+  [`03_loop_pause.md`](03_loop_pause.md#missing).
