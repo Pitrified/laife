@@ -17,6 +17,7 @@ game loop, reading the existing JSON-lines struct log. Analysis and decisions in
 | 2  | textual tui inspector          | [`02_textual_tui.md`](02_textual_tui.md)      | done |
 | 3  | pause / step the game loop     | [`03_loop_pause.md`](03_loop_pause.md)        | done |
 | 4  | inspector fine-tuning          | [`04_fine_tunes.md`](04_fine_tunes.md)        | done |
+| 5  | inspector fine-tuning, round 2 | [`04.1_fine_tunes.md`](04.1_fine_tunes.md)    | planned |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
@@ -122,3 +123,16 @@ Append-only. Newest at the bottom.
   window); headless pilot covered the render path. See
   [`04_fine_tunes.md`](04_fine_tunes.md#outcome). Observability phases 1-4
   all done; only the spun-out warnings (05) remain as a separate future item.
+- 2026-07-11 : phase 5 planned from a second fine-tune note
+  ([`04.1_fine_tunes.md`](04.1_fine_tunes.md)). Two grounded findings: the
+  `stage=mission` llm_call is an orphan - `_start_new_mission` builds the new
+  mission but only `alg.log`s it, emitting no struct-log event, so the
+  objective never reaches the TUI; and after phase 4's pair-collapse a
+  distance-N move still emits N identical `WRecMove -> WResMove` rows in a
+  row. Goals: emit a new `mission_start` event (player, turn, objective) and
+  render it; and collapse consecutive identical rows with an `xN` suffix,
+  mirroring `alog`'s run-collapse, disabled under turn focus. Main risk noted
+  in the plan: the run-collapse must cooperate with phase 4's in-place pair
+  upgrade and the `_pending_round_trips` indices - factor one
+  `_merge_if_repeat` helper, with a pure-recompute fallback if the index
+  bookkeeping gets tangled. Status `planned` - not yet implemented.
