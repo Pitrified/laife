@@ -26,6 +26,8 @@ from laife.entities.world_runner import WorldRunner
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
+from laife.llm.player_planner import PlayerPlannerResult
+from laife.meta.log_events import EVT_ACTION
 from laife.meta.log_events import EVT_WORLD_RESPONSE
 
 # ---------------------------------------------------------------------------
@@ -308,3 +310,77 @@ def test_play_increments_turn_each_iteration(player: Player) -> None:
 
     asyncio.run(_run())
     assert player.turn == 4
+
+
+# ---------------------------------------------------------------------------
+# llm_call coverage - action type and the plan / reply / mission call sites
+# ---------------------------------------------------------------------------
+
+
+def test_think_logs_action_type(player: Player) -> None:
+    """think() must stamp action_type (the class name) alongside the action string."""
+
+    async def _run() -> None:
+        action = ActionMove(reason="go", direction=CardinalDirection.East, distance=1)
+        player.brain.think = AsyncMock(return_value=action)
+        player.turn = 5
+
+        with patch("laife.entities.player.slog") as mock_slog:
+            await player.think()
+
+        mock_slog.bind.assert_called_once_with(
+            event=EVT_ACTION,
+            player=player.name,
+            turn=5,
+            action_type="ActionMove",
+            action=str(action),
+        )
+        mock_slog.bind.return_value.info.assert_called_once_with(EVT_ACTION)
+
+    asyncio.run(_run())
+
+
+def test_plan_emits_llm_call_with_plan_stage(player: Player) -> None:
+    """Player.plan must time its planner LLM call with stage='plan'."""
+
+    async def _run() -> None:
+        player.planner.ainvoke = AsyncMock(
+            return_value=PlayerPlannerResult(sub_missions=["Sub 1"], reason="one step")
+        )
+        with patch("laife.entities.player.timed_llm_call") as mock_timed:
+            await player.plan(ActionPlan(reason="needs plan"))
+
+        assert mock_timed.call_args.kwargs["stage"] == "plan"
+        assert mock_timed.call_args.kwargs["player"] == player.name
+
+    asyncio.run(_run())
+
+
+def test_receive_message_emits_llm_call_with_reply_stage(player: Player) -> None:
+    """Player.receive_message must time its replier LLM call with stage='reply'."""
+
+    async def _run() -> None:
+        player.replier.ainvoke = AsyncMock(return_value=MagicMock(reply="hello"))
+        with patch("laife.entities.player.timed_llm_call") as mock_timed:
+            await player.receive_message(
+                sender_name="Bob", sender_prompt="a wanderer", message="hi"
+            )
+
+        assert mock_timed.call_args.kwargs["stage"] == "reply"
+
+    asyncio.run(_run())
+
+
+def test_generate_mission_objective_emits_llm_call_with_mission_stage(player: Player) -> None:
+    """_generate_mission_objective must time its mission-generator call with stage='mission'."""
+
+    async def _run() -> None:
+        player.mission_generator.ainvoke = AsyncMock(
+            return_value=MagicMock(objective="survive", reason="because")
+        )
+        with patch("laife.entities.player.timed_llm_call") as mock_timed:
+            await player._generate_mission_objective()
+
+        assert mock_timed.call_args.kwargs["stage"] == "mission"
+
+    asyncio.run(_run())

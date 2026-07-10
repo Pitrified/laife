@@ -128,6 +128,13 @@ would. Can be added later if it turns out to be missed.
   `llm_call -> action -> world_request -> world_response ->
   mission_transition` chain), `c` clears all filters, `f` toggles
   follow-tail auto-scroll.
+- Phase 4 update to the detail column: the `action` row now leads with the
+  action type (`ActionBuild reason=...`) and `llm_call` shows its `stage`. A
+  matched `world_request`/`world_response` pair collapses to one row
+  (`WRecBuild -> WResBuild status=success`) - tracked by `(player, turn)` in
+  `_pending_round_trips`, upgraded in place when the response lands, and
+  bypassed under turn focus (which wants the full uncollapsed chain). Both
+  events stay in the `.jsonl`; the collapse is display-only.
 - Tests: `tests/observability/test_log_reader.py` (plain async-generator
   unit tests) and `tests/observability/test_tui.py` (Textual's headless
   `App.run_test()` pilot - loads existing rows, cycles the player filter,

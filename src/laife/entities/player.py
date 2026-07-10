@@ -55,6 +55,7 @@ from laife.meta.log_events import EVT_ACTION
 from laife.meta.log_events import EVT_MISSION_TRANSITION
 from laife.meta.log_events import EVT_WORLD_RESPONSE
 from laife.meta.logger import slog
+from laife.meta.logger import timed_llm_call
 from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
 
@@ -258,11 +259,17 @@ class Player:
         Uses the cached observation so no extra world round-trip is needed.
         """
         alg.log(f"PLAYER {self.name}: generating new mission objective")
-        result = await self.mission_generator.ainvoke(
-            observation=self.last_observation,
-            player_state=self.render_state(),
-            inventory=self.inventory_to_prompt(),
-        )
+        with timed_llm_call(
+            player=self.name,
+            turn=self.turn,
+            model=self.mission_generator.config.chat_config.model,
+            stage="mission",
+        ):
+            result = await self.mission_generator.ainvoke(
+                observation=self.last_observation,
+                player_state=self.render_state(),
+                inventory=self.inventory_to_prompt(),
+            )
         alg.log(f"PLAYER {self.name}: proposed mission '{result.objective}' - {result.reason}")
         return result.objective
 
@@ -290,7 +297,11 @@ class Player:
         )
         alg.log(f"PLAYER.play {self.name}: picked {action}")
         slog.bind(
-            event=EVT_ACTION, player=self.name, turn=self.turn, action=str(action)
+            event=EVT_ACTION,
+            player=self.name,
+            turn=self.turn,
+            action_type=type(action).__name__,
+            action=str(action),
         ).info(EVT_ACTION)
         self.state = PlayerState.IDLE
         return action
@@ -335,12 +346,18 @@ class Player:
         """Decompose the current mission into sub-missions using the planner LLM."""
         alg.log(f"PLAYER.plan {self.name}: planning for '{action.reason}'")
         self.state = PlayerState.THINKING
-        result = await self.planner.ainvoke(
-            mission=self.mission,
-            history=self.history,
-            observation=self.last_observation,
-            player_state=self.render_state(),
-        )
+        with timed_llm_call(
+            player=self.name,
+            turn=self.turn,
+            model=self.planner.config.chat_config.model,
+            stage="plan",
+        ):
+            result = await self.planner.ainvoke(
+                mission=self.mission,
+                history=self.history,
+                observation=self.last_observation,
+                player_state=self.render_state(),
+            )
         for sub_objective in result.sub_missions:
             self.mission.add_sub_mission(sub_objective)
         self.mission.advance()  # activate the first pending step immediately
@@ -485,16 +502,22 @@ class Player:
         must remain free of all world I/O - only the external LLM call is
         awaited.
         """
-        result = await self.replier.ainvoke(
-            PlayerReplyInput(
-                sender_name=sender_name,
-                sender_prompt=sender_prompt,
-                message=message,
-                own_state=self.render_state(),
-                own_mission=self.mission.to_prompt(),
-                own_history=self.history.to_prompt(),
+        with timed_llm_call(
+            player=self.name,
+            turn=self.turn,
+            model=self.replier.config.chat_config.model,
+            stage="reply",
+        ):
+            result = await self.replier.ainvoke(
+                PlayerReplyInput(
+                    sender_name=sender_name,
+                    sender_prompt=sender_prompt,
+                    message=message,
+                    own_state=self.render_state(),
+                    own_mission=self.mission.to_prompt(),
+                    own_history=self.history.to_prompt(),
+                )
             )
-        )
         return result.reply
 
     async def interact(self, action: ActionInteract) -> WResInteract:

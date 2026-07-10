@@ -51,6 +51,28 @@ def _write_fixture(path: Path) -> None:
     path.write_text("\n".join(lines) + "\n")
 
 
+def _round_trip_line(*, timestamp: float, event: str, extra: dict[str, object]) -> str:
+    """One request/response envelope for the collapse fixtures."""
+    return _envelope(
+        timestamp=timestamp,
+        extra={"event": event, "player": "Alice", "turn": 1, **extra},
+    )
+
+
+def _request_line() -> str:
+    """Build an Alice/turn-1 world_request line (WRecBuild)."""
+    return _round_trip_line(timestamp=1000.0, event="world_request", extra={"kind": "WRecBuild"})
+
+
+def _response_line() -> str:
+    """Build the matching Alice/turn-1 world_response line (WResBuild, success)."""
+    return _round_trip_line(
+        timestamp=1001.0,
+        event="world_response",
+        extra={"kind": "WResBuild", "status": "success"},
+    )
+
+
 async def _settle(pilot: Pilot[None]) -> None:
     """Give the reader/UI workers a few ticks to drain the queue."""
     for _ in range(5):
@@ -138,3 +160,55 @@ def test_focus_turn_shows_only_that_player_turn(tmp_path: Path) -> None:
     row_count, focus_key = asyncio.run(_run())
     assert focus_key == ("Bob", 1)
     assert row_count == 1
+
+
+def test_world_round_trip_collapses_to_one_row(tmp_path: Path) -> None:
+    """A world_request and its matching world_response render as one line."""
+    path = tmp_path / "game_20260101T000000.jsonl"
+    path.write_text(_request_line() + "\n" + _response_line() + "\n")
+    app = ObservabilityApp(log_path=path)
+
+    async def _run() -> tuple[int, str]:
+        async with app.run_test() as pilot:
+            await _settle(pilot)
+            table = app.query_one(DataTable)
+            return table.row_count, str(table.get_row_at(0)[4])
+
+    row_count, detail = asyncio.run(_run())
+    assert row_count == 1
+    assert detail == "WRecBuild -> WResBuild status=success"
+
+
+def test_in_flight_request_shows_alone(tmp_path: Path) -> None:
+    """A world_request with no response yet shows on its own line, undisturbed."""
+    path = tmp_path / "game_20260101T000000.jsonl"
+    path.write_text(_request_line() + "\n")
+    app = ObservabilityApp(log_path=path)
+
+    async def _run() -> tuple[int, str]:
+        async with app.run_test() as pilot:
+            await _settle(pilot)
+            table = app.query_one(DataTable)
+            return table.row_count, str(table.get_row_at(0)[4])
+
+    row_count, detail = asyncio.run(_run())
+    assert row_count == 1
+    assert detail == "WRecBuild"
+
+
+def test_focus_turn_keeps_round_trip_uncollapsed(tmp_path: Path) -> None:
+    """Under turn focus the pair stays as two rows, showing the full chain."""
+    path = tmp_path / "game_20260101T000000.jsonl"
+    path.write_text(_request_line() + "\n" + _response_line() + "\n")
+    app = ObservabilityApp(log_path=path)
+
+    async def _run() -> int:
+        async with app.run_test() as pilot:
+            await _settle(pilot)
+            table = app.query_one(DataTable)
+            table.move_cursor(row=0)
+            await pilot.press("t")  # focus (Alice, 1)
+            await _settle(pilot)
+            return table.row_count
+
+    assert asyncio.run(_run()) == 2

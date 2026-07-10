@@ -16,6 +16,7 @@ from textual.app import App
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.binding import BindingType
+from textual.coordinate import Coordinate
 from textual.widgets import DataTable
 from textual.widgets import Footer
 from textual.widgets import Header
@@ -42,14 +43,18 @@ EVENT_COLORS = {
 # Per-event-type builders for the detail column; unknown events fall back
 # to a plain k=v dump of the row's extras.
 _DETAIL_BUILDERS: dict[str, Callable[[LogRow], str]] = {
-    "action": lambda row: str(row.extra.get("action", "")),
+    # Lead with the action type - str(action) alone drops the class name.
+    "action": lambda row: (
+        f"{row.extra.get('action_type', '')} {row.extra.get('action', '')}".strip()
+    ),
     "world_request": lambda row: str(row.extra.get("kind", "")),
     "world_response": lambda row: (
         f"{row.extra.get('kind', '')} status={row.extra.get('status', '')}"
     ),
     "mission_transition": lambda row: f"to_status={row.extra.get('to_status', '')}",
     "llm_call": lambda row: (
-        f"model={row.extra.get('model', '')} elapsed={row.extra.get('elapsed', '')}"
+        f"stage={row.extra.get('stage', '')} model={row.extra.get('model', '')}"
+        f" elapsed={row.extra.get('elapsed', '')}"
     ),
     "sim_control": lambda row: f"state={row.extra.get('state', '')}",
 }
@@ -61,6 +66,14 @@ def _detail(row: LogRow) -> str:
     if builder is not None:
         return builder(row)
     return ", ".join(f"{k}={v}" for k, v in row.extra.items())
+
+
+def _round_trip_detail(request: LogRow, response: LogRow) -> str:
+    """Detail for a collapsed world_request/world_response pair on one line."""
+    return (
+        f"{request.extra.get('kind', '')} -> {response.extra.get('kind', '')}"
+        f" status={response.extra.get('status', '')}"
+    )
 
 
 class ObservabilityApp(App[None]):
@@ -96,6 +109,9 @@ class ObservabilityApp(App[None]):
         self._queue: asyncio.Queue[LogRow] = asyncio.Queue()
         self._rows: list[LogRow] = []
         self._displayed_rows: list[LogRow] = []
+        # (player, turn) -> index in _displayed_rows of a shown world_request
+        # awaiting its world_response, so the pair collapses to one line.
+        self._pending_round_trips: dict[tuple[str, int], int] = {}
         self._players: list[str] = []
         self._event_types: list[str] = []
         self._player_filter: str | None = None
@@ -145,7 +161,7 @@ class ObservabilityApp(App[None]):
         if row.event and row.event not in self._event_types:
             self._event_types.append(row.event)
         if self._passes_filters(row):
-            self._append_table_row(row)
+            self._show_row(row)
 
     def _passes_filters(self, row: LogRow) -> bool:
         if self._focus_key is not None:
@@ -153,6 +169,40 @@ class ObservabilityApp(App[None]):
         if self._player_filter is not None and row.player != self._player_filter:
             return False
         return not (self._event_filter is not None and row.event != self._event_filter)
+
+    @staticmethod
+    def _round_trip_key(row: LogRow) -> tuple[str, int] | None:
+        """Correlation key for collapsing a request/response pair, or None."""
+        if row.player is None or row.turn is None:
+            return None
+        return (row.player, row.turn)
+
+    def _show_row(self, row: LogRow) -> None:
+        """Add *row*, collapsing a world_response into its pending request.
+
+        Collapse is disabled under turn focus, which wants the full,
+        uncollapsed llm_call -> action -> request -> response -> mission chain.
+        A response with no pending request (e.g. attached mid-run) or a request
+        whose response is filtered out falls through and shows on its own line.
+        """
+        key = self._round_trip_key(row)
+        if self._focus_key is None and row.event == "world_response" and key is not None:
+            pending_index = self._pending_round_trips.pop(key, None)
+            if pending_index is not None:
+                self._collapse_response(pending_index, row)
+                return
+        self._append_table_row(row)
+        if self._focus_key is None and row.event == "world_request" and key is not None:
+            self._pending_round_trips[key] = len(self._displayed_rows) - 1
+
+    def _collapse_response(self, index: int, response: LogRow) -> None:
+        """Fold *response* into the already-displayed request row at *index*."""
+        request = self._displayed_rows[index]
+        table = self.query_one(DataTable)
+        table.update_cell_at(
+            Coordinate(index, COLUMNS.index("detail")),
+            _round_trip_detail(request, response),
+        )
 
     def _append_table_row(self, row: LogRow) -> None:
         table = self.query_one(DataTable)
@@ -173,9 +223,10 @@ class ObservabilityApp(App[None]):
         table = self.query_one(DataTable)
         table.clear()
         self._displayed_rows = []
+        self._pending_round_trips = {}
         for row in self._rows:
             if self._passes_filters(row):
-                self._append_table_row(row)
+                self._show_row(row)
 
     # -- actions ------------------------------------------------------
 

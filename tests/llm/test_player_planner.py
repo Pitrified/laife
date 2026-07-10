@@ -88,6 +88,7 @@ def stubbed_player() -> Player:
     player.history = MissionHistory()
     player.last_observation = WorldMapObservation.from_position((0, 0))
     player.planner = MagicMock()
+    player.turn = 0
     return player
 
 

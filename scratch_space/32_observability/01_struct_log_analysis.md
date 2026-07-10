@@ -60,12 +60,18 @@ catalogue, superseding the draft above:
 - All five now log at `INFO` (`world_request` was the odd one out at `DEBUG`,
   invisible under the default log level - fixed).
 - Per-event payload, now uniform: every event carries `player` and `turn`.
-  - `action`: `player`, `turn`, `action`
+  - `action`: `player`, `turn`, `action_type` (the action class name, e.g.
+    `ActionBuild` - added in phase 4; `str(action)` alone drops it), `action`
+    (the full field string)
   - `world_response`: `player`, `turn`, `kind` (response class name, e.g.
     `WResBuild` - now emitted for all six request kinds, not just build/craft),
     `status`
   - `mission_transition`: `player`, `turn`, `to_status`
-  - `llm_call`: `player`, `turn`, `model`, `elapsed`
+  - `llm_call`: `player`, `turn`, `model`, `elapsed`, `stage`
+    (`action`/`plan`/`reply`/`mission` - added in phase 4). Emitted from four
+    call sites, not just the brain: the action-picker (`stage=action`), the
+    planner (`plan`), the replier (`reply`), and the mission generator
+    (`mission`), all via `logger.timed_llm_call`.
   - `world_request`: `player`, `turn`, `kind` (request class name, e.g.
     `WRecBuild`, pairs with the matching `WRes*` on `world_response`)
 - Correlation decision: **go**. Chose `(player: str, turn: int)` over a

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 4 - inspector fine-tuning
@@ -116,4 +116,41 @@ missed events.
 
 ## Outcome
 
-_(to be filled when the phase lands)_
+Done, all four goals, verified end-to-end against a real game log.
+
+- Goal 1 (action type): `Player.think` now binds
+  `action_type=type(action).__name__` alongside `action=str(action)`
+  (`player.py`); the TUI `action` detail leads with it
+  (`ActionMove reason=...`). Real-log check: `action_type` present on every
+  `action` event.
+- Goal 3 (llm_call gaps): added `logger.timed_llm_call`, a context manager
+  that times the wrapped `await` and emits one `EVT_LLM_CALL` with
+  `player, turn, model, stage, elapsed` (no record on exception, matching the
+  old inline site). Replaced the brain's inline timing (`stage=action`) and
+  wrapped the planner (`plan`), replier (`reply`), and mission generator
+  (`mission`). Real-log check: `llm_call` now carries `stage`, and
+  `stage=mission` events appear that were invisible before this phase. The
+  replier wrap stays queue-free, honoring the world-loop contract.
+- Goal 2 (collapse): render-side only. A `world_request` is shown, its
+  `(player, turn)` tracked in `_pending_round_trips`; the matching
+  `world_response` upgrades that row's detail cell in place
+  (`WRecObserve -> WResObserve status=success`) instead of adding a second
+  row. Disabled under turn focus (full chain wanted) and naturally a no-op
+  when a filter hides one side. Both events stay in the `.jsonl`. Real-log
+  check: 715 raw rows -> 411 displayed, exactly 304 pairs collapsed (= the
+  response count).
+- Goal 4 (docs): phase-1 catalogue and phase-2 detail-column notes updated.
+- Tests: `timed_llm_call` unit tests (emit + skip-on-error) in
+  `test_logger.py`; `action_type` and the three new `stage` call sites in
+  `test_player_lifecycle.py`; collapse, in-flight-alone, and
+  focus-keeps-uncollapsed in `test_tui.py`. 9 new tests. Full suite green:
+  213 passed, ruff and pyright clean. One test-only fix: the
+  `test_player_planner.py` partial-`Player` fixture now sets `turn`, which the
+  real `__init__` always sets and `plan` now reads.
+
+## Missing
+
+- Live `make run` + `make tui` visual confirmation of the new detail
+  rendering was not done interactively (needs a focused pygame window); the
+  headless pilot against a real `cache/game_*.jsonl` covered the same render
+  path and the collapse counts exactly.

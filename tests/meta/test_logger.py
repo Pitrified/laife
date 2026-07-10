@@ -14,6 +14,7 @@ from laife.meta.log_events import EVT_WORLD_REQUEST
 from laife.meta.logger import configure_logging
 from laife.meta.logger import restore_default_logging
 from laife.meta.logger import slog
+from laife.meta.logger import timed_llm_call
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -114,6 +115,45 @@ def test_configure_logging_creates_parent_dirs(tmp_path: Path) -> None:
     log_file = tmp_path / "nested" / "dir" / "game.jsonl"
     configure_logging(level="INFO", log_file=log_file, enqueue=False)
     assert log_file.parent.exists()
+
+
+# ---------------------------------------------------------------------------
+# timed_llm_call
+# ---------------------------------------------------------------------------
+
+
+def test_timed_llm_call_emits_llm_call_record(tmp_path: Path) -> None:
+    """timed_llm_call must emit one EVT_LLM_CALL with player, turn, model, stage, elapsed."""
+    log_file = tmp_path / "game.jsonl"
+    configure_logging(level="INFO", log_file=log_file, enqueue=False)
+
+    with timed_llm_call(player="Alice", turn=4, model="gpt-4o", stage="plan"):
+        pass
+
+    lines = log_file.read_text().splitlines()
+    assert len(lines) == 1
+    extra = json.loads(lines[0])["record"]["extra"]
+    assert extra["event"] == EVT_LLM_CALL
+    assert extra["player"] == "Alice"
+    assert extra["turn"] == 4
+    assert extra["model"] == "gpt-4o"
+    assert extra["stage"] == "plan"
+    assert "elapsed" in extra
+
+
+def test_timed_llm_call_skips_record_on_error(tmp_path: Path) -> None:
+    """A call that raises inside the block must not emit an EVT_LLM_CALL record."""
+    log_file = tmp_path / "game.jsonl"
+    configure_logging(level="INFO", log_file=log_file, enqueue=False)
+
+    msg = "boom"
+    with pytest.raises(ValueError, match=msg), timed_llm_call(
+        player="Alice", turn=1, model="gpt-4o", stage="action"
+    ):
+        raise ValueError(msg)
+
+    content = log_file.read_text() if log_file.exists() else ""
+    assert content == ""
 
 
 # ---------------------------------------------------------------------------

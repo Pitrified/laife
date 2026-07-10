@@ -16,7 +16,7 @@ game loop, reading the existing JSON-lines struct log. Analysis and decisions in
 | 1  | struct log analysis            | [`01_struct_log_analysis.md`](01_struct_log_analysis.md) | done |
 | 2  | textual tui inspector          | [`02_textual_tui.md`](02_textual_tui.md)      | done |
 | 3  | pause / step the game loop     | [`03_loop_pause.md`](03_loop_pause.md)        | done |
-| 4  | inspector fine-tuning          | [`04_fine_tunes.md`](04_fine_tunes.md)        | planned |
+| 4  | inspector fine-tuning          | [`04_fine_tunes.md`](04_fine_tunes.md)        | done |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
@@ -107,3 +107,18 @@ Append-only. Newest at the bottom.
   docs. Status `planned` - not yet implemented. The startup/shutdown
   warnings ([`05_random_warnings.md`](05_random_warnings.md)) are spun out as
   a separate future cleanup, not a phase of this feature.
+- 2026-07-11 : phase 4 done - all four goals landed and verified end-to-end
+  against a real game log. New `logger.timed_llm_call` context manager
+  unifies LLM-call timing; the brain plus the previously-unlogged planner,
+  replier, and mission generator now all emit `llm_call` with a `stage`
+  field (real-log check surfaced `stage=mission` events that were invisible
+  before). `action` events carry `action_type`; the TUI leads the action
+  detail with it. `world_request`/`world_response` pairs collapse to one row
+  render-side via `_pending_round_trips` (upgraded in place, bypassed under
+  turn focus, both events kept in the `.jsonl`) - real-log check collapsed
+  exactly 304 pairs (715 -> 411 rows). 9 new tests; full suite 213 passed,
+  ruff and pyright clean. One test-only fix (planner fixture now sets
+  `turn`). Interactive `make run` visual pass not done (needs a focused
+  window); headless pilot covered the render path. See
+  [`04_fine_tunes.md`](04_fine_tunes.md#outcome). Observability phases 1-4
+  all done; only the spun-out warnings (05) remain as a separate future item.
