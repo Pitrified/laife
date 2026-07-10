@@ -149,6 +149,9 @@ Append-only. Newest at the bottom.
   polish the real log surfaced: event-less startup lines rendered blank (a
   bare `(x3)` after collapse), so `_detail` now falls back to the raw
   `message`. 7 new tests; full suite 220 passed, ruff and pyright clean.
-  Interactive `make run` visual pass still not done (needs a focused window).
   See [`04.1_fine_tunes.md`](04.1_fine_tunes.md#outcome). Observability
   phases 1-5 all done; only the spun-out warnings (05_random_warnings) remain.
+- 2026-07-11 : phase 5 interactive smoke done - live `make run` + `make tui`,
+  mission_start rows seen and the `xN` collapse read well. This clears the
+  last open item across phases 1-5; every phase is now confirmed on a real
+  interactive run, not just headless.
