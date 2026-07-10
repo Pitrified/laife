@@ -7,6 +7,7 @@ coupling. Run with ``make tui`` or ``uv run python -m laife.observability.tui``.
 
 import asyncio
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar
 
@@ -16,7 +17,6 @@ from textual.app import App
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.binding import BindingType
-from textual.coordinate import Coordinate
 from textual.widgets import DataTable
 from textual.widgets import Footer
 from textual.widgets import Header
@@ -36,6 +36,7 @@ EVENT_COLORS = {
     "world_request": "yellow",
     "world_response": "green",
     "mission_transition": "magenta",
+    "mission_start": "bright_magenta",
     "sim_control": "red",
 }
 
@@ -52,6 +53,7 @@ _DETAIL_BUILDERS: dict[str, Callable[[LogRow], str]] = {
         f"{row.extra.get('kind', '')} status={row.extra.get('status', '')}"
     ),
     "mission_transition": lambda row: f"to_status={row.extra.get('to_status', '')}",
+    "mission_start": lambda row: f"objective={row.extra.get('objective', '')}",
     "llm_call": lambda row: (
         f"stage={row.extra.get('stage', '')} model={row.extra.get('model', '')}"
         f" elapsed={row.extra.get('elapsed', '')}"
@@ -61,11 +63,18 @@ _DETAIL_BUILDERS: dict[str, Callable[[LogRow], str]] = {
 
 
 def _detail(row: LogRow) -> str:
-    """Build a one-line, event-specific summary from a row's extra fields."""
+    """Build a one-line, event-specific summary from a row's extra fields.
+
+    Rows with no recognized event fall back to their extras, then to the raw
+    log message - startup/non-event lines carry a message but no extras, so
+    without this they would render blank.
+    """
     builder = _DETAIL_BUILDERS.get(row.event or "")
     if builder is not None:
         return builder(row)
-    return ", ".join(f"{k}={v}" for k, v in row.extra.items())
+    if row.extra:
+        return ", ".join(f"{k}={v}" for k, v in row.extra.items())
+    return row.message
 
 
 def _round_trip_detail(request: LogRow, response: LogRow) -> str:
@@ -74,6 +83,27 @@ def _round_trip_detail(request: LogRow, response: LogRow) -> str:
         f"{request.extra.get('kind', '')} -> {response.extra.get('kind', '')}"
         f" status={response.extra.get('status', '')}"
     )
+
+
+@dataclass
+class _DisplayEntry:
+    """One rendered table row: an anchor log row plus display-only collapse state.
+
+    ``anchor`` is the raw row the row maps back to (the request of a collapsed
+    pair, otherwise the row itself) - focus-turn reads its ``(player, turn)``.
+    ``detail`` may already be a collapsed round-trip string; ``count`` is the
+    number of identical consecutive rows folded into this one (the ``xN`` run).
+    """
+
+    anchor: LogRow
+    event: str
+    detail: str
+    count: int = 1
+
+
+def _signature(entry: _DisplayEntry) -> tuple[str | None, str, str]:
+    """Run-collapse key: identical consecutive signatures fold into one row."""
+    return (entry.anchor.player, entry.event, entry.detail)
 
 
 class ObservabilityApp(App[None]):
@@ -108,10 +138,9 @@ class ObservabilityApp(App[None]):
 
         self._queue: asyncio.Queue[LogRow] = asyncio.Queue()
         self._rows: list[LogRow] = []
+        # Anchor row per displayed table row, parallel to the DataTable; maps a
+        # cursor position back to its (player, turn) for focus-turn.
         self._displayed_rows: list[LogRow] = []
-        # (player, turn) -> index in _displayed_rows of a shown world_request
-        # awaiting its world_response, so the pair collapses to one line.
-        self._pending_round_trips: dict[tuple[str, int], int] = {}
         self._players: list[str] = []
         self._event_types: list[str] = []
         self._player_filter: str | None = None
@@ -147,21 +176,30 @@ class ObservabilityApp(App[None]):
 
     @work(exclusive=True, group="ui")
     async def _drain_queue(self) -> None:
-        """Consume queued rows and apply them to the table, one at a time."""
+        """Absorb queued rows in batches and rebuild the table once per batch.
+
+        Coalescing everything currently queued into a single rebuild keeps the
+        initial load of an existing file O(n) instead of O(n^2), while a live
+        tail still refreshes promptly as rows trickle in.
+        """
         while True:
-            row = await self._queue.get()
-            self._ingest(row)
+            self._absorb(await self._queue.get())
+            while True:
+                try:
+                    self._absorb(self._queue.get_nowait())
+                except asyncio.QueueEmpty:
+                    break
+            self._refresh()
 
     # -- row handling --------------------------------------------------
 
-    def _ingest(self, row: LogRow) -> None:
+    def _absorb(self, row: LogRow) -> None:
+        """Record a new raw row and register its player/event for the filters."""
         self._rows.append(row)
         if row.player and row.player not in self._players:
             self._players.append(row.player)
         if row.event and row.event not in self._event_types:
             self._event_types.append(row.event)
-        if self._passes_filters(row):
-            self._show_row(row)
 
     def _passes_filters(self, row: LogRow) -> bool:
         if self._focus_key is not None:
@@ -177,56 +215,60 @@ class ObservabilityApp(App[None]):
             return None
         return (row.player, row.turn)
 
-    def _show_row(self, row: LogRow) -> None:
-        """Add *row*, collapsing a world_response into its pending request.
+    def _build_display(self) -> list[_DisplayEntry]:
+        """Filter, pair-collapse, then run-collapse the raw rows into entries.
 
-        Collapse is disabled under turn focus, which wants the full,
-        uncollapsed llm_call -> action -> request -> response -> mission chain.
-        A response with no pending request (e.g. attached mid-run) or a request
-        whose response is filtered out falls through and shows on its own line.
+        Pure over ``self._rows`` and the current filter state; the whole table
+        is rebuilt from its result. Both collapses are disabled under turn
+        focus, which wants the full, uncollapsed chain. A world_response with no
+        pending request (e.g. attached mid-run) or whose request is filtered out
+        falls through to its own entry.
         """
-        key = self._round_trip_key(row)
-        if self._focus_key is None and row.event == "world_response" and key is not None:
-            pending_index = self._pending_round_trips.pop(key, None)
-            if pending_index is not None:
-                self._collapse_response(pending_index, row)
-                return
-        self._append_table_row(row)
-        if self._focus_key is None and row.event == "world_request" and key is not None:
-            self._pending_round_trips[key] = len(self._displayed_rows) - 1
+        collapse = self._focus_key is None
+        entries: list[_DisplayEntry] = []
+        pending: dict[tuple[str, int], int] = {}
+        for row in self._rows:
+            if not self._passes_filters(row):
+                continue
+            key = self._round_trip_key(row)
+            if collapse and row.event == "world_response" and key is not None and key in pending:
+                request = entries[pending.pop(key)]
+                request.detail = _round_trip_detail(request.anchor, row)
+                continue
+            entries.append(_DisplayEntry(anchor=row, event=row.event or "", detail=_detail(row)))
+            if collapse and row.event == "world_request" and key is not None:
+                pending[key] = len(entries) - 1
+        return self._run_collapse(entries) if collapse else entries
 
-    def _collapse_response(self, index: int, response: LogRow) -> None:
-        """Fold *response* into the already-displayed request row at *index*."""
-        request = self._displayed_rows[index]
-        table = self.query_one(DataTable)
-        table.update_cell_at(
-            Coordinate(index, COLUMNS.index("detail")),
-            _round_trip_detail(request, response),
-        )
+    @staticmethod
+    def _run_collapse(entries: list[_DisplayEntry]) -> list[_DisplayEntry]:
+        """Fold each maximal run of identical consecutive entries into one xN row."""
+        collapsed: list[_DisplayEntry] = []
+        for entry in entries:
+            if collapsed and _signature(collapsed[-1]) == _signature(entry):
+                collapsed[-1].count += 1
+            else:
+                collapsed.append(entry)
+        return collapsed
 
-    def _append_table_row(self, row: LogRow) -> None:
-        table = self.query_one(DataTable)
-        event_text = Text(row.event or "", style=EVENT_COLORS.get(row.event or "", "white"))
-        table.add_row(
-            row.time.strftime("%H:%M:%S.%f")[:-3],
-            row.player or "-",
-            row.turn if row.turn is not None else "-",
-            event_text,
-            _detail(row),
-        )
-        self._displayed_rows.append(row)
-        if self._follow:
-            table.move_cursor(row=table.row_count - 1)
-
-    def _rerender_table(self) -> None:
-        """Rebuild the table from scratch after a filter change."""
+    def _refresh(self) -> None:
+        """Rebuild the table from the current raw rows and filter state."""
+        entries = self._build_display()
         table = self.query_one(DataTable)
         table.clear()
-        self._displayed_rows = []
-        self._pending_round_trips = {}
-        for row in self._rows:
-            if self._passes_filters(row):
-                self._show_row(row)
+        self._displayed_rows = [entry.anchor for entry in entries]
+        for entry in entries:
+            detail = entry.detail if entry.count == 1 else f"{entry.detail} (x{entry.count})"
+            event_text = Text(entry.event, style=EVENT_COLORS.get(entry.event, "white"))
+            table.add_row(
+                entry.anchor.time.strftime("%H:%M:%S.%f")[:-3],
+                entry.anchor.player or "-",
+                entry.anchor.turn if entry.anchor.turn is not None else "-",
+                event_text,
+                detail,
+            )
+        if self._follow and table.row_count:
+            table.move_cursor(row=table.row_count - 1)
 
     # -- actions ------------------------------------------------------
 
@@ -236,7 +278,7 @@ class ObservabilityApp(App[None]):
         options: list[str | None] = [None, *sorted(self._players)]
         idx = options.index(self._player_filter) if self._player_filter in options else 0
         self._player_filter = options[(idx + 1) % len(options)]
-        self._rerender_table()
+        self._refresh()
 
     def action_cycle_event_filter(self) -> None:
         """Cycle the event-type filter through: all -> each known event type -> all."""
@@ -244,7 +286,7 @@ class ObservabilityApp(App[None]):
         options: list[str | None] = [None, *sorted(self._event_types)]
         idx = options.index(self._event_filter) if self._event_filter in options else 0
         self._event_filter = options[(idx + 1) % len(options)]
-        self._rerender_table()
+        self._refresh()
 
     def action_focus_turn(self) -> None:
         """Narrow the view to the (player, turn) of the currently selected row.
@@ -263,14 +305,14 @@ class ObservabilityApp(App[None]):
         self._player_filter = None
         self._event_filter = None
         self._focus_key = (row.player, row.turn)
-        self._rerender_table()
+        self._refresh()
 
     def action_clear_filters(self) -> None:
         """Drop the player filter, event filter, and turn focus."""
         self._player_filter = None
         self._event_filter = None
         self._focus_key = None
-        self._rerender_table()
+        self._refresh()
 
     def action_toggle_follow(self) -> None:
         """Toggle whether new rows auto-scroll the cursor to the bottom."""

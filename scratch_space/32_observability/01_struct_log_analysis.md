@@ -67,6 +67,10 @@ catalogue, superseding the draft above:
     `WResBuild` - now emitted for all six request kinds, not just build/craft),
     `status`
   - `mission_transition`: `player`, `turn`, `to_status`
+  - `mission_start`: `player`, `turn`, `from_status`, `objective` (added in
+    phase 5; emitted by `_start_new_mission` so the generated mission objective
+    reaches the log - pairs by `(player, turn)` with the `stage=mission`
+    llm_call that produced it)
   - `llm_call`: `player`, `turn`, `model`, `elapsed`, `stage`
     (`action`/`plan`/`reply`/`mission` - added in phase 4). Emitted from four
     call sites, not just the brain: the action-picker (`stage=action`), the

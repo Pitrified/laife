@@ -17,7 +17,7 @@ game loop, reading the existing JSON-lines struct log. Analysis and decisions in
 | 2  | textual tui inspector          | [`02_textual_tui.md`](02_textual_tui.md)      | done |
 | 3  | pause / step the game loop     | [`03_loop_pause.md`](03_loop_pause.md)        | done |
 | 4  | inspector fine-tuning          | [`04_fine_tunes.md`](04_fine_tunes.md)        | done |
-| 5  | inspector fine-tuning, round 2 | [`04.1_fine_tunes.md`](04.1_fine_tunes.md)    | planned |
+| 5  | inspector fine-tuning, round 2 | [`04.1_fine_tunes.md`](04.1_fine_tunes.md)    | done |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
@@ -136,3 +136,19 @@ Append-only. Newest at the bottom.
   upgrade and the `_pending_round_trips` indices - factor one
   `_merge_if_repeat` helper, with a pure-recompute fallback if the index
   bookkeeping gets tangled. Status `planned` - not yet implemented.
+- 2026-07-11 : phase 5 done - both goals landed and verified end-to-end
+  against a real game log. New `mission_start` event carries the generated
+  objective from `_start_new_mission`; the TUI renders it and it pairs with
+  the `stage=mission` llm_call by `(player, turn)` (real-log check: 2 == 2,
+  orphan closed). For the `xN` run-collapse I took the plan's fallback - a
+  pure `_build_display()` (filter -> pair-collapse -> run-collapse) + single
+  `_refresh()`, replacing phase 4's incremental in-place upgrade and
+  `_pending_round_trips` rather than fighting the index bookkeeping; the UI
+  worker now drains the queue in batches to keep initial load O(n). Real-log
+  check: 1379 raw -> 246 displayed, move bursts folding to `(x10)`. Extra
+  polish the real log surfaced: event-less startup lines rendered blank (a
+  bare `(x3)` after collapse), so `_detail` now falls back to the raw
+  `message`. 7 new tests; full suite 220 passed, ruff and pyright clean.
+  Interactive `make run` visual pass still not done (needs a focused window).
+  See [`04.1_fine_tunes.md`](04.1_fine_tunes.md#outcome). Observability
+  phases 1-5 all done; only the spun-out warnings (05_random_warnings) remain.

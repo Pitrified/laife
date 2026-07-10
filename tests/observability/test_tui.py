@@ -73,6 +73,31 @@ def _response_line() -> str:
     )
 
 
+def _move_pair(*, ts: float, player: str = "Alice", turn: int = 1) -> list[str]:
+    """Build a WRecMove/WResMove(success) round trip - the repeated move noise."""
+    return [
+        _envelope(
+            timestamp=ts,
+            extra={"event": "world_request", "player": player, "turn": turn, "kind": "WRecMove"},
+        ),
+        _envelope(
+            timestamp=ts + 0.1,
+            extra={
+                "event": "world_response",
+                "player": player,
+                "turn": turn,
+                "kind": "WResMove",
+                "status": "success",
+            },
+        ),
+    ]
+
+
+def _write_lines(path: Path, lines: list[str]) -> None:
+    """Write JSON-lines to *path*."""
+    path.write_text("\n".join(lines) + "\n")
+
+
 async def _settle(pilot: Pilot[None]) -> None:
     """Give the reader/UI workers a few ticks to drain the queue."""
     for _ in range(5):
@@ -212,3 +237,121 @@ def test_focus_turn_keeps_round_trip_uncollapsed(tmp_path: Path) -> None:
             return table.row_count
 
     assert asyncio.run(_run()) == 2
+
+
+def test_consecutive_identical_rows_collapse_with_xn(tmp_path: Path) -> None:
+    """A run of identical round-trip rows folds into one row with an (xN) suffix."""
+    path = tmp_path / "game_20260101T000000.jsonl"
+    _write_lines(path, [*_move_pair(ts=1000.0), *_move_pair(ts=1002.0), *_move_pair(ts=1004.0)])
+    app = ObservabilityApp(log_path=path)
+
+    async def _run() -> tuple[int, str]:
+        async with app.run_test() as pilot:
+            await _settle(pilot)
+            table = app.query_one(DataTable)
+            return table.row_count, str(table.get_row_at(0)[4])
+
+    row_count, detail = asyncio.run(_run())
+    assert row_count == 1
+    assert detail == "WRecMove -> WResMove status=success (x3)"
+
+
+def test_differing_row_breaks_the_run(tmp_path: Path) -> None:
+    """An unlike row between two identical ones splits them into separate runs."""
+    path = tmp_path / "game_20260101T000000.jsonl"
+    action = _envelope(
+        timestamp=1001.5,
+        extra={"event": "action", "player": "Alice", "turn": 1, "action": "move"},
+    )
+    _write_lines(path, [*_move_pair(ts=1000.0), action, *_move_pair(ts=1002.0)])
+    app = ObservabilityApp(log_path=path)
+
+    async def _run() -> int:
+        async with app.run_test() as pilot:
+            await _settle(pilot)
+            return app.query_one(DataTable).row_count
+
+    # move-pair, action, move-pair -> three distinct rows, none collapsed.
+    assert asyncio.run(_run()) == 3
+
+
+def test_interleaved_player_prevents_collapse(tmp_path: Path) -> None:
+    """Identical details from different players never merge - the run key includes player."""
+    path = tmp_path / "game_20260101T000000.jsonl"
+    lines = [*_move_pair(ts=1000.0, player="Alice"), *_move_pair(ts=1002.0, player="Bob")]
+    _write_lines(path, lines)
+    app = ObservabilityApp(log_path=path)
+
+    async def _run() -> int:
+        async with app.run_test() as pilot:
+            await _settle(pilot)
+            return app.query_one(DataTable).row_count
+
+    assert asyncio.run(_run()) == 2
+
+
+def test_focus_turn_shows_repeats_uncollapsed(tmp_path: Path) -> None:
+    """Under turn focus, repeated round trips are shown in full, not folded."""
+    path = tmp_path / "game_20260101T000000.jsonl"
+    _write_lines(path, [*_move_pair(ts=1000.0), *_move_pair(ts=1002.0), *_move_pair(ts=1004.0)])
+    app = ObservabilityApp(log_path=path)
+
+    async def _run() -> int:
+        async with app.run_test() as pilot:
+            await _settle(pilot)
+            table = app.query_one(DataTable)
+            table.move_cursor(row=0)
+            await pilot.press("t")  # focus (Alice, 1)
+            await _settle(pilot)
+            return table.row_count
+
+    # 3 requests + 3 responses, all shown uncollapsed under focus.
+    assert asyncio.run(_run()) == 6
+
+
+def test_mission_start_row_shows_objective(tmp_path: Path) -> None:
+    """A mission_start event renders its objective in the detail column."""
+    path = tmp_path / "game_20260101T000000.jsonl"
+    _write_lines(
+        path,
+        [
+            _envelope(
+                timestamp=1000.0,
+                extra={
+                    "event": "mission_start",
+                    "player": "Alice",
+                    "turn": 2,
+                    "from_status": "completed",
+                    "objective": "build a raft",
+                },
+            )
+        ],
+    )
+    app = ObservabilityApp(log_path=path)
+
+    async def _run() -> str:
+        async with app.run_test() as pilot:
+            await _settle(pilot)
+            return str(app.query_one(DataTable).get_row_at(0)[4])
+
+    assert asyncio.run(_run()) == "objective=build a raft"
+
+
+def test_event_less_row_falls_back_to_message(tmp_path: Path) -> None:
+    """A log line with no event and no extras shows its message, not a blank cell."""
+    path = tmp_path / "game_20260101T000000.jsonl"
+    record = {
+        "time": {"timestamp": 1000.0},
+        "level": {"name": "INFO"},
+        "message": "Loading Laife params",
+        "extra": {"logger_name": "laife"},
+    }
+    _write_lines(path, [json.dumps({"text": "x\n", "record": record})])
+    app = ObservabilityApp(log_path=path)
+
+    async def _run() -> str:
+        async with app.run_test() as pilot:
+            await _settle(pilot)
+            return str(app.query_one(DataTable).get_row_at(0)[4])
+
+    assert asyncio.run(_run()) == "Loading Laife params"

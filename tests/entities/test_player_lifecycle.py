@@ -28,6 +28,7 @@ from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
 from laife.llm.player_planner import PlayerPlannerResult
 from laife.meta.log_events import EVT_ACTION
+from laife.meta.log_events import EVT_MISSION_START
 from laife.meta.log_events import EVT_WORLD_RESPONSE
 
 # ---------------------------------------------------------------------------
@@ -384,3 +385,23 @@ def test_generate_mission_objective_emits_llm_call_with_mission_stage(player: Pl
         assert mock_timed.call_args.kwargs["stage"] == "mission"
 
     asyncio.run(_run())
+
+
+def test_start_new_mission_emits_mission_start_event(player: Player) -> None:
+    """_start_new_mission must emit EVT_MISSION_START with the new objective and turn."""
+    player.turn = 6
+    from_status = player.mission.status.value
+
+    with patch("laife.entities.player.slog") as mock_slog:
+        player._start_new_mission("find fresh water")
+
+    mock_slog.bind.assert_called_once_with(
+        event=EVT_MISSION_START,
+        player=player.name,
+        turn=6,
+        from_status=from_status,
+        objective="find fresh water",
+    )
+    mock_slog.bind.return_value.info.assert_called_once_with(EVT_MISSION_START)
+    # The objective must actually be adopted, not just logged.
+    assert player.mission.objective == "find fresh water"

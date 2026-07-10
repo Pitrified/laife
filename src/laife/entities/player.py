@@ -52,6 +52,7 @@ from laife.llm.player_replier import PlayerReplier
 from laife.llm.player_replier import PlayerReplierConfig
 from laife.llm.player_replier import PlayerReplyInput
 from laife.meta.log_events import EVT_ACTION
+from laife.meta.log_events import EVT_MISSION_START
 from laife.meta.log_events import EVT_MISSION_TRANSITION
 from laife.meta.log_events import EVT_WORLD_RESPONSE
 from laife.meta.logger import slog
@@ -247,6 +248,13 @@ class Player:
             f"PLAYER {self.name}: mission '{self.mission.objective}' ended"
             f" with status {old_status.value} - starting new mission: '{objective}'"
         )
+        slog.bind(
+            event=EVT_MISSION_START,
+            player=self.name,
+            turn=self.turn,
+            from_status=old_status.value,
+            objective=objective,
+        ).info(EVT_MISSION_START)
         self.mission = Mission(
             objective=objective,
             status=MissionStatus.ACTIVE,

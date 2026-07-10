@@ -135,6 +135,14 @@ would. Can be added later if it turns out to be missed.
   `_pending_round_trips`, upgraded in place when the response lands, and
   bypassed under turn focus (which wants the full uncollapsed chain). Both
   events stay in the `.jsonl`; the collapse is display-only.
+- Phase 5 reworked the render path into a pure recompute:
+  `_build_display()` filters -> pair-collapses -> run-collapses the raw rows
+  and `_refresh()` rebuilds the table (per-batch, via a batched queue drain).
+  This replaced the incremental in-place pair upgrade. New: a `mission_start`
+  row (`objective=...`); an `xN` run-collapse folding consecutive identical
+  `(player, event, detail)` rows into one `... (xN)` line, disabled under turn
+  focus; and a `_detail` fallback to the raw `message` for event-less rows so
+  they no longer render blank.
 - Tests: `tests/observability/test_log_reader.py` (plain async-generator
   unit tests) and `tests/observability/test_tui.py` (Textual's headless
   `App.run_test()` pilot - loads existing rows, cycles the player filter,
