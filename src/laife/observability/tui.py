@@ -242,13 +242,30 @@ class ObservabilityApp(App[None]):
 
     @staticmethod
     def _run_collapse(entries: list[_DisplayEntry]) -> list[_DisplayEntry]:
-        """Fold each maximal run of identical consecutive entries into one xN row."""
+        """Fold each player's run of identical entries into one xN row.
+
+        A run tolerates other players' rows interleaving into it: when two
+        players move at once their per-step world requests land in the log as
+        ``p0, p1, p0, p1, ...``, and a strictly-consecutive fold would collapse
+        nothing. Each ``(player, event, detail)`` signature keeps its own open
+        run (so different players never merge into one row); a run stays open
+        until the *same* player emits a different signature, which ends that
+        player's other runs. The folded row keeps the position of its first
+        member.
+        """
         collapsed: list[_DisplayEntry] = []
+        open_runs: dict[tuple[str | None, str, str], _DisplayEntry] = {}
         for entry in entries:
-            if collapsed and _signature(collapsed[-1]) == _signature(entry):
-                collapsed[-1].count += 1
+            sig = _signature(entry)
+            run = open_runs.get(sig)
+            if run is not None:
+                run.count += 1
             else:
                 collapsed.append(entry)
+                open_runs[sig] = entry
+            player = entry.anchor.player
+            for other in [s for s in open_runs if s[0] == player and s != sig]:
+                del open_runs[other]
         return collapsed
 
     def _refresh(self) -> None:

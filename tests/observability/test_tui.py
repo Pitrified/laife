@@ -290,6 +290,37 @@ def test_interleaved_player_prevents_collapse(tmp_path: Path) -> None:
     assert asyncio.run(_run()) == 2
 
 
+def test_interleaved_repeats_collapse_per_player(tmp_path: Path) -> None:
+    """Two players moving at once interleave in the log yet still fold per player.
+
+    Concurrent movement lands as ``Alice, Bob, Alice, Bob, ...`` in the shared
+    world queue; each player's run must still collapse to one xN row rather than
+    a wall of alternating rows.
+    """
+    path = tmp_path / "game_20260101T000000.jsonl"
+    lines = [
+        *_move_pair(ts=1000.0, player="Alice"),
+        *_move_pair(ts=1000.5, player="Bob"),
+        *_move_pair(ts=1002.0, player="Alice"),
+        *_move_pair(ts=1002.5, player="Bob"),
+        *_move_pair(ts=1004.0, player="Alice"),
+        *_move_pair(ts=1004.5, player="Bob"),
+    ]
+    _write_lines(path, lines)
+    app = ObservabilityApp(log_path=path)
+
+    async def _run() -> tuple[int, str, str]:
+        async with app.run_test() as pilot:
+            await _settle(pilot)
+            table = app.query_one(DataTable)
+            return table.row_count, str(table.get_row_at(0)[4]), str(table.get_row_at(1)[4])
+
+    row_count, alice_detail, bob_detail = asyncio.run(_run())
+    assert row_count == 2
+    assert alice_detail == "WRecMove -> WResMove status=success (x3)"
+    assert bob_detail == "WRecMove -> WResMove status=success (x3)"
+
+
 def test_focus_turn_shows_repeats_uncollapsed(tmp_path: Path) -> None:
     """Under turn focus, repeated round trips are shown in full, not folded."""
     path = tmp_path / "game_20260101T000000.jsonl"
