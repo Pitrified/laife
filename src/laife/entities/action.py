@@ -59,9 +59,20 @@ class ActionComplete(BaseAction):
 
 
 class ActionInteract(BaseAction):
-    """Send a natural-language message to a nearby player."""
+    """Send a natural-language message to a nearby player.
 
-    target_name: str = Field(..., description="Name of the player to address.")
+    Only players can be addressed - buildings and terrain cannot receive
+    messages, and the world rejects any non-player target.
+    """
+
+    target_name: str = Field(
+        ...,
+        description=(
+            "Name of the player to address. Must be a player listed as a"
+            " valid interaction target - buildings and terrain cannot be"
+            " addressed."
+        ),
+    )
     message: str = Field(..., description="The message to send.")
 
 
@@ -87,6 +98,7 @@ class ActionPickerInput(BaseModelKwargs):
     observation: str
     player_state: str
     inventory: str
+    nearby_players: str
 
 
 @dataclass

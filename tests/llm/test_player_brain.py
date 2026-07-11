@@ -29,6 +29,7 @@ VALID_PROMPT = (
     "Observation: {{ observation }}\n"
     "State: {{ player_state }}\n"
     "Inventory: {{ inventory }}\n"
+    "Nearby players: {{ nearby_players }}\n"
 )
 
 
@@ -132,5 +133,6 @@ def test_think_passes_correct_kwargs(brain: PlayerBrain) -> None:
             observation=observation.to_prompt(),
             player_state=player_state,
             inventory="Empty - no utensils carried.",
+            nearby_players=observation.nearby_players_to_prompt(),
         )
     )

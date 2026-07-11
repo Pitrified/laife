@@ -61,6 +61,7 @@ class PlayerBrain:
                     observation=observation.to_prompt(),
                     player_state=player_state,
                     inventory=inventory,
+                    nearby_players=observation.nearby_players_to_prompt(),
                 )
             )
         return result

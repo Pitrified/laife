@@ -19,7 +19,7 @@ investigate the targeting and the warning. Analysis and decisions in
 | #  | Phase                          | Plan                                                | Status  |
 | -- | ------------------------------ | --------------------------------------------------- | ------- |
 | 1  | survive error responses        | [`01_survive_wres_error.md`](01_survive_wres_error.md) | done |
-| 2  | interaction targeting          | [`02_interaction_targeting.md`](02_interaction_targeting.md) | planned |
+| 2  | interaction targeting          | [`02_interaction_targeting.md`](02_interaction_targeting.md) | in progress |
 | 3  | serializer warning             | [`03_serializer_warning.md`](03_serializer_warning.md) | planned |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
@@ -56,3 +56,14 @@ Append-only. Newest at the bottom.
   asserted the old raise-on-WResError behavior). Suite green: 226 passed,
   ruff and pyright clean. See
   [`01_survive_wres_error.md`](01_survive_wres_error.md#outcome).
+- 2026-07-11 : phase 2 advanced to the live-game boundary. Both cheap
+  mitigations landed: tightened `ActionInteract.target_name` schema
+  description, and a "Nearby players (valid interaction targets)" section in
+  the new `player_brain/v3.jinja` fed by
+  `WorldMapObservation.nearby_players_to_prompt()` via a new
+  `nearby_players` field on `ActionPickerInput`. Found the classification
+  sweep is blocked: `cache/` holds no `.jsonl` logs, so it needs fresh live
+  sessions. Remaining (live game required): behaviour observation, target
+  classification on new logs, and the steer/validate/extend fork decision.
+  Suite green: 228 passed, ruff and pyright clean. See
+  [`02_interaction_targeting.md`](02_interaction_targeting.md#progress-2026-07-11).

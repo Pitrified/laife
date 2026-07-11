@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in progress
 ---
 
 # Phase 2 - interaction targeting
@@ -67,6 +67,37 @@ Decision fork - pick with the evidence, record the choice here:
 
 - Implementing building interaction mechanics (crops, inventories) - if the
   fork lands on extend, that becomes its own phase.
+
+## Progress (2026-07-11)
+
+Done up to the point where a live game is needed:
+
+- Both cheap mitigations landed:
+  - `ActionInteract.target_name` description (and the action docstring) now
+    say the target must be a player and that buildings/terrain cannot be
+    addressed - this reaches the model through the structured-output schema.
+  - New `WorldMapObservation.nearby_players_to_prompt()` lists nearby players
+    (nearest first, quoted names, or an explicit "None - no other players are
+    within range."); `ActionPickerInput` gained a `nearby_players` field,
+    `PlayerBrain.think` fills it from the observation, and the new
+    `prompts/player_brain/v3.jinja` renders it as a
+    "Nearby players (valid interaction targets)" section with a closing
+    guidance line. `version: auto` resolves to v3 (smoke-checked, chain
+    validation passes).
+  - 2 new tests for the listing (empty case, filter+sort); brain tests
+    updated for the new variable. Suite green: 228 passed, ruff and pyright
+    clean.
+- Classification sweep: **blocked, no data** - `cache/` holds no `.jsonl`
+  logs on this box (past live-run logs were not kept). The sweep needs logs
+  from future live sessions.
+
+Remaining, needs a live game:
+
+- Run live sessions and watch how the brain reacts to the error line in
+  history (phase 1) and to the new target listing: does it self-correct,
+  or loop on the same building?
+- Classify interact targets from those fresh logs.
+- Record the steer / validate / extend fork decision here with that evidence.
 
 ## Done when
 

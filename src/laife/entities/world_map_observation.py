@@ -56,6 +56,20 @@ class WorldMapObservation(BaseModel):
                 )
         return "\n".join(lines)
 
+    def nearby_players_to_prompt(self) -> str:
+        """Return the nearby players as valid interaction targets for the LLM.
+
+        Only players can be addressed with an interact action; this listing
+        keeps the action picker from targeting buildings or terrain.
+        """
+        players = [e for e in self.nearby_entities if e.entity_type == "player"]
+        if not players:
+            return "None - no other players are within range."
+        return "\n".join(
+            f'- "{p.name}" (distance {p.distance:.1f})'
+            for p in sorted(players, key=lambda p: p.distance)
+        )
+
 
 def euclidean(a: Position, b: Position) -> float:
     """Return the Euclidean distance between two positions."""

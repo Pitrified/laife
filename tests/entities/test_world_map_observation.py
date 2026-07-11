@@ -250,3 +250,54 @@ def test_observe_at_distance_correct_diagonal() -> None:
     res = runner.observe_at((0, 0), radius=10)
     obs = res.observation
     assert obs.nearby_entities[0].distance == pytest.approx(5.0)
+
+
+# ---------------------------------------------------------------------------
+# nearby_players_to_prompt - valid interaction targets
+# ---------------------------------------------------------------------------
+
+
+def test_nearby_players_to_prompt_empty() -> None:
+    """With no players in range the listing says so explicitly."""
+    obs = WorldMapObservation(
+        player_position=(0, 0),
+        nearby_entities=[
+            NearbyEntity(
+                entity_type="building",
+                name="Big ol Farm",
+                relative_position=(2, 0),
+                distance=2.0,
+            )
+        ],
+    )
+    assert obs.nearby_players_to_prompt() == "None - no other players are within range."
+
+
+def test_nearby_players_to_prompt_filters_and_sorts() -> None:
+    """Only players are listed, nearest first; buildings are excluded."""
+    obs = WorldMapObservation(
+        player_position=(0, 0),
+        nearby_entities=[
+            NearbyEntity(
+                entity_type="player",
+                name="Koda",
+                relative_position=(3, 4),
+                distance=5.0,
+            ),
+            NearbyEntity(
+                entity_type="building",
+                name="Tower",
+                relative_position=(0, -4),
+                distance=4.0,
+            ),
+            NearbyEntity(
+                entity_type="player",
+                name="Yuki",
+                relative_position=(-3, 0),
+                distance=3.0,
+            ),
+        ],
+    )
+    prompt = obs.nearby_players_to_prompt()
+    assert prompt == '- "Yuki" (distance 3.0)\n- "Koda" (distance 5.0)'
+    assert "Tower" not in prompt
