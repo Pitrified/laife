@@ -20,7 +20,7 @@ investigate the targeting and the warning. Analysis and decisions in
 | -- | ------------------------------ | --------------------------------------------------- | ------- |
 | 1  | survive error responses        | [`01_survive_wres_error.md`](01_survive_wres_error.md) | done |
 | 2  | interaction targeting          | [`02_interaction_targeting.md`](02_interaction_targeting.md) | in progress |
-| 3  | serializer warning             | [`03_serializer_warning.md`](03_serializer_warning.md) | planned |
+| 3  | serializer warning             | [`03_serializer_warning.md`](03_serializer_warning.md) | done |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
@@ -67,3 +67,43 @@ Append-only. Newest at the bottom.
   classification on new logs, and the steer/validate/extend fork decision.
   Suite green: 228 passed, ruff and pyright clean. See
   [`02_interaction_targeting.md`](02_interaction_targeting.md#progress-2026-07-11).
+- 2026-07-11 : back on an LLM-connected machine; recorded the queued live
+  work below. `cache/` now holds `.jsonl` logs (07-10, so **pre-mitigation** -
+  baseline only, they cannot test whether the phase 2 mitigations helped).
+  Baseline sweep already yields one data point: the only `ActionInteract` in
+  them repeats the original pattern verbatim -
+  `target_name='Big ol Farm' message='I would like to gather crops.'`,
+  `reason='To gather crops...'` - a sensible building-directed intent, early
+  evidence leaning toward the **extend** fork. Next steps, in order:
+  1. Phase 3 (independent, cheapest, do first): minimal serializer-warning
+     repro - drive one `ActionPicker.ainvoke` against the live backend with
+     `warnings.filterwarnings("error", message=".*Expected .none.*")`, read
+     the frame, fix at the right layer (llm-core tag+pin bump vs narrow
+     suppression). Per [`03_serializer_warning.md`](03_serializer_warning.md).
+  2. Phase 2 live runs: `make run` a few sessions on the v3 prompt
+     (`version: auto` resolves to v3), watching whether the brain self-corrects
+     after the phase 1 error line and the new target listing, or loops on the
+     same building.
+  3. Phase 2 classification: re-sweep `cache/game_*.jsonl` including the new
+     post-mitigation sessions, classify each interact target (player /
+     building / terrain / hallucinated), write up in `02_interaction_targeting.md`.
+  4. Phase 2 fork decision: record steer / validate / extend with that
+     evidence. If extend, draft `04_building_interaction.md` and add its row
+     to the phases table. Baseline already tilts toward extend; confirm the
+     mitigations didn't already reduce it to noise before committing.
+  5. Run the verification suite (`make test lint typecheck`) and mark phases
+     2 and 3 done.
+- 2026-07-11 : phase 3 done. Live repro pinned the warning to pure
+  langchain-openai internals (`chat_models/base.py:1540` `_create_chat_result`
+  -> `response.model_dump()`; `parsed` field declared `Optional[None]` but
+  holds our `ActionEnvelope`) - not our code, not llm-core chain construction,
+  so no tag/pin bump. Fixed with narrow suppression: `_suppress_known_warnings()`
+  in `meta/logger.py`, called from `configure_logging`, filtering the pydantic
+  serializer `UserWarning` from `pydantic.main` only. Verified live (0 surviving
+  hits over a real `ainvoke`, PASS); suite green 228 passed, ruff+pyright clean.
+  Bonus phase 2 signal from the two live runs: with the v3 mitigations the brain
+  picked `ActionInteract(target_name='p1')` (a player) and `ActionMove` under the
+  "gather crops from the farm" mission with the farm in view - it did not address
+  the building. Encouraging for the steer fork, but n=2; still needs the proper
+  phase 2 live-run + classification pass. See
+  [`03_serializer_warning.md`](03_serializer_warning.md#outcome-2026-07-11).

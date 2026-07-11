@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 3 - serializer warning
@@ -63,3 +63,41 @@ Read during planning (2026-07-11):
 - The warning's origin layer is documented here and it no longer fires on a
   real run, or the suppression decision is recorded and applied.
 - Project verification suite passes.
+
+## Outcome (2026-07-11)
+
+Repro (`scratch_space` script `repro_serializer_warning.py`) drove one live
+`ActionPicker.ainvoke` with a custom `warnings.showwarning` that dumps the
+emission stack for the matching message. It fired once and pinned the site:
+
+```
+langchain_openai/chat_models/base.py:1540  _create_chat_result
+    response if isinstance(response, dict) else response.model_dump()
+pydantic/main.py:464  model_dump
+UserWarning: Pydantic serializer warnings:
+  PydanticSerializationUnexpectedValue(Expected `none` ... [field_name='parsed',
+  input_value=ActionEnvelope(...)])
+```
+
+Origin layer: **pure langchain-openai internals**, not our code and not
+llm-core chain construction. `with_structured_output` returns a completion whose
+`parsed` field is declared `Optional[None]`; langchain populates it with our
+`ActionEnvelope` and then `model_dump()`s the raw completion, so pydantic warns.
+The parsed action is still returned correctly - the warning is benign. It fires
+from langchain's sync worker thread (run in an executor), so it is process-wide.
+
+Fix: **narrow suppression** (the plan's option 2, since the site is pure
+langchain). Added `_suppress_known_warnings()` in `src/laife/meta/logger.py`,
+called from `configure_logging`, with an `warnings.filterwarnings("ignore", ...)`
+scoped to `message="Pydantic serializer warnings"`, `category=UserWarning`,
+`module=r"pydantic\.main"`. Comment names the upstream site and the removal
+condition; body links back here.
+
+No llm-core change: the site is not chain construction, so the git-pinned
+package is untouched (no tag/pin bump).
+
+Verified live (`verify_suppression.py`): with `configure_logging` active, a
+counting `showwarning` left in place recorded 0 surviving hits over a real
+`ainvoke` (`>>> PASS`). A filtered warning never reaches `showwarning`, so 0 is
+proof, not absence of a trigger - the same call fired the warning before the fix.
+Suite green afterward: 228 passed, ruff and pyright clean.

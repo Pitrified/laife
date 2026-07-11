@@ -25,6 +25,7 @@ import datetime
 from pathlib import Path
 import sys
 import time
+import warnings
 
 from loguru import logger
 
@@ -86,6 +87,8 @@ def configure_logging(
         When *True* (default) writes are non-blocking via a background thread.
         Set to *False* in tests to get synchronous, immediately-visible output.
     """
+    _suppress_known_warnings()
+
     # Remove all existing handlers (including loguru's default stderr sink)
     # so structured output goes only to the file.
     logger.remove()
@@ -101,6 +104,27 @@ def configure_logging(
         serialize=True,
         level=level,
         enqueue=enqueue,
+    )
+
+
+def _suppress_known_warnings() -> None:
+    """Silence upstream-only warnings that are noise on every ``make run``.
+
+    Pydantic serializer warning from ``with_structured_output``: langchain-openai's
+    ``_create_chat_result`` (``langchain_openai/chat_models/base.py``) calls
+    ``response.model_dump()`` on a completion whose ``parsed`` field is declared
+    ``Optional[None]`` but is populated with our parsed model, so pydantic warns
+    ``Expected `none` ... [field_name='parsed']``. It is benign (the parsed action
+    is returned correctly) and fires entirely inside langchain, not our code or
+    llm-core. Remove this filter once langchain-openai stops dumping the raw
+    completion with the mismatched ``parsed`` type. See
+    scratch_space/35_interaction_error/03_serializer_warning.md.
+    """
+    warnings.filterwarnings(
+        "ignore",
+        message="Pydantic serializer warnings",
+        category=UserWarning,
+        module=r"pydantic\.main",
     )
 
 
