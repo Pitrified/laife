@@ -19,8 +19,8 @@ investigate the targeting and the warning. Analysis and decisions in
 | #  | Phase                          | Plan                                                | Status  |
 | -- | ------------------------------ | --------------------------------------------------- | ------- |
 | 1  | survive error responses        | [`01_survive_wres_error.md`](01_survive_wres_error.md) | planned |
-| 2  | interaction targeting          | [`02_interaction_targeting.md`](02_interaction_targeting.md) | draft   |
-| 3  | serializer warning             | [`03_serializer_warning.md`](03_serializer_warning.md) | draft   |
+| 2  | interaction targeting          | [`02_interaction_targeting.md`](02_interaction_targeting.md) | planned |
+| 3  | serializer warning             | [`03_serializer_warning.md`](03_serializer_warning.md) | planned |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
@@ -32,3 +32,16 @@ Append-only. Newest at the bottom.
   traced the crash to the disagreement between `Player._world_request`'s fail-loudly
   type assertion and `route_interaction`'s documented `WResInteract | WResError`
   return; drafted phases 1-3.
+- 2026-07-11 : detailed all three phase plans (all now `planned`).
+  Phase 1: seam decided - `_world_request` widens to `T | WResError` (the
+  `play()` dispatch already funnels every response into history, and the
+  mission-update isinstance guards pass errors through as neutral).
+  Phase 2: planning-time code read showed the observation already labels
+  entity types, so the leading hypothesis is a capability gap, not name
+  confusion; plan is investigation + two cheap mitigations + a recorded
+  steer/validate/extend fork. Only the fork's implementation depends on
+  phase 1 landing and on live evidence - everything up to it is planned.
+  Phase 3: `parsed` traced to langchain's `with_structured_output` envelope
+  via llm-core (`structured_chain.py:91`); plan is warnings-as-errors repro,
+  then fix at the right layer (llm-core is our own git-pinned package, so a
+  fix there means tag + pin bump) or narrow suppression.

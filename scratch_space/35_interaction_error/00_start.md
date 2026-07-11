@@ -65,6 +65,10 @@ but worth pinning down before it hides a real schema drift.
 
 - Should `_world_request` return `T | WResError` (every caller handles errors),
   or should error handling live once in `Player.play()` around the action dispatch?
+  ANS: widen `_world_request` to `T | WResError` - the `play()` dispatch already
+  funnels every response into a history entry, and the helpers' post-request
+  code must short-circuit on error anyway, which the widened type forces
+  explicitly. Reasoning in [`01_survive_wres_error.md`](01_survive_wres_error.md#decisions).
 - Is building interaction a missing feature (gathering crops is a sensible goal)
   or should the prompt steer the model away from non-player targets?
 - Does the `parsed`-field warning come from our `StructuredLLMChain` usage or
