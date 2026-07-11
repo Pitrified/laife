@@ -1,5 +1,5 @@
 ---
-status: in progress
+status: done
 ---
 
 # Phase 2 - interaction targeting
@@ -106,3 +106,64 @@ Remaining, needs a live game:
 - The fork decision is recorded with evidence (and, if extend, the follow-up
   phase is drafted in `tracking.md`).
 - Project verification suite passes.
+
+## Evidence and decision (2026-07-11)
+
+### Pre-mitigation baseline (captured logs)
+
+`cache/game_*.jsonl` (07-10, before the mitigations) held exactly one
+`ActionInteract`, and it reproduced the crash pattern verbatim:
+`target_name='Big ol Farm' message='I would like to gather crops.'`,
+`reason='To gather crops...'`. n=1, so directional only: a sensible
+building-directed intent expressed through the only target-taking action.
+
+### Post-mitigation live evidence (v3 prompt)
+
+Controlled harness (`scratch_space` script `phase2_targeting.py`) drove the real
+`ActionPicker`/`PlayerBrain` chain against the live backend over three
+building-tempting scenarios, inputs rendered through the real
+`WorldMapObservation`, N=5 each. Mission for all: "Gather crops from the Big ol
+Farm...". Targets classified against known players (`p1`) and buildings
+(`Big ol Farm`):
+
+| Scenario | Setup | Result |
+| -------- | ----- | ------ |
+| S1 farm + player, empty history | farm and `p1` both in range | 5/5 `ActionMove` |
+| S2 farm, **no** player in range | only the farm nearby, `nearby_players` = "None..." | 5/5 `ActionMove` |
+| S3 self-correction | S1 + a prior-turn `WResError` from targeting the farm in history | 5/5 `ActionInteract` -> **player `p1`** |
+
+Plus the two full-call samples from the phase 3 repro/verify runs (same v3
+prompt): both picked a player (`ActionInteract(target_name='p1')`) or
+`ActionMove`. **Across ~17 live samples: 0 building targets, 0 hallucinated
+targets.**
+
+Reading:
+
+- S2 is the capability-gap crux. With no valid target, the brain does **not**
+  hallucinate a player and does **not** address the building - it moves. So the
+  gap does not surface as a bad interact; the original crash needed the model to
+  *choose* the building as a target, and the mitigations remove that choice.
+- S3 is the one scenario that actually exercises target selection under
+  temptation (empty-history S1 never chose to interact at all). After the phase-1
+  error line it redirects to the valid player every time - the error-in-history
+  loop self-corrects rather than repeating the building.
+
+### Decision: STEER
+
+The two cheap mitigations (tightened `ActionInteract.target_name` schema +
+`player_brain/v3` "Nearby players (valid interaction targets)" listing), together
+with the phase-1 error line in history, drop the building-miss rate to noise
+(0/~17). No pre-send validation (option 2) and no building-interaction capability
+(option 3) is needed to fix this bug. Extend is not scoped as a follow-up: crop
+gathering can be revisited as a gameplay feature on its own merits later, but it
+is not required here and no `NN_building_interaction.md` is drafted.
+
+Limits of the evidence: single default model (openai), N=5 per scenario,
+controlled inputs rather than a long organic game. The harness exercises the real
+chain; the only piece not driven here is the multi-turn `play()` dispatch, which
+phase 1's tests already cover. A longer headless `make run` sweep could
+corroborate but is not a blocker for the steer decision.
+
+No code change in this step - the mitigations landed last session; this step was
+investigation + decision, so the suite is unchanged (228 passed at the phase 3
+commit, ruff and pyright clean).

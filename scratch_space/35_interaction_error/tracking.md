@@ -19,7 +19,7 @@ investigate the targeting and the warning. Analysis and decisions in
 | #  | Phase                          | Plan                                                | Status  |
 | -- | ------------------------------ | --------------------------------------------------- | ------- |
 | 1  | survive error responses        | [`01_survive_wres_error.md`](01_survive_wres_error.md) | done |
-| 2  | interaction targeting          | [`02_interaction_targeting.md`](02_interaction_targeting.md) | in progress |
+| 2  | interaction targeting          | [`02_interaction_targeting.md`](02_interaction_targeting.md) | done |
 | 3  | serializer warning             | [`03_serializer_warning.md`](03_serializer_warning.md) | done |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
@@ -107,3 +107,16 @@ Append-only. Newest at the bottom.
   the building. Encouraging for the steer fork, but n=2; still needs the proper
   phase 2 live-run + classification pass. See
   [`03_serializer_warning.md`](03_serializer_warning.md#outcome-2026-07-11).
+- 2026-07-11 : phase 2 done - fork decided STEER. Controlled live harness
+  (`phase2_targeting.py`, real chain + real `WorldMapObservation`, N=5 over three
+  building-tempting scenarios) plus the two earlier full-call samples: 0 building
+  targets and 0 hallucinated targets across ~17 live samples. Key readings: with
+  no valid player in range the brain moves rather than addressing the building or
+  hallucinating a target (capability gap does not surface as a bad interact), and
+  a farm-target `WResError` already in history makes the next pick redirect to the
+  player 5/5. The mitigations + phase-1 error line drop the miss rate to noise, so
+  no validation and no building-interaction capability are needed; extend is not
+  scoped as a follow-up. No code change this step (mitigations landed last
+  session); suite unchanged at 228 passed, ruff+pyright clean. Effort complete -
+  all three phases done. Write-up:
+  [`02_interaction_targeting.md`](02_interaction_targeting.md#evidence-and-decision-2026-07-11).
