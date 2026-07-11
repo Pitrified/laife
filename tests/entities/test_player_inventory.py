@@ -8,6 +8,7 @@ from laife.entities.action import ActionCraft
 from laife.entities.player import Player
 from laife.entities.utensil import Utensil
 from laife.entities.world_channel import WResCraft
+from laife.entities.world_channel import WResError
 from laife.entities.world_channel import WResStatus
 from laife.entities.world_runner import WorldRunner
 
@@ -41,7 +42,9 @@ def _make_player(runner: WorldRunner) -> Player:
     return player
 
 
-async def _run_craft(runner: WorldRunner, player: Player, action: ActionCraft) -> WResCraft:
+async def _run_craft(
+    runner: WorldRunner, player: Player, action: ActionCraft
+) -> WResCraft | WResError:
     """Drive world simulation + player.craft concurrently; return the craft result."""
     sim = asyncio.create_task(runner.simulate())
     result = await player.craft(action)

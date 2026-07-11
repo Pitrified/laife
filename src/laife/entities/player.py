@@ -314,19 +314,22 @@ class Player:
         self.state = PlayerState.IDLE
         return action
 
-    async def _world_request[T: WRes](self, wreq: WReq, response_type: type[T]) -> T:
-        """Send *wreq* to the world, assert the response type, and return it.
+    async def _world_request[T: WRes](
+        self, wreq: WReq, response_type: type[T]
+    ) -> T | WResError:
+        """Send *wreq* to the world and return the typed response or a WResError.
 
-        Raises ``TypeError`` if the world returns an unexpected response type.
-        The world channel is expected to be reliable; a type mismatch signals
-        a world implementation bug and should fail loudly.
+        ``WResError`` is a legitimate world answer (e.g. an interaction routed
+        to a target that does not exist) and is returned for the caller to
+        handle as a turn outcome. Any other unexpected response type signals a
+        world implementation bug and raises ``TypeError`` loudly.
         """
         wreq.player_name = self.name
         wreq.turn = self.turn
         await self.world_input_queue.put(wreq)
         wrsp = await self.input_queue.get()
         self.input_queue.task_done()
-        if not isinstance(wrsp, response_type):
+        if not isinstance(wrsp, response_type | WResError):
             msg = f"Expected {response_type.__name__}, got {type(wrsp).__name__}"
             raise TypeError(msg)
         slog.bind(
@@ -338,11 +341,18 @@ class Player:
         ).info(EVT_WORLD_RESPONSE)
         return wrsp
 
-    async def observe(self) -> WResObserve:
-        """Request a world observation and cache it in last_observation."""
+    async def observe(self) -> WResObserve | WResError:
+        """Request a world observation and cache it in last_observation.
+
+        On a WResError the previous observation is kept (the constructor seeds
+        one, so a fallback always exists) and the turn goes on with stale data.
+        """
         alg.log(f"PLAYER.observe {self.name}: requesting observation")
         wreq = WRecObserve(position=self.position, response_queue=self.input_queue)
         wrsp = await self._world_request(wreq, WResObserve)
+        if isinstance(wrsp, WResError):
+            alg.log(f"PLAYER.observe {self.name}: world error, keeping stale observation: {wrsp}")
+            return wrsp
         self.last_observation = wrsp.observation
         alg.log(
             f"PLAYER.observe {self.name}:"
@@ -381,7 +391,7 @@ class Player:
             reason=result.reason,
         )
 
-    async def complete(self, action: ActionComplete) -> WResComplete:
+    async def complete(self, action: ActionComplete) -> WResComplete | WResError:
         """Ask the world to verify completion; advance only on SUCCESS."""
         focus = self.mission.active_focus()
         alg.log(f"PLAYER.complete {self.name}: requesting world verdict for '{focus.objective}'")
@@ -393,6 +403,9 @@ class Player:
             response_queue=self.input_queue,
         )
         wrsp = await self._world_request(wreq, WResComplete)
+        if isinstance(wrsp, WResError):
+            alg.log(f"PLAYER.complete {self.name}: world error - {wrsp}")
+            return wrsp
 
         if wrsp.status == WResStatus.ERROR:
             # World rejected the claim - mission stays ACTIVE, brain will retry
@@ -427,6 +440,16 @@ class Player:
                 response_queue=self.input_queue,
             )
             wrsp_step = await self._world_request(wreq, WResMoveStep)
+            if isinstance(wrsp_step, WResError):
+                alg.log(f"PLAYER.move {self.name}: world error at step {step} - {wrsp_step}")
+                self.state = PlayerState.IDLE
+                return WResMove(
+                    status=WResStatus.ERROR,
+                    message=(
+                        f"World error after {step} step(s) from {start_position}:"
+                        f" {wrsp_step.message}"
+                    ),
+                )
 
             if wrsp_step.status == WResStatus.ERROR:
                 alg.log(f"PLAYER.move {self.name}: blocked at step {step}")
@@ -450,7 +473,7 @@ class Player:
         """Adjust the player's position by delta values."""
         self.position = (self.position[0] + dx, self.position[1] + dy)
 
-    async def build(self, action: ActionBuild) -> WResBuild:
+    async def build(self, action: ActionBuild) -> WResBuild | WResError:
         """Prepare and send a build request to the world."""
         alg.log(f"PLAYER.build {self.name}: building {action.building_type}")
         building = Building(
@@ -473,7 +496,7 @@ class Player:
         alg.log(f"PLAYER.build {self.name}: got response {wrsp}")
         return wrsp
 
-    async def craft(self, action: ActionCraft) -> WResCraft:
+    async def craft(self, action: ActionCraft) -> WResCraft | WResError:
         """Prepare and send a craft request to the world."""
         alg.log(f"PLAYER.craft {self.name}: crafting {action.utensil_name}")
         wreq = WRecCraft(
@@ -528,8 +551,12 @@ class Player:
             )
         return result.reply
 
-    async def interact(self, action: ActionInteract) -> WResInteract:
-        """Send a natural-language message to a nearby player and await the reply."""
+    async def interact(self, action: ActionInteract) -> WResInteract | WResError:
+        """Send a natural-language message to a nearby player and await the reply.
+
+        A WResError reply (e.g. the target does not exist) is a normal turn
+        outcome: it flows into the mission history so the brain can react.
+        """
         alg.log(f"PLAYER.interact {self.name}: messaging {action.target_name!r}")
         wreq = WRecInteract(
             sender_name=self.name,

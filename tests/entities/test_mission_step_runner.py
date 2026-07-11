@@ -269,6 +269,7 @@ def test_complete_returns_success() -> None:
     action = ActionComplete(reason="done", outcome="Step A completed")
     wrsp = asyncio.run(player.complete(action))
 
+    assert isinstance(wrsp, WResComplete)
     assert wrsp.status == WResStatus.SUCCESS
     assert wrsp.outcome == "Step A completed"
 

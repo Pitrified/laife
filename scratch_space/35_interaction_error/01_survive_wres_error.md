@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 1 - survive error responses
@@ -82,3 +82,33 @@ turn outcome. Context: [`00_start.md`](00_start.md).
   ends the game; the failure is visible in the struct log and in history.
 - Project verification suite passes
   (`uv run pytest && uv run ruff check . && uv run pyright`).
+
+## Outcome
+
+Landed as planned; all changes in `src/laife/entities/player.py`.
+
+- `_world_request` widened to `T | WResError`: `WResError` is accepted and
+  returned; anything else that mismatches still raises `TypeError`.
+  The existing `EVT_WORLD_RESPONSE` bind fires for errors too, so the struct
+  log (and TUI) show `kind=WResError status=error` with no new logging code.
+- Helper handling, per audit of what `world_runner.simulate` can route:
+  - `interact` returns the error (the reproduced case); it flows into the
+    history entry in `play()` unchanged.
+  - `observe` keeps the previously cached observation and returns the error.
+    One deviation from the plan: no first-turn fail-loudly special case is
+    needed, because the constructor always seeds `last_observation`.
+  - `complete` short-circuits before the mission-advance logic.
+  - `move` converts a step-level `WResError` into the same `WResMove` error
+    shape the blocked-step path already produced.
+  - `build`, `craft`: type widened only; the SUCCESS guard in `craft` already
+    skips the inventory append, and `_update_mission_from_response`'s
+    isinstance guards keep errors mission-neutral.
+- TUI check: no change needed - both `_detail` and the collapsed
+  `_round_trip_detail` already render `kind` and `status`.
+- Tests: 6 new in `tests/entities/test_world_request_errors.py`
+  (incident repro at interact level and through a live `play()` loop,
+  fail-loudly regression, mission-neutrality, observe stale/fresh paths).
+  Three existing tests updated for the widened types, including
+  `test_world_request_raises_on_wrong_type`, which had used `WResError` as
+  its wrong type - exactly the behavior this phase redefined.
+- Full suite green: 226 passed, ruff clean, pyright 0 errors.

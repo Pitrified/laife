@@ -179,7 +179,7 @@ def test_start_new_mission_resets_history(player: Player) -> None:
 def test_world_request_queues_and_returns(player: Player) -> None:
     """_world_request must put once, get once, call task_done once, and return wrsp."""
 
-    async def _run() -> WResObserve:
+    async def _run() -> WResObserve | WResError:
         obs = WResObserve(
             status=WResStatus.SUCCESS,
             observation=WorldMapObservation.from_position((0, 0)),
@@ -200,10 +200,14 @@ def test_world_request_queues_and_returns(player: Player) -> None:
 
 
 def test_world_request_raises_on_wrong_type(player: Player) -> None:
-    """_world_request must raise TypeError when the response type does not match."""
+    """_world_request must raise TypeError on a mismatch that is not WResError.
+
+    WResError itself is a legitimate world answer and is returned, not raised;
+    see tests/entities/test_world_request_errors.py.
+    """
 
     async def _run() -> None:
-        wrong = WResError(status=WResStatus.ERROR, message="oops")
+        wrong = WResMove(status=WResStatus.ERROR, message="oops")
         player.world_input_queue.put = AsyncMock()
         player.input_queue.get = AsyncMock(return_value=wrong)
         player.input_queue.task_done = MagicMock()
