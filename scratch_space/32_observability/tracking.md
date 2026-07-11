@@ -23,7 +23,10 @@ Status values: draft / planned / in progress / done / superseded / discarded.
 
 Not a phase: [`05_random_warnings.md`](05_random_warnings.md) - unrelated
 startup/shutdown warnings (SystemExit on quit, pydantic V1 on py3.14, pygame
-AVX2). Spun out as a separate future cleanup, not part of the inspector.
+AVX2). Spun out to [`34_runtime_warnings`](../34_runtime_warnings/tracking.md).
+Likewise [`05.1_random_decisions.md`](05.1_random_decisions.md) (the
+`WResError` interaction crash) is spun out to
+[`35_interaction_error`](../35_interaction_error/tracking.md).
 
 ## Log
 
@@ -155,3 +158,9 @@ Append-only. Newest at the bottom.
   mission_start rows seen and the `xN` collapse read well. This clears the
   last open item across phases 1-5; every phase is now confirmed on a real
   interactive run, not just headless.
+- 2026-07-11 : spun the two leftover notes into their own tracked folders:
+  `05_random_warnings.md` -> [`34_runtime_warnings`](../34_runtime_warnings/tracking.md)
+  (clean shutdown, pydantic v1 warning, pygame avx2 warning) and
+  `05.1_random_decisions.md` -> [`35_interaction_error`](../35_interaction_error/tracking.md)
+  (survive `WResError`, interaction targeting investigation, serializer warning).
+  Nothing remains open in this folder.
