@@ -21,7 +21,7 @@ At call sites::
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-import datetime
+import datetime as dt
 from pathlib import Path
 import sys
 import time
@@ -94,7 +94,7 @@ def configure_logging(
     logger.remove()
 
     if log_file is None:
-        stamp = datetime.datetime.now(datetime.UTC).strftime("%Y%m%dT%H%M%S")
+        stamp = dt.datetime.now(dt.UTC).strftime("%Y%m%dT%H%M%S")
         log_file = Path("cache") / f"game_{stamp}.jsonl"
 
     Path(log_file).parent.mkdir(parents=True, exist_ok=True)
@@ -117,8 +117,7 @@ def _suppress_known_warnings() -> None:
     ``Expected `none` ... [field_name='parsed']``. It is benign (the parsed action
     is returned correctly) and fires entirely inside langchain, not our code or
     llm-core. Remove this filter once langchain-openai stops dumping the raw
-    completion with the mismatched ``parsed`` type. See
-    scratch_space/35_interaction_error/03_serializer_warning.md.
+    completion with the mismatched ``parsed`` type.
     """
     warnings.filterwarnings(
         "ignore",

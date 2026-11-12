@@ -8,7 +8,7 @@ import asyncio
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from dataclasses import field
-import datetime
+import datetime as dt
 import json
 from pathlib import Path
 from typing import Any
@@ -23,7 +23,7 @@ POLL_INTERVAL_SECONDS = 0.25
 class LogRow:
     """One parsed record from the structured JSONL log."""
 
-    time: datetime.datetime
+    time: dt.datetime
     level: str
     message: str
     event: str | None
@@ -52,9 +52,7 @@ def _parse_line(line: str) -> LogRow | None:
         extra = dict(record["extra"])
         extra.pop("logger_name", None)
         return LogRow(
-            time=datetime.datetime.fromtimestamp(
-                record["time"]["timestamp"], tz=datetime.UTC
-            ),
+            time=dt.datetime.fromtimestamp(record["time"]["timestamp"], tz=dt.UTC),
             level=record["level"]["name"],
             message=record["message"],
             event=extra.pop("event", None),

@@ -181,9 +181,7 @@ def test_observe_success_updates_observation() -> None:
         runner = WorldRunner()
         alice = _make_player(runner)
         fresh = WorldMapObservation.from_position((3, 4))
-        alice.input_queue.put_nowait(
-            WResObserve(status=WResStatus.SUCCESS, observation=fresh)
-        )
+        alice.input_queue.put_nowait(WResObserve(status=WResStatus.SUCCESS, observation=fresh))
         await alice.observe()
         assert alice.last_observation is fresh
         return alice

@@ -4,7 +4,7 @@ Pure asyncio, no pygame dependency (same discipline as ``WorldRunner``).
 Players await :meth:`SimControl.wait_turn` at the top of each ``play()``
 iteration; the world runner is never gated, so a turn already in flight
 (LLM calls and world round trip included) always finishes before its
-player blocks. See ``scratch_space/32_observability/03_loop_pause.md``.
+player blocks.
 """
 
 import asyncio

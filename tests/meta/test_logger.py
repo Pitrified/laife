@@ -147,8 +147,9 @@ def test_timed_llm_call_skips_record_on_error(tmp_path: Path) -> None:
     configure_logging(level="INFO", log_file=log_file, enqueue=False)
 
     msg = "boom"
-    with pytest.raises(ValueError, match=msg), timed_llm_call(
-        player="Alice", turn=1, model="gpt-4o", stage="action"
+    with (
+        pytest.raises(ValueError, match=msg),
+        timed_llm_call(player="Alice", turn=1, model="gpt-4o", stage="action"),
     ):
         raise ValueError(msg)
 

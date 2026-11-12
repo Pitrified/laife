@@ -314,9 +314,7 @@ class Player:
         self.state = PlayerState.IDLE
         return action
 
-    async def _world_request[T: WRes](
-        self, wreq: WReq, response_type: type[T]
-    ) -> T | WResError:
+    async def _world_request[T: WRes](self, wreq: WReq, response_type: type[T]) -> T | WResError:
         """Send *wreq* to the world and return the typed response or a WResError.
 
         ``WResError`` is a legitimate world answer (e.g. an interaction routed

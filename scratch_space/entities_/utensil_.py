@@ -2,6 +2,7 @@
 
 # %% imports
 
+from laife.llm_services.vectorstores.cchroma import CChroma
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from pydantic import SecretStr
@@ -10,7 +11,6 @@ from laife.config.constants import EMBEDDING_MODEL
 from laife.config.constants import UTENSILS_COLLECTION
 from laife.config.constants import VECTORSTORE_FOL
 from laife.entities.utensil import Utensil
-from laife.llm_services.vectorstores.cchroma import CChroma
 
 # %% setup vector db
 
