@@ -1,0 +1,49 @@
+# Headless run
+
+`make headless` runs the game with no window and no provider.
+It is for development: run the engine after a change, then read what it did.
+
+```bash
+make headless                  # 6 turns per player, seed 0
+make headless TURNS=12 SEED=3
+make tui                       # opens the newest log, this run's
+```
+
+It prints each player's turn count and position, and the path of the structured log it wrote under `cache/`.
+
+## What runs
+
+The world and the players are the live game's: [`setup_world`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_setup.py) builds them for both `make run` and `make headless`.
+The seed fixes the players' starting positions.
+Two runs with the same seed and script take the same actions with the same outcomes and end in the same positions.
+What can differ is the interleaving of the two players' events in the log.
+The turn stamped on a reply can differ too: a reply runs inside the sender's world request and carries the receiver's current turn.
+
+Every chain gets a `ScriptedChatConfig` from [`laife.llm.scripted_chat`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/scripted_chat.py) in place of the provider.
+The scripted model ignores the prompt and answers by output model:
+
+- the player brain gets the next action of that player's script, cycling;
+- the judges approve, and the mission generator, planner and replier return fixed values;
+- an output model it has no answer for raises `UnscriptedSchemaError`, so a new chain fails the run instead of being answered with a guess.
+
+The default script is one action of each type, ending with `complete`, so a run of six turns per player goes through every branch of the turn loop.
+
+`WorldRenderer` is not started, and nothing on the headless path imports pygame.
+`laife.entities` holds the simulation only; the sprites and the renderer are imported from `laife.rendering`.
+
+## What it does not show
+
+- Anything drawn on screen.
+- How a real model behaves: the script exercises the engine's code paths, not the prompts.
+
+## When it stops
+
+Each player returns after `--turns` turns, and the world loop is then cancelled.
+If the world loop dies first, its exception is raised and the run fails.
+The players would otherwise wait for world responses forever.
+
+## The gate
+
+`tests/test_headless.py` runs one pass of the script and checks that the run ends, that every player played every turn, and that no world response was an error.
+It does not check which actions were taken.
+It is part of `make check`.

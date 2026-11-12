@@ -1,5 +1,5 @@
 ---
-status: in progress
+status: done
 priority: 0
 description: |
   Run the real engine with no window and no provider: players fed by a scripted LLM, the structured log written to `cache/` as in a live run, usable by an agent and as a gate.
@@ -36,6 +36,7 @@ Read on 2026-11-12, on `main` after the folder 36 merge.
 - **The simulation has no pygame dependency.**
   No module under `src/laife/entities/` or `src/laife/config/` imports pygame; the mentions there are docstrings.
   `WorldRenderer` is the only display code, and `game/main.py` gathers it beside `runner.simulate()` and the players.
+  Correction found in phase 4: `laife/entities/__init__.py` re-exported the sprites and `WorldRenderer`, so importing any `laife.entities` module loaded pygame. The re-exports were removed; nothing used them.
 - **Nothing ends a run.**
   `Player.play()` and `WorldRunner.simulate()` loop forever; a run ends when the window closes.
 - **Runs are not reproducible.**

@@ -82,6 +82,7 @@ nav:
       - Getting started: guides/getting_started.md
       - Architecture: guides/architecture.md
       - Game loop: guides/game_loop.md
+      - Headless run: guides/headless.md
       - LLM chains: guides/llm_chains.md
       - Params and config: guides/params_config.md
       - Glossary: guides/glossary.md

@@ -11,42 +11,63 @@ from laife.entities.terrain_types import TERRAINS
 from laife.ui.alog import alg
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
     import random
+
+    from llm_core.chat.config.base import ChatConfig
 
     from laife.entities.sim_control import SimControl
     from laife.entities.world_runner import WorldRunner
+
+
+PLAYER_NAMES = ("p0", "p1")
+
+
+class MissingPlayerChatConfigError(Exception):
+    """A chat config map was given that has no entry for one of the players."""
+
+    def __init__(self, player: str) -> None:
+        """Name the player, so a headless run never falls back to a paid provider."""
+        super().__init__(f"No chat config for player {player!r}")
 
 
 def setup_world(
     runner: WorldRunner,
     sim_control: SimControl | None,
     rng: random.Random,
+    chat_configs: Mapping[str, ChatConfig] | None = None,
 ) -> None:
     """Populate the world with terrain, players, and buildings.
 
     Player positions are drawn from *rng*: a seeded ``random.Random`` gives the
     same world on every run.
+
+    *chat_configs* maps each name in :data:`PLAYER_NAMES` to that player's chat
+    config. ``None`` gives every player ``chat.default``; a map missing a
+    player raises rather than fall back to it.
     """
+
+    def _chat_config(name: str) -> ChatConfig | None:
+        if chat_configs is None:
+            return None
+        if name not in chat_configs:
+            raise MissingPlayerChatConfigError(name)
+        return chat_configs[name]
+
     # seed terrain regions
     for terrain in TERRAINS:
         runner.add_terrain(terrain)
 
-    player = Player(
-        "p0",
-        position=(rng.randint(0, 800), rng.randint(0, 600)),
-        player_type="inu",
-        world_input_queue=runner.input_queue,
-        sim_control=sim_control,
-    )
-    runner.add_player(player)
-    player = Player(
-        "p1",
-        position=(rng.randint(0, 800), rng.randint(0, 600)),
-        player_type="inu",
-        world_input_queue=runner.input_queue,
-        sim_control=sim_control,
-    )
-    runner.add_player(player)
+    for name in PLAYER_NAMES:
+        player = Player(
+            name,
+            position=(rng.randint(0, 800), rng.randint(0, 600)),
+            player_type="inu",
+            world_input_queue=runner.input_queue,
+            sim_control=sim_control,
+            chat_config=_chat_config(name),
+        )
+        runner.add_player(player)
 
     player_pov = (500, 500)
     # a house
