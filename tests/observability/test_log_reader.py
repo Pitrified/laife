@@ -2,11 +2,14 @@
 
 import asyncio
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from laife.observability.log_reader import LogRow
 from laife.observability.log_reader import latest_log_file
 from laife.observability.log_reader import tail_jsonl
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -118,8 +121,7 @@ def test_tail_jsonl_picks_up_appended_line(tmp_path: Path) -> None:
     """A line appended after the tail has started is picked up without restarting."""
     path = tmp_path / "game_20260101T000000.jsonl"
     path.write_text(
-        _envelope(timestamp=1000.0, extra={"event": "action", "player": "Alice", "turn": 1})
-        + "\n"
+        _envelope(timestamp=1000.0, extra={"event": "action", "player": "Alice", "turn": 1}) + "\n"
     )
 
     async def _run() -> list[LogRow]:

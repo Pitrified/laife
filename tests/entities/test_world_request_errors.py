@@ -1,7 +1,7 @@
 """Tests for surviving WResError world responses (feature 35, phase 1)."""
 
 import asyncio
-from collections.abc import Generator
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -19,6 +19,9 @@ from laife.entities.world_channel import WResStatus
 from laife.entities.world_map_observation import WorldMapObservation
 from laife.entities.world_runner import WorldRunner
 from laife.llm.mission import MissionStatus
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -181,9 +184,7 @@ def test_observe_success_updates_observation() -> None:
         runner = WorldRunner()
         alice = _make_player(runner)
         fresh = WorldMapObservation.from_position((3, 4))
-        alice.input_queue.put_nowait(
-            WResObserve(status=WResStatus.SUCCESS, observation=fresh)
-        )
+        alice.input_queue.put_nowait(WResObserve(status=WResStatus.SUCCESS, observation=fresh))
         await alice.observe()
         assert alice.last_observation is fresh
         return alice

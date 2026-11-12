@@ -1,9 +1,13 @@
 """Load and manage sprites for the game."""
 
+from typing import TYPE_CHECKING
+
 import pygame
-from pygame.surface import Surface
 
 from laife.config.constants import SPRITES_FOL
+
+if TYPE_CHECKING:
+    from pygame.surface import Surface
 
 INU_SPRITE_SHEET_COORDS = {
     "idle": {

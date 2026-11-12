@@ -41,8 +41,15 @@ docs = [
     "mkdocs-api-autonav>=0.2",
 ]
 lint = [
-    "ruff>=0.9.6",
-    "pyright>=1.1.408",
+    # Exact, and the same as rev in .pre-commit-config.yaml; bump both together.
+    "ruff==0.17.2",
+    # Exact, and the same as rev in .pre-commit-config.yaml; bump both together.
+    "pyright[nodejs]==1.1.414",
+    "pre-commit>=4.1.0",
+    # Exact, and the same as rev in .pre-commit-config.yaml; bump both together.
+    "detect-secrets==1.5.0",
+    # Exact, and the same as rev in .pre-commit-config.yaml; bump both together.
+    "nbstripout==0.9.1",
 ]
 notebook = [
     "ipykernel>=6.29.5",

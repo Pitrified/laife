@@ -40,7 +40,7 @@ class Utensil:
         )
 
     @classmethod
-    def from_document(cls, doc: Document) -> "Utensil":
+    def from_document(cls, doc: Document) -> Utensil:
         """Reconstruct an utensil from a LangChain Document."""
         return cls(
             name=doc.metadata["name"],

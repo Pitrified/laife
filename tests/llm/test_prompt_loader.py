@@ -1,11 +1,14 @@
 """Tests for PromptLoader and PromptLoaderConfig."""
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from llm_core.prompts.prompt_loader import NoPromptVersionFoundError
 from llm_core.prompts.prompt_loader import PromptLoader
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture

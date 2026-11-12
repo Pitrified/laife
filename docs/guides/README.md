@@ -11,3 +11,4 @@ for module-by-module detail see [the library docs](../library/README.md).
 - [Params and config](params_config.md) - environments, paths, and LLM service settings.
 - [Glossary](glossary.md) - the domain terms used across the project.
 - [Docs maintenance](docs_maintenance.md) - the sanity check to keep the docs in sync with the code.
+- [Worktrees](worktrees.md) - working a second branch in its own folder and session.

@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 from llm_core.vectorstores.config.chroma import ChromaConfig
 
-from laife.params.env_type import EnvType
-from laife.params.llm_services.embeddings import EmbeddingsParams
-
 if TYPE_CHECKING:
     from llm_core.vectorstores.config.base import VectorStoreConfig
+
+    from laife.params.env_type import EnvType
+    from laife.params.llm_services.embeddings import EmbeddingsParams
 
 
 class SearchParams:

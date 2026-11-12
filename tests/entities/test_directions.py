@@ -1,10 +1,14 @@
 """Test the directions module."""
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from laife.config.types import Position
 from laife.entities.utils.directions import CardinalDirection
 from laife.entities.utils.directions import pospos2cardinal_direction
+
+if TYPE_CHECKING:
+    from laife.config.types import Position
 
 
 @pytest.mark.parametrize(

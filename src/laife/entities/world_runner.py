@@ -1,14 +1,11 @@
 """WorldRunner - pure simulation loop, no pygame dependency."""
 
 import asyncio
+from typing import TYPE_CHECKING
 
 from llm_core.prompts.prompt_loader import PromptLoader
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 
-from laife.config.types import Position
-from laife.entities.building import Building
-from laife.entities.player import Player
-from laife.entities.terrain import Terrain
 from laife.entities.utils.geometry import aabb_collides
 from laife.entities.world_channel import WRecBuild
 from laife.entities.world_channel import WRecComplete
@@ -35,6 +32,12 @@ from laife.meta.log_events import EVT_WORLD_REQUEST
 from laife.meta.logger import slog
 from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
+
+if TYPE_CHECKING:
+    from laife.config.types import Position
+    from laife.entities.building import Building
+    from laife.entities.player import Player
+    from laife.entities.terrain import Terrain
 
 
 class WorldRunner:

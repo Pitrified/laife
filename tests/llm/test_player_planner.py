@@ -1,7 +1,7 @@
 """Tests for PlayerPlannerConfig, PlayerPlanner, and Player.plan() integration."""
 
 import asyncio
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -26,6 +26,9 @@ from laife.llm.player_planner import PlayerPlanner
 from laife.llm.player_planner import PlayerPlannerConfig
 from laife.llm.player_planner import PlayerPlannerInput
 from laife.llm.player_planner import PlayerPlannerResult
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Constants / shared helpers

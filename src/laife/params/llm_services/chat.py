@@ -7,10 +7,10 @@ from llm_core.chat.config.huggingface import HuggingFaceChatConfig
 from llm_core.chat.config.ollama import OllamaChatConfig
 from llm_core.chat.config.openai import ChatOpenAIConfig
 
-from laife.params.env_type import EnvType
-
 if TYPE_CHECKING:
     from llm_core.chat.config.base import ChatConfig
+
+    from laife.params.env_type import EnvType
 
 
 class ChatParams:

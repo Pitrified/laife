@@ -121,52 +121,7 @@ The new planning will have more feedback received in the history.
 
 ### Features
 
-- [x] : World with renderer
-  - [ ] : Prettier background with tiled grass
-  - [ ] : Prettier terrain with tiled terrain types
-  - [ ] : Prettier buildings with a big building in the center and a tiled garden
-  - [ ] : Utensils can be held by the player
-- [x] : Swap player and world queue control,
-      the player sends requests to the world to do some action,
-      and the world answers with the result
-  - [x] : Formalize the player and world interaction
-  - [x] : Make the list of possible player actions: base done, easily extendable with new actions
-- [ ] : Map of the world with entities:
-  - [x] : Different buildings
-  - [ ] : Different terrain
-  - [ ] : Make the map dynamic with some kind of loader
-- [ ] : Vector db of the world entities
-  - [x] : Different utensils
-  - [ ] : Different buildings
-  - [ ] : Different terrains
-- [ ] : Action object as an output of the Brain
-- [ ] : Translate the map into a prompt
-- [ ] : Convert the `to_prompts` into langchain objects using `PromptTemplate`s
-- [ ] : Assign a mission to a player based on the map
-  - [ ] : If a mission is too complex, break it down into sub-missions
-  - [ ] : Share the mission with the world: the player can ask for help
-- [ ] : Create an utensil to solve the mission
-  - [ ] : If the utensil does not exist, create it
-  - [ ] : Create an image of the utensil --> need wrapper for langchain image generation tools
-- [ ] : Solve the mission
-- [ ] : The mission could be building a building
-- [ ] : Add an alive parameter to the player
-- [ ] : Let players interact with each other with
-   - [ ] : a `ActionInteract` action 
-   - [ ] : a `to_prompt` that describes the other player in the prompt
-- [ ] : Add a player inventory
-- [ ] : Add a player long term memory
-- [ ] : Check why some classes are dataclasses and some are pydantic models, and unify the approach
-- [ ] : Add typed `WResXXX` classes for world responses, instead of the generic `WRes` with a dict payload
-   Or at least define schemas for the payloads of the different world responses, build the payloads as pydantic models and validate when receiving them.
-   And we can maybe just use `response: BaseModel` in `WRes`, and just have the different schemas defined.
-- [x] : Add an ActionPickerInput BaseModelKw, receive that in invoke; required prompt vars can be inferred from the fields of the input model and the prompt template loaded can be validated to ensure it contains them all.
-- [ ] : Make the vector-able entities uniform, so that we have common ways to build the prompt and place them in the vector db
-- [ ] : Add a structured logger with a whole bunch of info from the game loop/missions/actions, to be able to analyze the game play and debug better
-   - [ ] : Add a dashboard to visualize the logs and analyze the game play
-   - [ ] : Enhance UI of game window to show more info, also interactive with mouse
-- [ ] : The sending requests and receiving responses in player is quite repetitive, optimize it
-- [ ] : The action picker and world judge are quite similar, try to create a superclass
+What is built is in the `done` folders under [`plans/`](plans/); what is next is the backlog in [`plan.md`](plan.md).
 
 ### Startup Entities
 

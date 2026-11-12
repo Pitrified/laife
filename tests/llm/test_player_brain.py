@@ -1,7 +1,7 @@
 """Tests for PlayerBrainConfig and PlayerBrain."""
 
 import asyncio
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 
@@ -18,6 +18,9 @@ from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionStatus
 from laife.llm.player_brain import PlayerBrain
 from laife.llm.player_brain import PlayerBrainConfig
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Shared fixtures

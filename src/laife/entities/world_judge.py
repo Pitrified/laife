@@ -1,12 +1,15 @@
 """World action judge - LLM-based validation for build and craft actions."""
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from llm_core.chains.structured_chain import StructuredLLMChain
-from llm_core.chat.config.base import ChatConfig
 from pydantic import BaseModel
 
 from laife.data_models.basemodel_kwargs import BaseModelKwargs
+
+if TYPE_CHECKING:
+    from llm_core.chat.config.base import ChatConfig
 
 
 class WorldJudgeInput(BaseModelKwargs):
