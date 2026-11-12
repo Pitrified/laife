@@ -128,6 +128,7 @@ The pre-commit hooks run on every commit once installed with `make hooks`, once 
 - **Run `make check` before the commit, not after.** A commit made first and checked second is a commit somebody else finds.
 - **A skipped test is not a passed test.** Read the count. Fewer tests than last time means something stopped being collected.
 - **Always run project code through `make`, or `uv run --no-sync`.** A bare `uv run` re-syncs the environment from `uv.lock` first, which reverts a local editable install of llm-core (`make dev-llm-core`). `make undev` is the deliberate way back.
+- **Hook versions follow `uv.lock`.** ruff, pyright, nbstripout and detect-secrets are pinned exactly in `pyproject.toml` to their hook `rev`; move both together. `scripts/check_tool_pins.py`, the `tool-pins` hook, fails when they differ; python-project-template's `docs/guides/pre_commit.md`, "Tool versions", has the procedure.
 - **A gate has to stay fast enough to be run.** A slow gate gets skipped, and a skipped gate is a wish. One command, a failure that names the file and what to do, and shown failing once before it counts.
 - The docs are published to GitHub Pages by `.github/workflows/docs.yml`, which runs `mkdocs build --strict`. `make docs-check` is the same build, so a docs break is caught before it reaches CI.
 

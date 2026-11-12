@@ -31,12 +31,14 @@ repos:
         # Passed file names override pyproject's include, so scope it the same way.
         files: ^(src|tests)/
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.8.2
+    # Same version as the nbstripout pin in pyproject.toml; bump both together.
+    rev: 0.9.1
     hooks:
       - id: nbstripout
         name: Check for Jupyter notebook output
         args: [--verify]
   - repo: https://github.com/Yelp/detect-secrets
+    # Same version as the detect-secrets pin in pyproject.toml; bump both together.
     rev: v1.5.0
     hooks:
       - id: detect-secrets
@@ -45,6 +47,12 @@ repos:
         exclude: ^uv\.lock$
   - repo: local
     hooks:
+      - id: tool-pins
+        name: hook revs match uv.lock
+        entry: python3 scripts/check_tool_pins.py
+        language: system
+        pass_filenames: false
+        files: ^(\.pre-commit-config\.yaml|uv\.lock|pyproject\.toml)$
       - id: plans
         name: plan folders and citations
         entry: python3 scripts/plans.py check --citations
