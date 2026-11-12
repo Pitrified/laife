@@ -180,9 +180,14 @@ class Player:
     # Agent loop
     # ------------------------------------------------------------------
 
-    async def play(self) -> None:
-        """Run the agent decision loop (intended to run as an asyncio task)."""
-        while True:
+    async def play(self, max_turns: int | None = None) -> None:
+        """Run the agent decision loop (intended to run as an asyncio task).
+
+        Returns once ``self.turn`` reaches *max_turns*; ``None`` loops until
+        cancelled. A player that has returned still answers messages, since
+        the world calls :meth:`receive_message` directly.
+        """
+        while max_turns is None or self.turn < max_turns:
             # Hold here while paused; the turn about to start is self.turn + 1.
             if self.sim_control is not None:
                 await self.sim_control.wait_turn(self.name, self.turn + 1)

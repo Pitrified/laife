@@ -320,6 +320,26 @@ def test_play_increments_turn_each_iteration(player: Player) -> None:
     assert player.turn == 4
 
 
+def test_play_returns_at_max_turns(player: Player) -> None:
+    """play(max_turns=n) returns on its own after turn n."""
+
+    async def _run() -> None:
+        obs = WResObserve(
+            status=WResStatus.SUCCESS,
+            observation=WorldMapObservation.from_position((0, 0)),
+        )
+        player.world_input_queue.put = AsyncMock()
+        player.input_queue.get = AsyncMock(return_value=obs)
+        player.input_queue.task_done = MagicMock()
+        move_action = ActionMove(reason="x", direction=CardinalDirection.East, distance=0)
+        player.brain.think = AsyncMock(return_value=move_action)
+
+        await asyncio.wait_for(player.play(max_turns=3), timeout=5)
+
+    asyncio.run(_run())
+    assert player.turn == 3
+
+
 # ---------------------------------------------------------------------------
 # llm_call coverage - action type and the plan / reply / mission call sites
 # ---------------------------------------------------------------------------

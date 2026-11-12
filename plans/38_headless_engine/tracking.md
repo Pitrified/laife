@@ -16,7 +16,7 @@ Analysis, proposals and open questions in [`00_start.md`](00_start.md).
 | #  | Phase                        | Plan                                                 | Status |
 | -- | ---------------------------- | ---------------------------------------------------- | ------ |
 | 1  | shared world setup with seed | [`01_world_setup_seed.md`](01_world_setup_seed.md)   | done    |
-| 2  | turn limit                   | [`02_max_turns.md`](02_max_turns.md)                 | planned |
+| 2  | turn limit                   | [`02_max_turns.md`](02_max_turns.md)                 | done    |
 | 3  | scripted chat model          | [`03_scripted_chat.md`](03_scripted_chat.md)         | planned |
 | 4  | headless entry and gate      | [`04_headless_entry.md`](04_headless_entry.md)       | planned |
 
@@ -30,3 +30,4 @@ Append-only. Newest at the bottom.
 - 2026-11-12 : Q1-Q6 answered with the user; renderer checks added to `plan.md`; drafted phases 1-4.
 - 2026-11-12 : per-player and per-world chat config chosen for phase 3; phases 1-4 planned.
 - 2026-11-12 : phase 1 done: `setup_world()` in the package with a `random.Random`; it needs a running loop because of `alg.log`.
+- 2026-11-12 : phase 2 done: `play(max_turns=...)`; cancelling the runner moved to phase 4.
