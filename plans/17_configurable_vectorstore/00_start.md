@@ -101,6 +101,7 @@ Replace the `CChroma` constructor arg with `VectorStoreConfig`:
 def __init__(self, vector_db: CChroma) -> None:
     self._db = vector_db
 
+
 # after
 def __init__(self, config: VectorStoreConfig) -> None:
     self._db = config.create_vector_store()

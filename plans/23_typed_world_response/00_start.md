@@ -18,30 +18,37 @@ Remove the untyped `response_data: dict` bag from `WRes` and replace every use-s
 ### New class hierarchy, `src/laife/entities/world_channel.py`
 
 ```python
-class WRes(BaseModel):           # pydantic base - just status
+class WRes(BaseModel):  # pydantic base - just status
     status: WResStatus
 
-class WResBuild(WRes):           # build action result (success or judge/spatial rejection)
+
+class WResBuild(WRes):  # build action result (success or judge/spatial rejection)
     feedback: str
 
-class WResCraft(WRes):           # craft action result
+
+class WResCraft(WRes):  # craft action result
     feedback: str
 
-class WResObserve(WRes):         # observation result
+
+class WResObserve(WRes):  # observation result
     observation: WorldMapObservation
 
-class WResMoveStep(WRes):        # per-step move validation from WorldRunner
-    new_position: Position | None = None   # set on SUCCESS
-    obstacle: str | None = None            # set on ERROR
 
-class WResMove(WRes):            # aggregated move result returned by Player.move()
+class WResMoveStep(WRes):  # per-step move validation from WorldRunner
+    new_position: Position | None = None  # set on SUCCESS
+    obstacle: str | None = None  # set on ERROR
+
+
+class WResMove(WRes):  # aggregated move result returned by Player.move()
     message: str
 
-class WResPlan(WRes):            # player-local planner result
+
+class WResPlan(WRes):  # player-local planner result
     sub_missions: list[str]
     reason: str
 
-class WResError(WRes):           # fallback for unknown requests / internal errors
+
+class WResError(WRes):  # fallback for unknown requests / internal errors
     message: str
 ```
 

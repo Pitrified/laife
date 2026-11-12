@@ -107,7 +107,7 @@ class WRecInteract(WReq):
     """Request to route a message from one player to another."""
 
     sender_name: str
-    sender_prompt: str   # snapshot of sender.to_prompt() at send time
+    sender_prompt: str  # snapshot of sender.to_prompt() at send time
     target_name: str
     message: str
 
@@ -115,7 +115,7 @@ class WRecInteract(WReq):
 class WResInteract(WRes):
     """Response carrying the target player's LLM-generated reply."""
 
-    target_prompt: str   # snapshot of target.to_prompt() at reply time
+    target_prompt: str  # snapshot of target.to_prompt() at reply time
     reply: str
 ```
 
@@ -128,9 +128,10 @@ class PlayerReplyInput(BaseModelKwargs):
     sender_name: str
     sender_prompt: str
     message: str
-    own_state: str        # receiver's render_state()
-    own_mission: str      # receiver's mission.to_prompt()
-    own_history: str      # receiver's history.to_prompt()
+    own_state: str  # receiver's render_state()
+    own_mission: str  # receiver's mission.to_prompt()
+    own_history: str  # receiver's history.to_prompt()
+
 
 class PlayerReplyOutput(BaseModel):
     reply: str

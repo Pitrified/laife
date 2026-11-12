@@ -112,7 +112,7 @@ After appending sub-missions, call `advance()` to activate the first one immedia
 ```python
 for sub_objective in result.sub_missions:
     self.mission.add_sub_mission(sub_objective)
-self.mission.advance()          # activate step 0
+self.mission.advance()  # activate step 0
 self.history = MissionHistory()
 ```
 
@@ -161,10 +161,9 @@ async def complete(self, action: ActionComplete) -> WRes:
     alg.log(f"PLAYER.complete {self.name}: completing '{focus.objective}'")
     focus.status = MissionStatus.COMPLETED
     advanced = self.mission.advance()
-    self.history = MissionHistory()   # fresh slate for the new focus
-    msg = (
-        f"Completed '{focus.objective}'. "
-        + (f"Next step: '{self.mission.active_focus().objective}'." if advanced else "All steps done.")
+    self.history = MissionHistory()  # fresh slate for the new focus
+    msg = f"Completed '{focus.objective}'. " + (
+        f"Next step: '{self.mission.active_focus().objective}'." if advanced else "All steps done."
     )
     alg.log(f"PLAYER.complete {self.name}: {msg}")
     return WRes(WResStatus.SUCCESS, {"message": msg, "outcome": action.outcome})

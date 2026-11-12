@@ -54,14 +54,15 @@ WorldActionJudge:  prompt + chat model  ->  WorldJudgeResult  (was it valid?)
 
 ```python
 class WorldJudgeInput(BaseModelKwargs):
-    action_type: str      # "build" | "craft"
-    action_details: str   # action fields serialised to prompt string
-    observation: str      # player.last_observation
-    player_state: str     # player.render_state()
+    action_type: str  # "build" | "craft"
+    action_details: str  # action fields serialised to prompt string
+    observation: str  # player.last_observation
+    player_state: str  # player.render_state()
+
 
 class WorldJudgeResult(BaseModel):
     success: bool
-    feedback: str         # natural-language outcome fed back into MissionHistory
+    feedback: str  # natural-language outcome fed back into MissionHistory
 ```
 
 ### `WorldActionJudge` dataclass
@@ -87,7 +88,7 @@ Per-action prompt tuning without any code duplication. `WorldJudgeInput` uses th
 class WRecCraft(WReq):
     utensil_name: str
     description: str
-    observation: str      # player passes its own cached observation
+    observation: str  # player passes its own cached observation
     player_state: str
 ```
 

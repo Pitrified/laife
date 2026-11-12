@@ -37,8 +37,10 @@ Python's structural pattern matching works cleanly on a class hierarchy:
 
 ```python
 match action:
-    case ActionMove():  ...
-    case ActionBuild(): ...
+    case ActionMove():
+        ...
+    case ActionBuild():
+        ...
 ```
 
 This reads well and Pyright/mypy can narrow types correctly in each branch.
@@ -75,9 +77,9 @@ not the base class:
 
 ```python
 from typing import Union, Annotated
+
 Actions = Annotated[
-    Union[ActionMove, ActionBuild, ActionCraft, ActionPlan],
-    Field(discriminator="type")
+    Union[ActionMove, ActionBuild, ActionCraft, ActionPlan], Field(discriminator="type")
 ]
 structured_llm = model.with_structured_output(Actions)
 ```
@@ -251,27 +253,34 @@ and each concrete class inherits it, making the wrapper truly thin.
 class BaseAction(BaseModel):
     reason: str
 
+
 class ActionMove(BaseAction):
     direction: Direction
+
 
 class ActionBuild(BaseAction):
     building_type: BuildingType
 
+
 class ActionCraft(BaseAction):
     item_name: str
+
 
 class ActionPlan(BaseAction):
     next_actions: list[str]
 
+
 Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan
 
-class ActionEnvelope(BaseModel):          # LLM boundary only - never leaves ActionPicker
+
+class ActionEnvelope(BaseModel):  # LLM boundary only - never leaves ActionPicker
     act: Actions
+
 
 class ActionPicker:
     def invoke(self, mission: str) -> BaseAction:
         envelope: ActionEnvelope = self.chain.invoke(...)
-        return envelope.act               # callers get a concrete BaseAction directly
+        return envelope.act  # callers get a concrete BaseAction directly
 ```
 
 **What this achieves over the old `Action(act, reason)` shape:**
@@ -297,7 +306,7 @@ Handlers currently use `cast()` to tell the type checker what the concrete type 
 
 ```python
 async def move(self, action: BaseAction) -> str:
-    action = cast("ActionMove", action)   # type-checker hint only - no runtime check
+    action = cast("ActionMove", action)  # type-checker hint only - no runtime check
     ...
 ```
 

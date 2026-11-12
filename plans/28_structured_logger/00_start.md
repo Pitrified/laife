@@ -67,12 +67,12 @@ uv add structlog
 #### `src/laife/meta/log_events.py`
 
 ```python
-EVT_ACTION             = "action"
-EVT_WORLD_RESPONSE     = "world_response"
+EVT_ACTION = "action"
+EVT_WORLD_RESPONSE = "world_response"
 EVT_MISSION_TRANSITION = "mission_transition"
-EVT_LLM_CALL           = "llm_call"
-EVT_LLM_RESULT         = "llm_result"
-EVT_WORLD_REQUEST      = "world_request"
+EVT_LLM_CALL = "llm_call"
+EVT_LLM_RESULT = "llm_result"
+EVT_WORLD_REQUEST = "world_request"
 ```
 
 #### `src/laife/entities/player.py`
@@ -125,6 +125,7 @@ Call `configure_logging()` before the asyncio event loop starts:
 
 ```python
 from laife.meta.logger import configure_logging
+
 configure_logging(level="INFO", log_file=f"cache/game_{timestamp}.jsonl")
 ```
 

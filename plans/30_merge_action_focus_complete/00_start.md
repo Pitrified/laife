@@ -32,12 +32,16 @@ In action.py: resolve the conflict by keeping `ActionComplete` (HEAD) and append
 ```python
 class ActionComplete(BaseAction):
     """Signal that the current focus mission has been achieved."""
+
     outcome: str = Field(..., description="One-sentence description of what was accomplished.")
+
 
 class ActionInteract(BaseAction):
     """Send a natural-language message to a nearby player."""
+
     target_name: str = Field(..., description="Name of the player to address.")
     message: str = Field(..., description="The message to send.")
+
 
 Actions = ActionMove | ActionBuild | ActionCraft | ActionPlan | ActionComplete | ActionInteract
 ```

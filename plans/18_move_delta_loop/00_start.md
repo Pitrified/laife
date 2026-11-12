@@ -43,10 +43,10 @@ def cardinal_to_delta(direction: CardinalDirection, step: int = 1) -> tuple[int,
     `step` scales the unit vector, enabling non-unit steps.
     """
     _UNIT: dict[CardinalDirection, tuple[int, int]] = {
-        CardinalDirection.North:     ( 0, -1),
-        CardinalDirection.South:     ( 0, +1),
-        CardinalDirection.East:      (+1,  0),
-        CardinalDirection.West:      (-1,  0),
+        CardinalDirection.North: (0, -1),
+        CardinalDirection.South: (0, +1),
+        CardinalDirection.East: (+1, 0),
+        CardinalDirection.West: (-1, 0),
         CardinalDirection.NorthEast: (+1, -1),
         CardinalDirection.NorthWest: (-1, -1),
         CardinalDirection.SouthEast: (+1, +1),
@@ -109,13 +109,12 @@ Replace the `asyncio.sleep` stub with the delta loop:
 ```python
 async def move(self, action: ActionMove) -> WRes:
     self.state = PlayerState.MOVING
-    start_position = self.position          # snapshot for logging / rollback
+    start_position = self.position  # snapshot for logging / rollback
     dx, dy = cardinal_to_delta(action.direction)
 
     for step in range(action.distance):
         new_pos = (self.position[0] + dx, self.position[1] + dy)
-        wreq = WRecMove(player=self, new_position=new_pos,
-                        response_queue=self.input_queue)
+        wreq = WRecMove(player=self, new_position=new_pos, response_queue=self.input_queue)
         await self.world_input_queue.put(wreq)
         wrsp = await self.input_queue.get()
         self.input_queue.task_done()

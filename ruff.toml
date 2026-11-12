@@ -10,10 +10,6 @@ extend-exclude = ["scripts/plans.py"]
 
 line-length = 100
 
-[format]
-# Code blocks in markdown are illustrations, and in old plans history: not formatted.
-exclude = ["*.md"]
-
 [lint]
 select = ["ALL"]
 ignore = [
