@@ -105,7 +105,7 @@ What exists today and its limits:
 
 - `make run` opens the pygame window and calls the configured LLM provider for every player turn. It needs a display and real credentials, so it costs money and is run by or with the user.
 - `make tui` reads the newest structured log; `SimControl` pauses and steps the loop.
-- There is no headless run with a scripted LLM yet. It is a `plan.md` item, and until it exists a change to game behaviour is not verified by an agent alone: say so rather than calling it done.
+- There is no headless run with a scripted LLM yet. It is being planned, and until it exists a change to game behaviour is not verified by an agent alone: say so rather than calling it done.
 
 ## Unattended work
 

@@ -6,18 +6,18 @@ What is already built is in the `done` folders under `plans/`; `python3 scripts/
 
 ## Engine
 
-### Headless run with a scripted LLM
-
-Run the real engine with no window and no provider: players fed by a scripted or recorded LLM, the structured log written to `cache/` as in a live run.
-It is the evidence the instructions ask for while planning and implementing, usable as a gate, and the thing an unattended session cannot do today.
-Open: recorded responses or a rule-based fake; whether `WorldRenderer` is skipped or pointed at SDL's dummy video driver.
-
 ### Renderer: pygame or a web app
 
 Whether pygame stays as the renderer.
 Options: pygame as now; a text-only runner beside a renderer (`scratch_space/rebirth_/` had it); a web page reading the world state, served from g7 over the tailnet and opened from g4 or the phone, as the sibling repo abyss does.
 Also decides the Python pin: pygame 2.6 has no 3.14 wheel, and the `==3.14.*` pin uses nothing newer than 3.12 (folder 33).
 The visual wishes wait on this choice: tiled terrain and grass instead of flat colours, buildings with a garden, utensils held by the player, a window that shows more state and answers the mouse.
+
+### Renderer checks without a screen
+
+The headless run skips `WorldRenderer`, so nothing an agent runs exercises the drawing code.
+Checks specific to the renderer: SDL's dummy video driver, or frames saved to images and compared.
+They depend on which renderer stays (item above).
 
 ### Runtime warnings
 
