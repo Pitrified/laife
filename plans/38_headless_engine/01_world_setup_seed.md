@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 1 - Shared world setup with a seed
@@ -24,3 +24,10 @@ Context: [`00_start.md`](00_start.md), "Also agreed".
 
 - `make run` code path unchanged apart from the import (not run here: it needs a display and a provider).
 - `make check` passes.
+
+## Outcome
+
+- `setup_world(runner, sim_control, rng)` is in `src/laife/entities/world_setup.py`; `sim_control` may be `None`.
+- It has to run inside a running event loop, as in `game/main.py`: `alg.log` starts its task on first use. The tests wrap it in `asyncio.run`.
+- `random.Random(...)` still needs `noqa: S311` where it is built; `rng.randint` does not.
+- `game/main.py` imports and loads; not run (display and provider).
