@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 3 - Scripted chat model
@@ -32,3 +32,13 @@ Context: [`00_start.md`](00_start.md) Q1, Q2, Q3.
 
 - Unit tests: each schema gets a valid instance; the cycle wraps; an unknown schema raises.
 - `make check` passes.
+
+## Outcome
+
+- One module, `src/laife/llm/scripted_chat.py`, rather than a `scripted/` subpackage: one file did not need a package.
+  `ScriptedChatModel`, `ScriptedChatConfig`, `default_script(other_player)`, and three named errors:
+  `UnscriptedSchemaError` (an output model with no answer), `EmptyScriptError` (an action asked of an empty script), `UnscriptedCallError` (a free-text call).
+- `Player(..., chat_config=None)` and `WorldRunner(chat_config=None)`; `None` takes `chat.default`, so `make run` is unchanged.
+- Each chain builds its own model from the config, so only the brain's model advances through the script.
+- Tests in `tests/llm/test_scripted_chat.py`, one of them through a real `StructuredLLMChain`.
+  `tests/test_models_build.py` picks up the two new pydantic models by itself.
