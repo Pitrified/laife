@@ -1,6 +1,6 @@
 ---
-status: in progress
-priority: 1
+status: done
+priority: 0
 description: |
   Bring laife back in line with the sibling repos after four months idle: agent instructions,
   a single fast `make check` behind pre-commit, repo-local skills, a `plans/` layout the
