@@ -2,11 +2,14 @@
 
 import asyncio
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from laife.observability.log_reader import LogRow
 from laife.observability.log_reader import latest_log_file
 from laife.observability.log_reader import tail_jsonl
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Helpers

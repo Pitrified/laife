@@ -1,7 +1,7 @@
 """Tests for Player mission lifecycle - completion and failure transitions."""
 
 import asyncio
-from collections.abc import Generator
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -30,6 +30,9 @@ from laife.llm.player_planner import PlayerPlannerResult
 from laife.meta.log_events import EVT_ACTION
 from laife.meta.log_events import EVT_MISSION_START
 from laife.meta.log_events import EVT_WORLD_RESPONSE
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 # ---------------------------------------------------------------------------
 # Helpers

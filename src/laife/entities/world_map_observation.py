@@ -6,7 +6,7 @@ import math
 
 from pydantic import BaseModel
 
-from laife.config.types import Position  # noqa: TC001
+from laife.config.types import Position
 from laife.entities.utils.directions import pospos2cardinal_direction
 
 _ORIGIN: Position = (0, 0)

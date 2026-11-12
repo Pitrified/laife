@@ -3,15 +3,18 @@
 import asyncio
 import sys
 import time
+from typing import TYPE_CHECKING
 
 import pygame
 
-from laife.entities.sim_control import SimControl
 from laife.entities.terrain import TerrainType
-from laife.entities.world_runner import WorldRunner
 from laife.rendering.building_sprite import BuildingSprite
 from laife.rendering.player_sprite import PlayerSprite
 from laife.ui.alog import alg
+
+if TYPE_CHECKING:
+    from laife.entities.sim_control import SimControl
+    from laife.entities.world_runner import WorldRunner
 
 _TERRAIN_COLORS: dict[TerrainType, tuple[int, int, int]] = {
     TerrainType.FOREST: (34, 85, 34),

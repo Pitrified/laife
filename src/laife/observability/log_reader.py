@@ -5,13 +5,16 @@ and reused by any future consumer of the struct log.
 """
 
 import asyncio
-from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from dataclasses import field
 import datetime as dt
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 DEFAULT_CACHE_DIR = Path("cache")
 
@@ -60,7 +63,7 @@ def _parse_line(line: str) -> LogRow | None:
             turn=extra.pop("turn", None),
             extra=extra,
         )
-    except (json.JSONDecodeError, KeyError, TypeError):
+    except json.JSONDecodeError, KeyError, TypeError:
         return None
 
 

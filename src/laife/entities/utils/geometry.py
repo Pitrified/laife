@@ -1,7 +1,10 @@
 """Pure geometry utilities - no pygame dependency."""
 
-from laife.config.types import Position
-from laife.config.types import Size
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from laife.config.types import Position
+    from laife.config.types import Size
 
 
 def aabb_collides(

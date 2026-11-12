@@ -1,6 +1,7 @@
 """MissionGenerator - proposes a new mission objective via an LLM given world context."""
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from llm_core.chains.structured_chain import StructuredLLMChain
 from llm_core.chat.config.base import ChatConfig
@@ -10,7 +11,9 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from laife.data_models.basemodel_kwargs import BaseModelKwargs
-from laife.entities.world_map_observation import WorldMapObservation
+
+if TYPE_CHECKING:
+    from laife.entities.world_map_observation import WorldMapObservation
 
 
 class MissionGeneratorInput(BaseModelKwargs):

@@ -7,7 +7,7 @@ from enum import Enum
 from pydantic import BaseModel
 from pydantic import Field
 
-from laife.entities.action import BaseAction  # noqa: TC001
+from laife.entities.action import BaseAction
 
 # TC001 is needed to let pydantic know what an Action is
 

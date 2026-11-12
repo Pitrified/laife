@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from laife.entities.world_map_observation import WorldMapObservation  # noqa: TC001
+from laife.entities.world_map_observation import WorldMapObservation
 
 if TYPE_CHECKING:
     import asyncio

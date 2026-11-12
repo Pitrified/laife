@@ -1,5 +1,7 @@
 """Brain of a player."""
 
+from typing import TYPE_CHECKING
+
 from llm_core.chat.config.base import ChatConfig
 from llm_core.prompts.prompt_loader import PromptLoader
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
@@ -8,10 +10,12 @@ from pydantic import BaseModel
 from laife.entities.action import ActionPicker
 from laife.entities.action import ActionPickerInput
 from laife.entities.action import BaseAction
-from laife.entities.world_map_observation import WorldMapObservation
-from laife.llm.mission import Mission
-from laife.llm.mission import MissionHistory
 from laife.meta.logger import timed_llm_call
+
+if TYPE_CHECKING:
+    from laife.entities.world_map_observation import WorldMapObservation
+    from laife.llm.mission import Mission
+    from laife.llm.mission import MissionHistory
 
 
 class PlayerBrainConfig(BaseModel):

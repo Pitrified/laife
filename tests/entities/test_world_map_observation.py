@@ -1,11 +1,11 @@
 """Tests for WorldMapObservation and WorldRunner.observe_at."""
 
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
 
-from laife.config.types import Position
 from laife.entities.building import Building
 from laife.entities.building import BuildingType
 from laife.entities.player import Player
@@ -13,6 +13,9 @@ from laife.entities.world_map_observation import NearbyEntity
 from laife.entities.world_map_observation import WorldMapObservation
 from laife.entities.world_map_observation import euclidean
 from laife.entities.world_runner import WorldRunner
+
+if TYPE_CHECKING:
+    from laife.config.types import Position
 
 # ---------------------------------------------------------------------------
 # Helpers

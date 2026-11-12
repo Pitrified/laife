@@ -1,11 +1,15 @@
 """BuildingSprite - pygame visual representation of a Building."""
 
+from typing import TYPE_CHECKING
+
 import pygame
 import pygame.freetype
 from pygame.sprite import Sprite
 
-from laife.entities.building import Building
 from laife.ui.alog import alg
+
+if TYPE_CHECKING:
+    from laife.entities.building import Building
 
 
 class BuildingSprite(Sprite):

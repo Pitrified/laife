@@ -1,12 +1,12 @@
 """Tests for the move delta loop."""
 
 import asyncio
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
 
-from laife.config.types import Position
 from laife.entities.action import ActionMove
 from laife.entities.building import Building
 from laife.entities.building import BuildingType
@@ -16,6 +16,9 @@ from laife.entities.utils.directions import cardinal_to_delta
 from laife.entities.world_channel import WResMove
 from laife.entities.world_channel import WResStatus
 from laife.entities.world_runner import WorldRunner
+
+if TYPE_CHECKING:
+    from laife.config.types import Position
 
 # ---------------------------------------------------------------------------
 # Helpers

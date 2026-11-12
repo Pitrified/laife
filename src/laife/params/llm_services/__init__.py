@@ -1,9 +1,13 @@
 """Holder for the LLM params to use in the project."""
 
-from laife.params.env_type import EnvType
+from typing import TYPE_CHECKING
+
 from laife.params.llm_services.chat import ChatParams
 from laife.params.llm_services.embeddings import EmbeddingsParams
 from laife.params.llm_services.search import SearchParams
+
+if TYPE_CHECKING:
+    from laife.params.env_type import EnvType
 
 
 class LLMServicesParams:

@@ -1,7 +1,7 @@
 """Tests for surviving WResError world responses (feature 35, phase 1)."""
 
 import asyncio
-from collections.abc import Generator
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -19,6 +19,9 @@ from laife.entities.world_channel import WResStatus
 from laife.entities.world_map_observation import WorldMapObservation
 from laife.entities.world_runner import WorldRunner
 from laife.llm.mission import MissionStatus
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 # ---------------------------------------------------------------------------
 # Helpers

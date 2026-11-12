@@ -1,9 +1,9 @@
 # Ruff configuration file
 # https://docs.astral.sh/ruff/rules/
 
-# py313 although the project runs 3.14, as in the sibling repos: with py314, ruff moves
-# annotation-only imports under TYPE_CHECKING, which pydantic models cannot take.
-target-version = "py313"
+# The Python the project runs. Under 3.14 annotations are evaluated lazily, so ruff's TC rules
+# move annotation-only imports under TYPE_CHECKING; pydantic models are exempt below.
+target-version = "py314"
 
 # A vendored copy of the tracked-development skill's script, refreshed from there, not edited.
 extend-exclude = ["scripts/plans.py"]
@@ -55,6 +55,16 @@ ignore = [
 "scripts/*" = [
     "INP001", # Implicit namespace package: scripts are run directly, not imported
     "T20",    # print found: these are manual scripts, print is the interface
+]
+
+[lint.flake8-type-checking]
+# pydantic reads these classes' annotations at runtime, so their imports stay real.
+# ruff only follows bases it can see in the same file: a model whose pydantic base is
+# imported from another module is not recognised. tests/test_models_build.py catches that.
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "llm_core.data_models.basemodel_kwargs.BaseModelKwargs",
+    "laife.data_models.basemodel_kwargs.BaseModelKwargs",
 ]
 
 [lint.pylint]

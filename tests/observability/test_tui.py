@@ -2,13 +2,17 @@
 
 import asyncio
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
-from textual.pilot import Pilot
 from textual.widgets import DataTable
 
 from laife.observability.tui import ObservabilityApp
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from textual.pilot import Pilot
 
 # ---------------------------------------------------------------------------
 # Helpers

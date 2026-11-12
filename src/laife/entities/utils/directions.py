@@ -2,8 +2,10 @@
 
 from enum import Enum
 import math
+from typing import TYPE_CHECKING
 
-from laife.config.types import Position
+if TYPE_CHECKING:
+    from laife.config.types import Position
 
 
 class CardinalDirection(Enum):

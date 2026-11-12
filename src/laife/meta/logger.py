@@ -19,17 +19,20 @@ At call sites::
     slog.bind(event=EVT_ACTION, player="Alice", action="build").info(EVT_ACTION)
 """
 
-from collections.abc import Iterator
 from contextlib import contextmanager
 import datetime as dt
 from pathlib import Path
 import sys
 import time
+from typing import TYPE_CHECKING
 import warnings
 
 from loguru import logger
 
 from laife.meta.log_events import EVT_LLM_CALL
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 # Module-level bound logger.  Import ``slog`` at call sites; never import
 # ``logger`` from loguru directly so that all structured calls flow through

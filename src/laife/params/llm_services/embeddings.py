@@ -7,10 +7,10 @@ from llm_core.embeddings.config.huggingface import HuggingFaceEmbeddingsConfig
 from llm_core.embeddings.config.ollama import OllamaEmbeddingsConfig
 from llm_core.embeddings.config.openai import OpenAIEmbeddingsConfig
 
-from laife.params.env_type import EnvType
-
 if TYPE_CHECKING:
     from llm_core.embeddings.config.base import EmbeddingsConfig
+
+    from laife.params.env_type import EnvType
 
 
 class EmbeddingsParams:

@@ -1,6 +1,7 @@
 """Player planner - decomposes a mission into ordered sub-missions via an LLM."""
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from llm_core.chains.structured_chain import StructuredLLMChain
 from llm_core.chat.config.base import ChatConfig
@@ -10,9 +11,11 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from laife.data_models.basemodel_kwargs import BaseModelKwargs
-from laife.entities.world_map_observation import WorldMapObservation
-from laife.llm.mission import Mission
-from laife.llm.mission import MissionHistory
+
+if TYPE_CHECKING:
+    from laife.entities.world_map_observation import WorldMapObservation
+    from laife.llm.mission import Mission
+    from laife.llm.mission import MissionHistory
 
 
 class PlayerPlannerInput(BaseModelKwargs):

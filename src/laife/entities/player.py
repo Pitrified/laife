@@ -2,11 +2,10 @@
 
 import asyncio
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 
-from laife.config.types import Position
-from laife.config.types import Size
 from laife.entities.action import ActionBuild
 from laife.entities.action import ActionComplete
 from laife.entities.action import ActionCraft
@@ -16,7 +15,6 @@ from laife.entities.action import ActionPlan
 from laife.entities.action import BaseAction
 from laife.entities.building import Building
 from laife.entities.building import BuildingType
-from laife.entities.sim_control import SimControl
 from laife.entities.utensil import Utensil
 from laife.entities.utils.directions import cardinal_to_delta
 from laife.entities.world_channel import WRecBuild
@@ -59,6 +57,11 @@ from laife.meta.logger import slog
 from laife.meta.logger import timed_llm_call
 from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
+
+if TYPE_CHECKING:
+    from laife.config.types import Position
+    from laife.config.types import Size
+    from laife.entities.sim_control import SimControl
 
 
 class PlayerState(StrEnum):

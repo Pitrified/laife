@@ -1,10 +1,15 @@
 """PlayerSprite - pygame visual representation of a Player."""
 
-import pygame
+from typing import TYPE_CHECKING
+
 from pygame.sprite import Sprite
 
-from laife.entities.player import Player
 from laife.rendering.sprites import SpriteLoader
+
+if TYPE_CHECKING:
+    import pygame
+
+    from laife.entities.player import Player
 
 
 class PlayerSprite(Sprite):

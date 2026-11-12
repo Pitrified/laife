@@ -1,7 +1,7 @@
 """Tests for MissionGeneratorConfig, MissionGenerator."""
 
 import asyncio
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -16,6 +16,9 @@ from laife.llm.mission_generator import MissionGenerator
 from laife.llm.mission_generator import MissionGeneratorConfig
 from laife.llm.mission_generator import MissionGeneratorInput
 from laife.llm.mission_generator import MissionGeneratorResult
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Constants / shared helpers

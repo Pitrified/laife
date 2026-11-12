@@ -6,9 +6,8 @@ coupling. Run with ``make tui`` or ``uv run python -m laife.observability.tui``.
 """
 
 import asyncio
-from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import ClassVar
 
 from rich.text import Text
@@ -24,6 +23,10 @@ from textual.widgets import Header
 from laife.observability.log_reader import LogRow
 from laife.observability.log_reader import latest_log_file
 from laife.observability.log_reader import tail_jsonl
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
 
 COLUMNS = ("time", "player", "turn", "event", "detail")
 
