@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in progress
 ---
 
 # Phase 2 - Skills and worktrees

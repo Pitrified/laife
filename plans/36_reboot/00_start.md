@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in progress
 priority: 1
 description: |
   Bring laife back in line with the sibling repos after four months idle: agent instructions,
