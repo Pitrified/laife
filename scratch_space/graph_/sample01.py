@@ -3,10 +3,10 @@
 https://langchain-ai.github.io/langgraph/#example
 """
 
+from typing import TYPE_CHECKING
 from typing import Literal
 
 from langchain_core.messages import HumanMessage
-from langchain_core.messages.ai import AIMessage
 from langchain_core.tools import tool
 from langchain_ollama import ChatOllama
 from langgraph.checkpoint.memory import MemorySaver
@@ -16,6 +16,9 @@ from langgraph.graph import MessagesState
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode
 from loguru import logger as lg
+
+if TYPE_CHECKING:
+    from langchain_core.messages.ai import AIMessage
 
 
 # Define the tools for the agent to use
