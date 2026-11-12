@@ -4,7 +4,7 @@ Fix or silence the three startup/shutdown warnings collected during the
 observability effort (`SystemExit` on quit, pydantic V1 shim on py3.14,
 pygame AVX2 build note). Analysis and decisions in [`00_start.md`](00_start.md);
 original capture in
-[`32_observability/05_random_warnings.md`](../32_observability/05_random_warnings.md).
+[`32_observability/05.1_random_warnings.md`](../32_observability/05.1_random_warnings.md).
 
 ## Key decisions
 
@@ -25,6 +25,6 @@ Status values: draft / planned / in progress / done / superseded / discarded.
 
 Append-only. Newest at the bottom.
 
-- 2026-07-11 : bootstrapped the folder from `32_observability/05_random_warnings.md`;
+- 2026-07-11 : bootstrapped the folder from `32_observability/05.1_random_warnings.md`;
   traced the quit `SystemExit` to `sys.exit()` in `WorldRenderer.quit()` running
   inside the `asyncio.gather` of `game/main.py`; drafted phases 1-3.

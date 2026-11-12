@@ -10,7 +10,7 @@ Build the decoupled inspector as a Textual TUI: a separate process that tails
 the `.jsonl` struct log and renders it with tables, filtering, and scrollback.
 Decoupled from the game loop, no graphics stack. Depends on the catalogue from
 [`01_struct_log_analysis.md`](01_struct_log_analysis.md). Context:
-[`00-start.md`](00-start.md).
+[`00_start.md`](00_start.md).
 
 Why Textual (not pygame/pygame_gui/web): best effort-to-payoff for a
 developer-facing inspector - tables, filtering, scrollback, and key bindings

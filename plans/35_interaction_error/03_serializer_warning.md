@@ -64,7 +64,7 @@ Read during planning (2026-07-11):
   real run, or the suppression decision is recorded and applied.
 - Project verification suite passes.
 
-## Outcome (2026-07-11)
+## Outcome, 2026-07-11
 
 Repro (`scratch_space` script `repro_serializer_warning.py`) drove one live
 `ActionPicker.ainvoke` with a custom `warnings.showwarning` that dumps the

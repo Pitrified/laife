@@ -9,7 +9,7 @@ status: done
 Catalogue what the structured sink already emits so the UI knows what to filter
 and group on. The JSON-lines sink already exists (`configure_logging()` in
 `src/laife/meta/logger.py`); this phase is inventory and gap-finding, not new
-plumbing. Context: [`00-start.md`](00-start.md).
+plumbing. Context: [`00_start.md`](00_start.md).
 
 ## Goals
 

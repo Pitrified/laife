@@ -10,7 +10,7 @@ To inspect state we need the simulation to hold still. The loop is
 asyncio-driven (`world_runner.py` awaits on `input_queue`), not a pygame blit
 loop, so "pause" means pausing async stepping, not just freezing the screen.
 Best paired with the inspector from
-[`02_textual_tui.md`](02_textual_tui.md). Context: [`00-start.md`](00-start.md).
+[`02_textual_tui.md`](02_textual_tui.md). Context: [`00_start.md`](00_start.md).
 
 ## Goals
 
@@ -30,7 +30,7 @@ Best paired with the inspector from
   paused runner. The runner keeps servicing requests; it drains naturally
   once every player is blocked at the turn gate.
 - **Trigger from pygame `KEYDOWN`, not from the TUI** (resolves the open
-  question in `00-start.md`). TUI-driven control needs cross-process IPC
+  question in `00_start.md`). TUI-driven control needs cross-process IPC
   (control file / socket / signal) from the inspector to the game - real
   machinery for no payoff yet, since watching the sim means the pygame
   window is already at hand and the renderer already has an event pump with

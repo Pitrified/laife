@@ -1,7 +1,14 @@
+---
+status: done
+priority: 0
+description: |
+  Survive `WResError` responses after a live crash, steer interaction targeting toward players, and silence a benign serializer warning.
+---
+
 # interaction weirdness - bootstrap
 
 Spun out of the observability effort:
-[`32_observability/05.1_random_decisions.md`](../32_observability/05.1_random_decisions.md)
+[`32_observability/05.2_random_decisions.md`](../32_observability/05.2_random_decisions.md)
 captured a live run where an interaction killed the whole game.
 This folder investigates and fixes that failure mode.
 
@@ -23,7 +30,7 @@ Plus a pydantic serializer UserWarning in the same run:
 `Expected 'none' - serialized value may not be as expected [field_name='parsed',
 input_value=ActionEnvelope(...)]`.
 
-## Analysis (from reading the code, not the log alone)
+## Analysis, from reading the code, not the log alone
 
 The crash is three layered issues:
 

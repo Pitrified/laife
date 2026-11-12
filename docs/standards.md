@@ -4,7 +4,7 @@ Follow these guidelines when maintaining the docs.
 
 ## Writing style
 
-- Never use em dashes (`--`, `---`, or Unicode `—`). Use a hyphen `-` or rewrite the sentence.
+- Never use em dashes (`--`, `---`, or the Unicode character). Use a hyphen `-` or rewrite the sentence.
 - Prefer clear, specific writing over filler.
 - Avoid hype adjectives/adverbs (bold, brutal, honest, quietly, seamless, ...) that add tone but no information;
   cut them or state the concrete fact instead.

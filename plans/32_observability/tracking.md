@@ -2,12 +2,12 @@
 
 Building an observability surface for the laife simulation, decoupled from the
 game loop, reading the existing JSON-lines struct log. Analysis and decisions in
-[`00-start.md`](00-start.md); original draft in [`README.md`](README.md).
+[`00_start.md`](00_start.md); original draft in [`00.1_draft.md`](00.1_draft.md).
 
 ## Key decisions
 
 - Decouple completely: the inspector is a separate process reading the existing
-  `.jsonl` sink. Pygame stays out of the observability path. (see `00-start.md`)
+  `.jsonl` sink. Pygame stays out of the observability path. (see `00_start.md`)
 
 ## Phases
 
@@ -17,14 +17,14 @@ game loop, reading the existing JSON-lines struct log. Analysis and decisions in
 | 2  | textual tui inspector          | [`02_textual_tui.md`](02_textual_tui.md)      | done |
 | 3  | pause / step the game loop     | [`03_loop_pause.md`](03_loop_pause.md)        | done |
 | 4  | inspector fine-tuning          | [`04_fine_tunes.md`](04_fine_tunes.md)        | done |
-| 5  | inspector fine-tuning, round 2 | [`04.1_fine_tunes.md`](04.1_fine_tunes.md)    | done |
+| 5  | inspector fine-tuning, round 2 | [`05_fine_tunes_round_2.md`](05_fine_tunes_round_2.md)    | done |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
-Not a phase: [`05_random_warnings.md`](05_random_warnings.md) - unrelated
+Not a phase: [`05.1_random_warnings.md`](05.1_random_warnings.md) - unrelated
 startup/shutdown warnings (SystemExit on quit, pydantic V1 on py3.14, pygame
 AVX2). Spun out to [`34_runtime_warnings`](../34_runtime_warnings/tracking.md).
-Likewise [`05.1_random_decisions.md`](05.1_random_decisions.md) (the
+Likewise [`05.2_random_decisions.md`](05.2_random_decisions.md) (the
 `WResError` interaction crash) is spun out to
 [`35_interaction_error`](../35_interaction_error/tracking.md).
 
@@ -61,7 +61,7 @@ Append-only. Newest at the bottom.
   pause unit is one player turn (gate at the top of `Player.play()`, world
   runner never gated to avoid deadlocking in-flight turns); trigger from
   pygame `KEYDOWN` (space toggle, `n` step) rather than TUI-driven IPC -
-  resolves the open question in `00-start.md`. New `SimControl`
+  resolves the open question in `00_start.md`. New `SimControl`
   (asyncio.Condition over running/step_permits) in
   `src/laife/entities/sim_control.py`, one `EVT_SIM_CONTROL` marker event
   with a `state` field. Status stays `planned` - not yet implemented.
@@ -109,7 +109,7 @@ Append-only. Newest at the bottom.
   `action_type`, collapse the request/response pair render-side, close the
   three `llm_call` gaps (with a `stage` field), and refresh the phase-1/2
   docs. Status `planned` - not yet implemented. The startup/shutdown
-  warnings ([`05_random_warnings.md`](05_random_warnings.md)) are spun out as
+  warnings ([`05.1_random_warnings.md`](05.1_random_warnings.md)) are spun out as
   a separate future cleanup, not a phase of this feature.
 - 2026-07-11 : phase 4 done - all four goals landed and verified end-to-end
   against a real game log. New `logger.timed_llm_call` context manager
@@ -127,7 +127,7 @@ Append-only. Newest at the bottom.
   [`04_fine_tunes.md`](04_fine_tunes.md#outcome). Observability phases 1-4
   all done; only the spun-out warnings (05) remain as a separate future item.
 - 2026-07-11 : phase 5 planned from a second fine-tune note
-  ([`04.1_fine_tunes.md`](04.1_fine_tunes.md)). Two grounded findings: the
+  ([`05_fine_tunes_round_2.md`](05_fine_tunes_round_2.md)). Two grounded findings: the
   `stage=mission` llm_call is an orphan - `_start_new_mission` builds the new
   mission but only `alg.log`s it, emitting no struct-log event, so the
   objective never reaches the TUI; and after phase 4's pair-collapse a
@@ -152,15 +152,15 @@ Append-only. Newest at the bottom.
   polish the real log surfaced: event-less startup lines rendered blank (a
   bare `(x3)` after collapse), so `_detail` now falls back to the raw
   `message`. 7 new tests; full suite 220 passed, ruff and pyright clean.
-  See [`04.1_fine_tunes.md`](04.1_fine_tunes.md#outcome). Observability
-  phases 1-5 all done; only the spun-out warnings (05_random_warnings) remain.
+  See [`05_fine_tunes_round_2.md`](05_fine_tunes_round_2.md#outcome). Observability
+  phases 1-5 all done; only the spun-out warnings (05.1_random_warnings) remain.
 - 2026-07-11 : phase 5 interactive smoke done - live `make run` + `make tui`,
   mission_start rows seen and the `xN` collapse read well. This clears the
   last open item across phases 1-5; every phase is now confirmed on a real
   interactive run, not just headless.
 - 2026-07-11 : spun the two leftover notes into their own tracked folders:
-  `05_random_warnings.md` -> [`34_runtime_warnings`](../34_runtime_warnings/tracking.md)
+  `05.1_random_warnings.md` -> [`34_runtime_warnings`](../34_runtime_warnings/tracking.md)
   (clean shutdown, pydantic v1 warning, pygame avx2 warning) and
-  `05.1_random_decisions.md` -> [`35_interaction_error`](../35_interaction_error/tracking.md)
+  `05.2_random_decisions.md` -> [`35_interaction_error`](../35_interaction_error/tracking.md)
   (survive `WResError`, interaction targeting investigation, serializer warning).
   Nothing remains open in this folder.

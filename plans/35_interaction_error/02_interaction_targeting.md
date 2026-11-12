@@ -68,7 +68,7 @@ Decision fork - pick with the evidence, record the choice here:
 - Implementing building interaction mechanics (crops, inventories) - if the
   fork lands on extend, that becomes its own phase.
 
-## Progress (2026-07-11)
+## Progress, 2026-07-11
 
 Done up to the point where a live game is needed:
 
@@ -107,9 +107,9 @@ Remaining, needs a live game:
   phase is drafted in `tracking.md`).
 - Project verification suite passes.
 
-## Evidence and decision (2026-07-11)
+## Evidence and decision, 2026-07-11
 
-### Pre-mitigation baseline (captured logs)
+### Pre-mitigation baseline, captured logs
 
 `cache/game_*.jsonl` (07-10, before the mitigations) held exactly one
 `ActionInteract`, and it reproduced the crash pattern verbatim:
@@ -117,7 +117,7 @@ Remaining, needs a live game:
 `reason='To gather crops...'`. n=1, so directional only: a sensible
 building-directed intent expressed through the only target-taking action.
 
-### Post-mitigation live evidence (v3 prompt)
+### Post-mitigation live evidence, v3 prompt
 
 Controlled harness (`scratch_space` script `phase2_targeting.py`) drove the real
 `ActionPicker`/`PlayerBrain` chain against the live backend over three

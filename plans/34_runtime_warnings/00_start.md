@@ -1,7 +1,14 @@
+---
+status: draft
+priority: 0
+description: |
+  Three startup and shutdown warnings seen in real runs: `SystemExit` on quit, the pydantic V1 warning on 3.14, pygame's AVX2 notice.
+---
+
 # runtime warnings cleanup - bootstrap
 
 Spun out of the observability effort:
-[`32_observability/05_random_warnings.md`](../32_observability/05_random_warnings.md)
+[`32_observability/05.1_random_warnings.md`](../32_observability/05.1_random_warnings.md)
 collected three startup/shutdown warnings seen on real `make run` sessions.
 None of them affects gameplay; each is a small independent bugfix.
 

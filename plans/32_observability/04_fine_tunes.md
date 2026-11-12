@@ -11,7 +11,7 @@ has surfaced concrete rough edges. Two workstreams: emission-side gaps
 (events that are missing or under-described in the `.jsonl`) and render-side
 noise (the TUI's `detail` column and row density). Grounded in the draft
 notes below and confirmed against the code. Context:
-[`00-start.md`](00-start.md), catalogue in
+[`00_start.md`](00_start.md), catalogue in
 [`01_struct_log_analysis.md`](01_struct_log_analysis.md), the TUI in
 [`02_textual_tui.md`](02_textual_tui.md).
 
@@ -29,7 +29,7 @@ missed events.
   missed?
 - Final doc updates.
 
-## Findings (grounded in code)
+## Findings, grounded in code
 
 1. **Action type is invisible.** `Player.think` emits
    `event=action, action=str(action)` (`player.py:292`). `action` is a
@@ -86,7 +86,7 @@ missed events.
 ## Out of scope
 
 - Random warnings on quit / pydantic V1 / pygame AVX2
-  ([`05_random_warnings.md`](05_random_warnings.md)) - spun out as a separate
+  ([`05.1_random_warnings.md`](05.1_random_warnings.md)) - spun out as a separate
   future cleanup, unrelated to the inspector (see tracking note).
 - Any new event *types* beyond filling the `llm_call` gaps; no new columns.
 - Reworking filters or bindings - unchanged from phase 2.

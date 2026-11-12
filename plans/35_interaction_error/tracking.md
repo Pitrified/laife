@@ -5,7 +5,7 @@ LLM addressed a building (`'Big ol Farm'`) as an interaction target; a pydantic
 serializer warning fired in the same run. Make error responses survivable, then
 investigate the targeting and the warning. Analysis and decisions in
 [`00_start.md`](00_start.md); original capture in
-[`32_observability/05.1_random_decisions.md`](../32_observability/05.1_random_decisions.md).
+[`32_observability/05.2_random_decisions.md`](../32_observability/05.2_random_decisions.md).
 
 ## Key decisions
 
@@ -28,7 +28,7 @@ Status values: draft / planned / in progress / done / superseded / discarded.
 
 Append-only. Newest at the bottom.
 
-- 2026-07-11 : bootstrapped the folder from `32_observability/05.1_random_decisions.md`;
+- 2026-07-11 : bootstrapped the folder from `32_observability/05.2_random_decisions.md`;
   traced the crash to the disagreement between `Player._world_request`'s fail-loudly
   type assertion and `route_interaction`'s documented `WResInteract | WResError`
   return; drafted phases 1-3.
