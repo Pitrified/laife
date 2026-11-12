@@ -86,6 +86,7 @@ nav:
       - Params and config: guides/params_config.md
       - Glossary: guides/glossary.md
       - Docs maintenance: guides/docs_maintenance.md
+      - Worktrees: guides/worktrees.md
   - Library:
       - library/README.md
       - entities: library/entities.md
