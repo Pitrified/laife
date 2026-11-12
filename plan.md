@@ -23,6 +23,21 @@ They depend on which renderer stays (item above).
 
 Folder `34_runtime_warnings` holds three drafted fixes: `SystemExit` on quit, the pydantic V1 warning on 3.14, pygame's AVX2 notice.
 
+### Seed for the live game
+
+`setup_world()` takes a `random.Random`; the headless run seeds it, `game/main.py` passes an unseeded one.
+A `--seed` argument or an env var would make a live run start from a known world (folder 38).
+
+### Recorded replay for the headless run
+
+The headless run answers from a fixed script.
+Replaying a live run's recorded answers would use the same seam, `ScriptedChatConfig` per player; it diverges as soon as the world differs from the recording, so it waits for a case that needs it (folder 38).
+
+### A failed reply stops the world
+
+An exception in the target's `receive_message()` escapes `WorldRunner.route_interaction` and ends `WorldRunner.simulate()`: the live game stops with a traceback, the headless run re-raises it.
+The other choice is a `WResError` to the sender, as other world errors are handled since folder 35. Whether a failed reply should end the game is a gameplay decision (folder 38).
+
 ## Gameplay
 
 ### Starting utensils and the vector store in play
@@ -77,6 +92,13 @@ Every `WRec*` forwards `*args, **kwargs` to `WReq.__init__` by hand; `@dataclass
 ### Provider layering
 
 Every chain takes the default OpenAI config; the Azure, HuggingFace and Ollama configs are built and never selected. Either use the choice or cut it.
+`Player` and `WorldRunner` each take a `chat_config` (folder 38), so the world and the players can run different models, such as a stronger judge; nothing in the live game selects one yet.
+
+### Scripted chat model to llm-core
+
+`laife.llm.scripted_chat` answers structured-output calls by schema.
+The model and config are general and could sit beside llm-core's `FakeChatModel`, which cycles one list regardless of schema; the default script and the per-schema answers stay in laife.
+Moving it means an llm-core release and a tag bump here (folder 38).
 
 ### Singleton reset
 

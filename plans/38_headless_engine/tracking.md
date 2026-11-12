@@ -33,3 +33,4 @@ Append-only. Newest at the bottom.
 - 2026-11-12 : phase 2 done: `play(max_turns=...)`; cancelling the runner moved to phase 4.
 - 2026-11-12 : phase 3 done: `scripted_chat.py`, and a `chat_config` argument on `Player` and `WorldRunner`.
 - 2026-11-12 : phase 4 done: `make headless`, the gate in `make check`; dropped the pygame re-exports from `laife.entities`; `run_headless` re-raises a dead world task instead of hanging. Folder done.
+- 2026-11-12 : follow-ups moved to `plan.md`: live-game seed, recorded replay, a failed reply stopping the world, scripted model to llm-core; world/player models folded into Provider layering. Open with the user: `make run` on g4 and `make tui` on a headless log.
