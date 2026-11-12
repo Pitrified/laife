@@ -1,0 +1,58 @@
+fail_fast: true
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version. run `uv self update` and match it
+    rev: 0.13.1
+    hooks:
+      - id: uv-lock
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Same version as the ruff pin in pyproject.toml; bump both together.
+    rev: v0.17.2
+    hooks:
+      - id: ruff-check
+        types_or: [python, pyi, jupyter]
+        args: [--fix]
+      - id: ruff-format
+        types_or: [python, pyi, jupyter]
+  - repo: https://github.com/RobertCraigie/pyright-python
+    # Same version as the pyright pin in pyproject.toml; bump both together.
+    rev: v1.1.414
+    hooks:
+      - id: pyright
+        # Passed file names override pyproject's include, so scope it the same way.
+        files: ^(src|tests)/
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.2
+    hooks:
+      - id: nbstripout
+        name: Check for Jupyter notebook output
+        args: [--verify]
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        # Lock files: public integrity hashes, which read as high-entropy strings.
+        exclude: ^uv\.lock$
+  - repo: local
+    hooks:
+      - id: plans
+        name: plan folders and citations
+        entry: python3 scripts/plans.py check --citations
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: house-style
+        name: house writing rules
+        entry: .claude/skills/deslopify/scripts/deslop-scan.sh --only house_rules --quiet
+        language: system
+        types: [markdown]

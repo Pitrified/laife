@@ -1,14 +1,24 @@
 # Ruff configuration file
 # https://docs.astral.sh/ruff/rules/
 
+# py313 although the project runs 3.14, as in the sibling repos: with py314, ruff moves
+# annotation-only imports under TYPE_CHECKING, which pydantic models cannot take.
 target-version = "py313"
 
+# A vendored copy of the tracked-development skill's script, refreshed from there, not edited.
+extend-exclude = ["scripts/plans.py"]
+
 line-length = 100
+
+[format]
+# Code blocks in markdown are illustrations, and in old plans history: not formatted.
+exclude = ["*.md"]
 
 [lint]
 select = ["ALL"]
 ignore = [
     "COM812", # Missing trailing comma, conflict with the formatter
+    "CPY001", # Missing copyright notice: private repo, no notices anywhere in the fleet
     "D104",   # Missing docstring in public package
     "D203",   # 1 blank line required before class docstring
     "D213",   # Multi-line docstring summary should start at the second line
@@ -45,6 +55,10 @@ ignore = [
 ]
 "game/*" = [
     "INP001", # Implicit namespace package
+]
+"scripts/*" = [
+    "INP001", # Implicit namespace package: scripts are run directly, not imported
+    "T20",    # print found: these are manual scripts, print is the interface
 ]
 
 [lint.pylint]
