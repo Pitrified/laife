@@ -1,51 +1,91 @@
-# Plan - Next Features
+# Backlog
 
-Ordered roughly by dependency and impact: earlier items unblock later ones.
+Future work, unnumbered and in no particular order.
+An item becomes a numbered folder under `plans/` when it is picked for implementation, in the `tracked-development` layout; the item is then removed from here and the folder's `00_start.md` starts from its text.
+What is already built is in the `done` folders under `plans/`; `python3 scripts/plans.py list --status done` lists them.
 
-## ~~1. Terrain entity~~ (done)
+## Engine
 
-Create a `Terrain` class (forest, lake, fertile land) with position, size, and terrain type. Implement `Vectorable`, `to_prompt(pov_pos)`, and `to_document()`/`from_document()`. Add terrain instances to `WorldRunner` and include them in `WorldMapObservation` so the player can perceive terrain when observing. This is the most fundamental missing piece of the world model and unblocks dynamic map composition, prompt richness, and terrain rendering.
+### Headless run with a scripted LLM
 
-### 1.1 Terrain meta
+Run the real engine with no window and no provider: players fed by a scripted or recorded LLM, the structured log written to `cache/` as in a live run.
+It is the evidence the instructions ask for while planning and implementing, usable as a gate, and the thing an unattended session cannot do today.
+Open: recorded responses or a rule-based fake; whether `WorldRenderer` is skipped or pointed at SDL's dummy video driver.
 
-We are saving the `Terrain` in the vector DB, we probably just want to add a `TerrainType`. Like `BuildingType`.
+### Renderer: pygame or a web app
 
-## ~~2. Typed world responses (`WRes` subclasses)~~ (done)
+Whether pygame stays as the renderer.
+Options: pygame as now; a text-only runner beside a renderer (`scratch_space/rebirth_/` had it); a web page reading the world state, served from g7 over the tailnet and opened from g4 or the phone, as the sibling repo abyss does.
+Also decides the Python pin: pygame 2.6 has no 3.14 wheel, and the `==3.14.*` pin uses nothing newer than 3.12 (folder 33).
+The visual wishes wait on this choice: tiled terrain and grass instead of flat colours, buildings with a garden, utensils held by the player, a window that shows more state and answers the mouse.
 
-Replace the generic `response_data: dict` in `WRes` with typed pydantic subclasses (`WResBuild`, `WResCraft`, `WResObserve`, `WResMove`). This eliminates stringly-typed payloads, adds validation at the boundary, and makes the player-side response handling safer and self-documenting.
+### Runtime warnings
 
-## 3. ~~Player inventory~~ (done)
+Folder `34_runtime_warnings` holds three drafted fixes: `SystemExit` on quit, the pydantic V1 warning on 3.14, pygame's AVX2 notice.
 
-Add an `inventory: list[Utensil]` to `Player`. Track utensils obtained via crafting (when `WResCraft` succeeds, place the utensil in inventory). Let the brain see the inventory in its observation prompt so it can reason about what tools are available before deciding to craft or use one.
+## Gameplay
 
-## ~~4. Dynamic mission assignment~~ (done)
+### Starting utensils and the vector store in play
 
-Replace the hardcoded `"Build a house"` mission with LLM-driven mission generation based on the current world observation. On first think cycle (or when a mission completes), the player asks a "mission generator" chain to propose a goal given what it sees. This makes gameplay emergent instead of scripted.
+Define the starter utensils (bucket, axe, hammer, hoe) and seed them into the Chroma store with the building and terrain types.
+Give the brain a retrieval step, so it looks up relevant utensils and buildings before choosing an action.
+`ChromaConfig` is built and nothing in play queries it (folder 33).
+Folder `31_utensil_crafting` holds the analysis of crafting a utensil that does not exist yet, including generating an image of it.
 
-## ~~5. Mission lifecycle (completion and failure)~~ (done)
+### Interaction memory
 
-Wire up mission status transitions: after the world judge confirms a build/craft succeeded, mark the active mission `COMPLETED`. After N consecutive failures, mark it `FAILED` and start a new mission. Without this, the player loops forever on a single mission.
+When a player receives a message, keep the content and sender, so the brain recalls past interactions when it replies.
+`Player.receive_message()` replies and keeps nothing (folder 33).
+A longer-term memory beyond the mission history is the same item grown.
 
-## 6. Starting utensils and vector DB population
+### Interaction v2
 
-Define the four starter utensils (bucket, axe, hammer, hoe) and seed them into the Chroma vector store alongside the building types. Give the brain a retrieval step so it can look up relevant utensils/buildings before choosing an action, making its decisions grounded in actual world data.
+The async-inbox strategy proposed in `24_player_interaction/00.1_strategy2_upgrade.md`: interactions that scale past a few players and allow broadcast.
 
-## ~~7. Terrain rendering~~ (done)
+### Shared missions
 
-Render terrain regions as tiled/colored backgrounds in `WorldRenderer`, replacing the flat black fill. Map each `TerrainType` to a tile color or sprite. This gives immediate visual feedback that the world has varied geography, and is a prerequisite for prettier map visuals.
+A player shares its mission with the world and can ask others for help.
 
-## ~~8. Player-to-player interaction~~ (done, proposal for v2 ready)
+### Players that can die
 
-Add `ActionInteract` to the action union. When a player picks it, the world delivers the target player's `to_prompt()` and routes a natural-language message between the two. This opens the door to cooperative mission-solving and emergent social behavior.
+An alive state on the player, and what ends it.
 
-## ~~9. Structured game logger~~ (done)
+### Dynamic map
 
-Replace `Alog` with a structured logger (JSON lines or similar) recording every action, world response, mission transition, and LLM call with timing. Add log levels and file output. This is necessary for debugging multi-agent runs and later building an analytics dashboard.
+Load the map from data instead of the hardcoded setup in `game/main.py`.
 
-## ~~10. Refactor repetitive player request pattern~~ (done)
+## Code health
 
-Extract the "build request, send to world, await response, handle status, record history" boilerplate in `Player` into a generic helper (e.g., `async _world_request(req: WReq) -> WRes`). Cuts duplication across the move/build/craft handlers and makes adding new action types cheaper.
+From folder 33 unless noted; each is checked against the code there.
 
-## 11. Save received messages in player memory
+### Judge after the collision check
 
-When a player receives an `ActionInteract` message, save the content and sender in a new `interactions: list[Interaction]` field on `Player`. This allows the brain to recall past interactions when deciding how to respond to new ones, enabling more coherent multi-agent conversations.
+`WorldRunner.judge_and_build()` pays for the LLM judge before the free collision check. Swap the order.
+
+### One base for the LLM chain wrappers
+
+Six classes build a `StructuredLLMChain` the same way. One generic base, config plus chain construction plus `invoke`/`ainvoke`, possibly in llm-core.
+
+### World request boilerplate
+
+Every `WRec*` forwards `*args, **kwargs` to `WReq.__init__` by hand; `@dataclass(kw_only=True)` would remove it.
+
+### One logging call per event
+
+`Player` and `WorldRunner` call `alg.log` and `slog` for the same event. One call that feeds both channels.
+
+### Provider layering
+
+Every chain takes the default OpenAI config; the Azure, HuggingFace and Ollama configs are built and never selected. Either use the choice or cut it.
+
+### Singleton reset
+
+The `Singleton` metaclass has no reset hook. Low priority: no test needs one yet.
+
+### Duplicated `BaseModelKwargs`
+
+Found 2026-11-12: `src/laife/data_models/basemodel_kwargs.py` and llm-core both define it.
+
+### Install weight
+
+Found 2026-11-12: `make sync` installs torch with the full CUDA 12 stack, through `transformers` and `llm-core[all]`, for a game that calls hosted models. Check what needs torch, and whether the CPU build or a narrower llm-core extra would do.
