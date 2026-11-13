@@ -1,17 +1,10 @@
 """Actions are something the Brain decides to do to solve a Mission."""
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-from llm_core.chains.structured_chain import StructuredLLMChain
+from llm_core.data_models.basemodel_kwargs import BaseModelKwargs
 from pydantic import BaseModel
 from pydantic import Field
 
-from laife.data_models.basemodel_kwargs import BaseModelKwargs
 from laife.entities.utils.directions import CardinalDirection
-
-if TYPE_CHECKING:
-    from llm_core.chat.config.base import ChatConfig
 
 
 class BaseAction(BaseModel):
@@ -89,12 +82,7 @@ class ActionEnvelope(BaseModel):
 
 
 class ActionPickerInput(BaseModelKwargs):
-    """Input payload for ActionPicker.invoke / ainvoke.
-
-    Field names define the required variables that every prompt template must
-    contain; the validation in StructuredLLMChain.__post_init__ derives the
-    required set directly from these fields so the two can never drift apart.
-    """
+    """Input of the action chain; the field names are the prompt variables."""
 
     mission: str
     history: str
@@ -102,28 +90,3 @@ class ActionPickerInput(BaseModelKwargs):
     player_state: str
     inventory: str
     nearby_players: str
-
-
-@dataclass
-class ActionPicker:
-    """Pick an action to take."""
-
-    chat_config: ChatConfig
-    prompt_str: str
-
-    def __post_init__(self) -> None:
-        """Build the underlying structured chain."""
-        self._chain: StructuredLLMChain[ActionPickerInput, ActionEnvelope] = StructuredLLMChain(
-            chat_config=self.chat_config,
-            prompt_str=self.prompt_str,
-            input_model=ActionPickerInput,
-            output_model=ActionEnvelope,
-        )
-
-    def invoke(self, action_input: ActionPickerInput) -> BaseAction:
-        """Pick an action synchronously."""
-        return self._chain.invoke(action_input).act
-
-    async def ainvoke(self, action_input: ActionPickerInput) -> BaseAction:
-        """Pick an action asynchronously."""
-        return (await self._chain.ainvoke(action_input)).act

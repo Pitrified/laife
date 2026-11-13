@@ -1,12 +1,10 @@
-"""Unit tests for WorldActionJudge and related types."""
+"""Unit tests for WorldJudge, its models and the runner's judged requests."""
 
 import asyncio
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
-from unittest.mock import patch
 
-from llm_core.chains.structured_chain import MissingPromptVariablesError
-from llm_core.chat.config.ollama import OllamaChatConfig
+from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
 
 from laife.entities.building import Building
@@ -14,39 +12,45 @@ from laife.entities.building import BuildingType
 from laife.entities.world_channel import WRecBuild
 from laife.entities.world_channel import WRecCraft
 from laife.entities.world_channel import WResStatus
-from laife.entities.world_judge import WorldActionJudge
+from laife.entities.world_judge import WorldJudge
+from laife.entities.world_judge import WorldJudgeConfig
 from laife.entities.world_judge import WorldJudgeInput
 from laife.entities.world_judge import WorldJudgeResult
 from laife.entities.world_runner import WorldRunner
+from laife.llm.scripted_chat import ScriptedChatConfig
+from laife.params.laife_params import get_laife_params
 
 # ---------------------------------------------------------------------------
 # Shared fixtures / constants
 # ---------------------------------------------------------------------------
 
-VALID_PROMPT = (
-    "Action: {{ action_type }}\n"
-    "Details: {{ action_details }}\n"
-    "Observation: {{ observation }}\n"
-    "State: {{ player_state }}\n"
-)
-
-INCOMPLETE_PROMPT = "Action: {{ action_type }}\n"
+VERDICT = WorldJudgeResult(success=True, feedback="Fine.")
 
 
 @pytest.fixture
-def chat_config() -> OllamaChatConfig:
-    """OllamaChatConfig for use in tests (no real LLM calls made)."""
-    return OllamaChatConfig()
+def judge() -> WorldJudge:
+    """WorldJudge on the game's own prompts and a scripted chat config."""
+    prompts_fol = get_laife_params().paths.prompts_fol
+    return WorldJudge(
+        WorldJudgeConfig(
+            chat_config=ScriptedChatConfig(),
+            build_prompt=PromptLoaderConfig(
+                base_prompt_fol=prompts_fol, prompt_name="world_judge_build"
+            ),
+            craft_prompt=PromptLoaderConfig(
+                base_prompt_fol=prompts_fol, prompt_name="world_judge_craft"
+            ),
+            complete_prompt=PromptLoaderConfig(
+                base_prompt_fol=prompts_fol, prompt_name="world_judge_complete"
+            ),
+        )
+    )
 
 
-@pytest.fixture
-def judge(chat_config: OllamaChatConfig) -> WorldActionJudge:
-    """WorldActionJudge with __post_init__ patched to avoid LLM initialisation."""
-    with patch(
-        "laife.entities.world_judge.WorldActionJudge.__post_init__",
-        lambda self: setattr(self, "_chain", MagicMock()),
-    ):
-        return WorldActionJudge(chat_config=chat_config, prompt_str=VALID_PROMPT)
+def _mock_chain(verdict: WorldJudgeResult = VERDICT) -> MagicMock:
+    chain = MagicMock()
+    chain.ainvoke = AsyncMock(return_value=verdict)
+    return chain
 
 
 @pytest.fixture
@@ -119,67 +123,84 @@ def test_world_judge_result_failure() -> None:
 
 
 # ---------------------------------------------------------------------------
-# MissingPromptVariablesError
+# WorldJudge - one chain per judged request, input built from plain values
 # ---------------------------------------------------------------------------
 
 
-def test_missing_prompt_variables_error_message() -> None:
-    """MissingPromptVariablesError must list missing variables in its message."""
-    err = MissingPromptVariablesError({"observation", "player_state"})
-    msg = str(err)
-    assert "observation" in msg
-    assert "player_state" in msg
+def test_judge_builds_its_chains_on_one_config(judge: WorldJudge) -> None:
+    """All three chains take the judge's chat config."""
+    config = judge.config.chat_config
+    assert judge.build_chain.chat_config is config
+    assert judge.craft_chain.chat_config is config
+    assert judge.complete_chain.chat_config is config
 
 
-# ---------------------------------------------------------------------------
-# WorldActionJudge - construction validation
-# ---------------------------------------------------------------------------
+def test_check_build(judge: WorldJudge) -> None:
+    """check_build() describes the building to the build chain and returns its verdict."""
+    judge.build_chain = _mock_chain()
+    building = _build_request((0, 0)).building
+
+    result = asyncio.run(
+        judge.check_build(building=building, observation="Clear area.", player_state="idle")
+    )
+
+    assert result is VERDICT
+    judge.build_chain.ainvoke.assert_awaited_once_with(
+        WorldJudgeInput(
+            action_type="build",
+            action_details="building_type=house, name=New House, size=(10, 10), description=None",
+            observation="Clear area.",
+            player_state="idle",
+        )
+    )
 
 
-def test_judge_raises_on_incomplete_prompt(chat_config: OllamaChatConfig) -> None:
-    """WorldActionJudge must raise MissingPromptVariablesError if prompt lacks required vars."""
-    with pytest.raises(MissingPromptVariablesError):
-        WorldActionJudge(chat_config=chat_config, prompt_str=INCOMPLETE_PROMPT)
+def test_check_craft(judge: WorldJudge) -> None:
+    """check_craft() describes the utensil to the craft chain and returns its verdict."""
+    judge.craft_chain = _mock_chain()
+
+    result = asyncio.run(
+        judge.check_craft(
+            utensil_name="axe",
+            description="Stone head.",
+            observation="Rocks nearby.",
+            player_state="idle",
+        )
+    )
+
+    assert result is VERDICT
+    judge.craft_chain.ainvoke.assert_awaited_once_with(
+        WorldJudgeInput(
+            action_type="craft",
+            action_details="utensil_name=axe, description=Stone head.",
+            observation="Rocks nearby.",
+            player_state="idle",
+        )
+    )
 
 
-def test_judge_accepts_valid_prompt(chat_config: OllamaChatConfig) -> None:
-    """WorldActionJudge must not raise when all required variables are present."""
-    with patch("laife.entities.world_judge.WorldActionJudge.__post_init__", lambda _: None):
-        j = WorldActionJudge(chat_config=chat_config, prompt_str=VALID_PROMPT)
-    assert j.prompt_str == VALID_PROMPT
+def test_check_complete(judge: WorldJudge) -> None:
+    """check_complete() sends objective and outcome to the complete chain."""
+    judge.complete_chain = _mock_chain()
 
+    result = asyncio.run(
+        judge.check_complete(
+            objective="Build a shed",
+            outcome="The shed stands.",
+            observation="A shed.",
+            player_state="idle",
+        )
+    )
 
-# ---------------------------------------------------------------------------
-# WorldActionJudge - invoke / ainvoke
-# ---------------------------------------------------------------------------
-
-
-def test_judge_invoke_returns_world_judge_result(
-    judge: WorldActionJudge,
-    judge_input: WorldJudgeInput,
-) -> None:
-    """invoke() must return whatever _chain.invoke returns."""
-    expected = WorldJudgeResult(success=True, feedback="Looks good.")
-    judge._chain.invoke = MagicMock(return_value=expected)
-
-    result = judge.invoke(judge_input)
-
-    assert result is expected
-    judge._chain.invoke.assert_called_once_with(judge_input)
-
-
-def test_judge_ainvoke_returns_world_judge_result(
-    judge: WorldActionJudge,
-    judge_input: WorldJudgeInput,
-) -> None:
-    """ainvoke() must return whatever _chain.ainvoke returns."""
-    expected = WorldJudgeResult(success=False, feedback="No station nearby.")
-    judge._chain.ainvoke = AsyncMock(return_value=expected)
-
-    result = asyncio.run(judge.ainvoke(judge_input))
-
-    assert result is expected
-    judge._chain.ainvoke.assert_awaited_once_with(judge_input)
+    assert result is VERDICT
+    judge.complete_chain.ainvoke.assert_awaited_once_with(
+        WorldJudgeInput(
+            action_type="complete: Build a shed",
+            action_details="The shed stands.",
+            observation="A shed.",
+            player_state="idle",
+        )
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -258,26 +279,26 @@ def test_judge_and_build_colliding_skips_judge() -> None:
     """A colliding build returns the collision error without calling the judge."""
     runner = WorldRunner()
     runner.add_building(_build_request((0, 0)).building)
-    runner.build_judge.ainvoke = AsyncMock()
+    runner.judge.check_build = AsyncMock()
 
     res = asyncio.run(runner.judge_and_build(_build_request((5, 5))))
 
     assert res.status == WResStatus.ERROR
     assert "collides" in res.feedback
-    runner.build_judge.ainvoke.assert_not_called()
+    runner.judge.check_build.assert_not_called()
     assert len(runner.buildings) == 1
 
 
 def test_judge_and_build_free_spot_asks_judge() -> None:
     """A build on a free spot goes through the judge and is added when approved."""
     runner = WorldRunner()
-    runner.build_judge.ainvoke = AsyncMock(
-        return_value=WorldJudgeResult(success=True, feedback="Fine."),
-    )
+    runner.judge.check_build = AsyncMock(return_value=VERDICT)
     req = _build_request((100, 100))
 
     res = asyncio.run(runner.judge_and_build(req))
 
     assert res.status == WResStatus.SUCCESS
-    runner.build_judge.ainvoke.assert_awaited_once()
+    runner.judge.check_build.assert_awaited_once_with(
+        building=req.building, observation=req.observation, player_state=req.player_state
+    )
     assert runner.buildings == [req.building]

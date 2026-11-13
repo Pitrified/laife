@@ -13,15 +13,28 @@ Each chain pairs an input model with a prompt template and an output model.
 - The prompt template is loaded by the `llm_core` prompt loader.
 - The output is a pydantic model, so the result is validated on the way out.
 
-This is why the input classes carry a note that their fields define the required prompt variables.
-See for example [`world_judge.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_judge.py).
+There is no wrapper class per chain: the brain and the world judge build each `StructuredLLMChain` from its two models and its prompt.
+The modules listed below hold the models.
 
 The template text itself lives in [the prompts package](../library/prompts.md), one folder per chain with versioned `vN.jinja` files.
 A chain points at its folder by name; the loader resolves the template from there, so prompt wording can change without touching the chain code.
 
+## The player's brain
+
+Each player has one [`PlayerBrain`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_brain.py), which owns the player's four chains: action, planner, replier and mission generator.
+`Player` calls one brain method per decision (`next_action`, `plan`, `reply`, `propose_mission`), passing plain values, and applies the result to its own state and mission.
+The brain times each call as an `llm_call` record labelled by stage.
+It holds no world queue, so a reply, which the world requests from inside its own loop, cannot reach the world.
+
+## The world judge
+
+[`WorldJudge`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_judge.py) is the same split on the world's side.
+It owns three chains on one input and output model, one per judged request: build, craft and complete.
+`WorldRunner` builds it, runs the free checks such as collision before calling it, and turns the verdict into a world response.
+
 ## The chains
 
-- Brain - [`llm/player_brain.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_brain.py).
+- Action picker - [`entities/action.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/action.py), called by `PlayerBrain.next_action`.
   Given the observation and the current mission, returns the next action.
   This is the core decision step of a turn.
 - Planner - [`llm/player_planner.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_planner.py).
@@ -33,7 +46,7 @@ A chain points at its folder by name; the loader resolves the template from ther
 - Mission generator - [`llm/mission_generator.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/mission_generator.py).
   Proposes a new mission objective from the current world observation, so a player without a goal can find one.
 - World judge - [`entities/world_judge.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_judge.py).
-  Decides whether a build or craft action is valid and returns a success flag with feedback.
+  Decides whether a build, a craft or a reported mission completion is valid and returns a success flag with feedback.
   This is the world's reasoning, not the player's.
 
 ## Missions as data

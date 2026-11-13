@@ -12,16 +12,14 @@ For cross-cutting explanations see [the guides](../guides/README.md).
 - [rendering](rendering.md) - the pygame view layer and sprites.
 - [params](params.md) - environment-aware settings, paths, and LLM service params.
 - [config](config.md) - type aliases and project-level constants.
-- [embed](embed.md) - the sentence-transformers embedding wrapper.
 - [meta](meta.md) - the singleton metaclass and the structured logger.
 - [ui](ui.md) - the asynchronous console logger.
-- [data_models](data_models.md) - the shared pydantic base.
 
 ## How the packages relate
 
-The pure logic lives in `entities`, `llm`, `config`, and `data_models`, with no pygame dependency.
+The pure logic lives in `entities`, `llm` and `config`, with no pygame dependency.
 `prompts` holds the template text the `llm` chains load at runtime.
 `rendering` and `ui` are presentation layers that observe the logic.
 `params` and `config` supply settings to all of them.
-`meta` and `embed` are support utilities.
+`meta` holds support utilities.
 See [the architecture guide](../guides/architecture.md) for the runtime picture.

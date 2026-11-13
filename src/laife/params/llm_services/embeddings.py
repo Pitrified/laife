@@ -2,9 +2,6 @@
 
 from typing import TYPE_CHECKING
 
-from llm_core.embeddings.config.azure_openai import AzureOpenAIEmbeddingsConfig
-from llm_core.embeddings.config.huggingface import HuggingFaceEmbeddingsConfig
-from llm_core.embeddings.config.ollama import OllamaEmbeddingsConfig
 from llm_core.embeddings.config.openai import OpenAIEmbeddingsConfig
 
 if TYPE_CHECKING:
@@ -16,8 +13,7 @@ if TYPE_CHECKING:
 class EmbeddingsParams:
     """Params for embedding services.
 
-    Holds one or more EmbeddingsConfig instances.
-    Swap ``default`` for a different provider config as needed.
+    Holds the OpenAI EmbeddingsConfig; callers read ``default``.
     """
 
     def __init__(self, env_type: EnvType) -> None:
@@ -28,9 +24,6 @@ class EmbeddingsParams:
     def load_params(self) -> None:
         """Load the params for embedding services."""
         self.openai = OpenAIEmbeddingsConfig()
-        self.azure = AzureOpenAIEmbeddingsConfig()
-        self.huggingface = HuggingFaceEmbeddingsConfig()
-        self.ollama = OllamaEmbeddingsConfig()
         self.default: EmbeddingsConfig = self.openai
 
     def __str__(self) -> str:

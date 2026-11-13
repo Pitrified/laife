@@ -36,7 +36,6 @@ def _stubbed_player(objective: str = "Build a house") -> Player:
     player.mission = Mission(objective=objective, status=MissionStatus.ACTIVE)
     player.history = MissionHistory()
     player.last_observation = WorldMapObservation.from_position((0, 0))
-    player.planner = MagicMock()
     player.brain = MagicMock()
     # Async world queue: put() is a no-op AsyncMock; input_queue is a real queue
     player.world_input_queue = MagicMock()
@@ -195,7 +194,7 @@ def test_plan_activates_first_sub_mission() -> None:
         sub_missions=["Step A", "Step B"],
         reason="Breaking it down",
     )
-    player.planner.ainvoke = AsyncMock(return_value=result)
+    player.brain.plan = AsyncMock(return_value=result)
 
     action = ActionPlan(reason="Need a plan")
     asyncio.run(player.plan(action))
@@ -214,7 +213,7 @@ def test_plan_resets_history() -> None:
     player.history.add_history_entry(entry)
 
     result = PlayerPlannerResult(sub_missions=["Step A"], reason="reason")
-    player.planner.ainvoke = AsyncMock(return_value=result)
+    player.brain.plan = AsyncMock(return_value=result)
 
     asyncio.run(player.plan(ActionPlan(reason="replan")))
 

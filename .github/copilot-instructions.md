@@ -94,6 +94,7 @@ Planning is cooperative: the functional and technical details are worked out wit
 
 - **Small primitives over complete APIs.** A function that answers one question well composes; a method for every phrasing of the question does not.
 - **No config knobs without a case.** A parameter with one caller and one value is a constant.
+- **A config object stays a config object even with one field.** `PromptLoaderConfig` holds only a prompt name today; a helper taking `name` instead would grow a parameter for each field added later, such as a version. Build and pass the config; do not unpack it into arguments.
 - **Build the case in front of you,** not the general one it might become.
 - **Errors say what is wrong and with which input.** Raise a named exception (`UnknownEnvLocationError`), not a bare `ValueError`.
 
@@ -155,7 +156,7 @@ platform.node().lower().startswith("pmn-14g4")  # g4, else g7
 | Rendering     | `src/laife/rendering/world_renderer.py` | `WorldRenderer` reads `WorldRunner` state and converts it into Pygame sprites/window; display dependency is isolated here, `WorldRunner` has none |
 | Simulation    | `src/laife/entities/world_runner.py`    | Authoritative state, processes `WReq` messages                                                                                                    |
 | Entities      | `src/laife/entities/`                   | `Player`, `Building`, `Utensil`, `Terrain`                                                                                                        |
-| AI brain      | `src/laife/llm/player_brain.py`         | `PlayerBrain.think()` → `BaseAction`                                                                                                              |
+| AI brain      | `src/laife/llm/player_brain.py`         | `PlayerBrain` owns the player's chains; `next_action()` → `BaseAction`                                                                            |
 | Actions       | `src/laife/entities/action.py`          | The `Actions` discriminated union of `BaseAction` subclasses                                                                                      |
 | Missions      | `src/laife/llm/mission.py`              | `Mission` owns `MissionHistory`; supports nested sub-missions                                                                                     |
 | LLM services  | `src/laife/params/llm_services/`        | Which llm-core chat, embeddings and vector store configs this game uses                                                                           |
@@ -168,7 +169,7 @@ platform.node().lower().startswith("pmn-14g4")  # g4, else g7
 Players put `WReq` subclasses (e.g., `WRecBuild`, `WRecObserve`) into `WorldRunner.input_queue`. Each request carries its own `response_queue`; the runner puts a `WRes` back there. This decouples the simulation loop from any display dependency.
 
 **LLM provider abstraction via llm-core config subclasses**
-Chat models, embeddings and vector stores are built from llm-core config objects (`ChatConfig.create_chat_model()`, `EmbeddingsConfig.create_embeddings()`, `VectorStoreConfig`), with provider subclasses for Ollama, OpenAI, Azure OpenAI and HuggingFace. Never instantiate the LangChain objects directly.
+Chat models, embeddings and vector stores are built from llm-core config objects (`ChatConfig.create_chat_model()`, `EmbeddingsConfig.create_embeddings()`, `VectorStoreConfig`), configured for OpenAI only; llm-core's Ollama, Azure OpenAI and HuggingFace subclasses sit behind extras laife does not install. Never instantiate the LangChain objects directly.
 
 **Structured chains**
 Every LLM call that returns a model goes through llm-core's `StructuredLLMChain[InputT, OutputT]`.

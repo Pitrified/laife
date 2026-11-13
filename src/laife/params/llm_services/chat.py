@@ -2,9 +2,6 @@
 
 from typing import TYPE_CHECKING
 
-from llm_core.chat.config.azure_openai import AzureOpenAIChatConfig
-from llm_core.chat.config.huggingface import HuggingFaceChatConfig
-from llm_core.chat.config.ollama import OllamaChatConfig
 from llm_core.chat.config.openai import ChatOpenAIConfig
 
 if TYPE_CHECKING:
@@ -16,8 +13,7 @@ if TYPE_CHECKING:
 class ChatParams:
     """Params for chat services.
 
-    Holds one or more ChatConfig instances.
-    Swap out ``default`` for a different provider config as needed.
+    Holds the OpenAI ChatConfig; callers read ``default``.
     """
 
     def __init__(
@@ -36,15 +32,6 @@ class ChatParams:
             temperature=1,
             model="gpt-6-luna",
         )
-
-        self.azure = AzureOpenAIChatConfig(
-            temperature=1,
-            model="gpt-5.2-chat",
-        )
-
-        self.huggingface = HuggingFaceChatConfig()
-
-        self.ollama = OllamaChatConfig()
 
         self.default: ChatConfig = self.openai
 

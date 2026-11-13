@@ -33,7 +33,8 @@ Fixed, project-level locations that do not depend on the environment, such as th
 - embeddings, used to vectorize world entities;
 - vector search, which uses the embeddings to retrieve relevant entities.
 
-Each is loaded per environment, so swapping a model or provider is a params change, not a code change in the chains.
+Each is loaded per environment, so swapping a model is a params change, not a code change in the chains.
+Only OpenAI is configured and installed; another provider also needs its llm-core extra in `pyproject.toml`.
 
 ## Secrets
 

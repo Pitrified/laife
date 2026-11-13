@@ -3,7 +3,6 @@
 import asyncio
 from typing import TYPE_CHECKING
 
-from llm_core.prompts.prompt_loader import PromptLoader
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 
 from laife.entities.utils.geometry import aabb_collides
@@ -23,8 +22,8 @@ from laife.entities.world_channel import WResInteract
 from laife.entities.world_channel import WResMoveStep
 from laife.entities.world_channel import WResObserve
 from laife.entities.world_channel import WResStatus
-from laife.entities.world_judge import WorldActionJudge
-from laife.entities.world_judge import WorldJudgeInput
+from laife.entities.world_judge import WorldJudge
+from laife.entities.world_judge import WorldJudgeConfig
 from laife.entities.world_map_observation import NearbyEntity
 from laife.entities.world_map_observation import WorldMapObservation
 from laife.entities.world_map_observation import euclidean
@@ -64,39 +63,24 @@ class WorldRunner:
         # players send world-modification requests through this queue
         self.input_queue: asyncio.Queue[WReq] = asyncio.Queue()
 
-        # LLM judges for build and craft actions
+        # LLM judge for build, craft and complete requests
         laife_params = get_laife_params()
         if chat_config is None:
             chat_config = laife_params.llm_services.chat.default
-        build_prompt = PromptLoader(
-            PromptLoaderConfig(
-                base_prompt_fol=laife_params.paths.prompts_fol,
-                prompt_name="world_judge_build",
+        prompts_fol = laife_params.paths.prompts_fol
+        self.judge = WorldJudge(
+            WorldJudgeConfig(
+                chat_config=chat_config,
+                build_prompt=PromptLoaderConfig(
+                    base_prompt_fol=prompts_fol, prompt_name="world_judge_build"
+                ),
+                craft_prompt=PromptLoaderConfig(
+                    base_prompt_fol=prompts_fol, prompt_name="world_judge_craft"
+                ),
+                complete_prompt=PromptLoaderConfig(
+                    base_prompt_fol=prompts_fol, prompt_name="world_judge_complete"
+                ),
             )
-        ).load_prompt()
-        craft_prompt = PromptLoader(
-            PromptLoaderConfig(
-                base_prompt_fol=laife_params.paths.prompts_fol,
-                prompt_name="world_judge_craft",
-            )
-        ).load_prompt()
-        self.build_judge = WorldActionJudge(
-            chat_config=chat_config,
-            prompt_str=build_prompt,
-        )
-        self.craft_judge = WorldActionJudge(
-            chat_config=chat_config,
-            prompt_str=craft_prompt,
-        )
-        complete_prompt = PromptLoader(
-            PromptLoaderConfig(
-                base_prompt_fol=laife_params.paths.prompts_fol,
-                prompt_name="world_judge_complete",
-            )
-        ).load_prompt()
-        self.complete_judge = WorldActionJudge(
-            chat_config=chat_config,
-            prompt_str=complete_prompt,
         )
 
     # ------------------------------------------------------------------
@@ -187,18 +171,11 @@ class WorldRunner:
         collision = self.check_building_collision(req.building)
         if collision is not None:
             return collision
-        judge_input = WorldJudgeInput(
-            action_type="build",
-            action_details=(
-                f"building_type={req.building.building_type.building_type}"
-                f", name={req.building.name}"
-                f", size={req.building.size}"
-                f", description={req.building.description}"
-            ),
+        result = await self.judge.check_build(
+            building=req.building,
             observation=req.observation,
             player_state=req.player_state,
         )
-        result = await self.build_judge.ainvoke(judge_input)
         if not result.success:
             return WResBuild(status=WResStatus.ERROR, feedback=result.feedback)
         self.buildings.append(req.building)
@@ -206,13 +183,12 @@ class WorldRunner:
 
     async def judge_craft(self, req: WRecCraft) -> WResCraft:
         """Validate a craft request with the LLM judge."""
-        judge_input = WorldJudgeInput(
-            action_type="craft",
-            action_details=(f"utensil_name={req.utensil_name}, description={req.description}"),
+        result = await self.judge.check_craft(
+            utensil_name=req.utensil_name,
+            description=req.description,
             observation=req.observation,
             player_state=req.player_state,
         )
-        result = await self.craft_judge.ainvoke(judge_input)
         return WResCraft(
             status=WResStatus.from_bool(success=result.success),
             feedback=result.feedback,
@@ -220,13 +196,11 @@ class WorldRunner:
 
     async def judge_complete(self, req: WRecComplete) -> WResComplete:
         """Ask the LLM judge whether the reported outcome satisfies the objective."""
-        result = await self.complete_judge.ainvoke(
-            WorldJudgeInput(
-                action_type=f"complete: {req.objective}",
-                action_details=req.outcome,
-                observation=req.observation,
-                player_state=req.player_state,
-            )
+        result = await self.judge.check_complete(
+            objective=req.objective,
+            outcome=req.outcome,
+            observation=req.observation,
+            player_state=req.player_state,
         )
         alg.log(f"WR.judge_complete: {result.success} - {result.feedback}")
         return WResComplete(

@@ -96,10 +96,8 @@ nav:
       - rendering: library/rendering.md
       - params: library/params.md
       - config: library/config.md
-      - embed: library/embed.md
       - meta: library/meta.md
       - ui: library/ui.md
-      - data_models: library/data_models.md
   - API Reference: reference/
   - Standards: standards.md
 

@@ -94,11 +94,13 @@ def test_runner_judges_take_the_given_config() -> None:
     """WorldRunner(chat_config=...) feeds its judges that config."""
     config = ScriptedChatConfig()
     runner = WorldRunner(chat_config=config)
-    assert runner.build_judge.chat_config is config
+    judge = runner.judge
+    chains = [judge.build_chain, judge.craft_chain, judge.complete_chain]
+    assert all(c.chat_config is config for c in chains)
 
 
 def test_player_chains_take_the_given_config() -> None:
-    """Player(chat_config=...) feeds all four of its chains that config."""
+    """Player(chat_config=...) feeds all four of its brain's chains that config."""
     config = ScriptedChatConfig(script=default_script("p1"))
     player = Player(
         "p0",
@@ -107,10 +109,11 @@ def test_player_chains_take_the_given_config() -> None:
         world_input_queue=WorldRunner().input_queue,
         chat_config=config,
     )
+    brain = player.brain
     configs = [
-        player.brain.config.chat_config,
-        player.planner.config.chat_config,
-        player.replier.config.chat_config,
-        player.mission_generator.config.chat_config,
+        brain.action_chain.chat_config,
+        brain.plan_chain.chat_config,
+        brain.reply_chain.chat_config,
+        brain.mission_chain.chat_config,
     ]
     assert all(c is config for c in configs)

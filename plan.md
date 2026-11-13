@@ -15,6 +15,7 @@ The visual wishes wait on this choice: tiled terrain and grass instead of flat c
 The same pass trims the engine's terminal output and the logs.
 The terminal is not the main interface: the window and `make tui` are.
 Today a run prints every `alg.log` line, and the structured log has one line per move step; whether the structured log keeps its shape is reassessed with it.
+`Player` and `WorldRunner` call `alg.log` and `slog` for the same event in a few places; whether one call feeds both channels is decided with the log shape.
 
 ### Renderer checks without a screen
 
@@ -83,37 +84,26 @@ Load the map from data instead of the hardcoded setup in `game/main.py`.
 
 From folder 33 unless noted; each is checked against the code there.
 
-### One base for the LLM chain wrappers
-
-Six classes build a `StructuredLLMChain` the same way. One generic base, config plus chain construction plus `invoke`/`ainvoke`, possibly in llm-core.
-
-### World request boilerplate
-
-Every `WRec*` forwards `*args, **kwargs` to `WReq.__init__` by hand; `@dataclass(kw_only=True)` would remove it.
-
-### One logging call per event
-
-`Player` and `WorldRunner` call `alg.log` and `slog` for the same event. One call that feeds both channels.
-
-### Provider layering
-
-Every chain takes the default OpenAI config; the Azure, HuggingFace and Ollama configs are built and never selected. Either use the choice or cut it.
-`Player` and `WorldRunner` each take a `chat_config` (folder 38), so the world and the players can run different models, such as a stronger judge; nothing in the live game selects one yet.
-
 ### Scripted chat model to llm-core
 
 `laife.llm.scripted_chat` answers structured-output calls by schema.
 The model and config are general and could sit beside llm-core's `FakeChatModel`, which cycles one list regardless of schema; the default script and the per-schema answers stay in laife.
 Moving it means an llm-core release and a tag bump here (folder 38).
+It gets a folder of its own, not mixed with other work.
+
+### Player mind state
+
+`PlayerBrain` thinks for one player; the mind state (`mission`, `history`, `last_observation`, `inventory`) lives on `Player`, and `_update_mission_from_response` mixes world results into it.
+One player instance has one brain instance, tightly tied, so a mind state shared between the two can exist.
+To be assessed and planned on its own (folder 39 gave the brain the chains, not the state).
+
+### Timing every LLM call
+
+`timed_llm_call` in `laife.meta.logger` is wrapped by hand around some call sites; the world judges are not timed.
+Timing belongs lower, in the chain, possibly in llm-core's `StructuredLLMChain`, with the player and turn context coming from the log context rather than from arguments.
 
 ### Singleton reset
 
-The `Singleton` metaclass has no reset hook. Low priority: no test needs one yet.
-
-### Duplicated `BaseModelKwargs`
-
-Found 2026-11-12: `src/laife/data_models/basemodel_kwargs.py` and llm-core both define it.
-
-### Install weight
-
-Found 2026-11-12: `make sync` installs torch with the full CUDA 12 stack, through `transformers` and `llm-core[all]`, for a game that calls hosted models. Check what needs torch, and whether the CPU build or a narrower llm-core extra would do.
+The `Singleton` metaclass, used by `LaifeParams` and `Alog`, has no reset hook.
+Folder 33 proposed one because tests seemed to reach into `Singleton._instances`; checked 2026-11-12, none does.
+Low priority: nothing needs a reset yet.
