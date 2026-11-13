@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 priority: 0
 description: |
   Four items that end in llm-core or in laife's use of it: a `reasoning_effort` field on `ChatOpenAIConfig`, timing every LLM call in the chain, the scripted chat model moved to llm-core, and the duplicated `Singleton`.

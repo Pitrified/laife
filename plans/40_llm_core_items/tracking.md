@@ -18,7 +18,7 @@ Analysis and questions in [`00_start.md`](00_start.md).
 | 1 | reasoning_effort         | [`01_reasoning_effort.md`](01_reasoning_effort.md) | done    |
 | 2 | timing in the chain      | [`02_timing.md`](02_timing.md)                   | done    |
 | 3 | scripted chat            | [`03_scripted_chat.md`](03_scripted_chat.md)     | done    |
-| 4 | Singleton, release, pin  | [`04_singleton.md`](04_singleton.md)             | in progress |
+| 4 | Singleton, release, pin  | [`04_singleton.md`](04_singleton.md)             | done    |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
@@ -33,3 +33,4 @@ Append-only. Newest at the bottom.
 - 2026-11-13 : phase 2 done: llm-core 8b8e9f9; laife times every chain through log_llm_call, judges included.
 - 2026-11-13 : phase 3 done: llm-core 7f11dd3; laife's script on llm-core's ScriptedChatConfig.
 - 2026-11-13 : phase 4 Singleton committed (7837b4f); llm-core v0.4.0 tagged locally on main (84340e0); pin waits for the push.
+- 2026-11-13 : user pushed llm-core v0.4.0; laife pinned to it; folder 40 done (4/4).

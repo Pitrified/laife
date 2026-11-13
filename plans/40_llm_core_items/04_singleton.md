@@ -1,5 +1,5 @@
 ---
-status: in progress
+status: done
 ---
 
 # Phase 4 - Singleton, release and pin
@@ -41,4 +41,5 @@ For the user's review, 2026-11-13.
 
 - laife 7837b4f: `LaifeParams` and `Alog` use llm-core's `Singleton`; the copy, its docs section and the docs line on clearing it are gone; `plan.md` "Singleton reset" removed. `make check` passes, 272; `make headless` same positions and per-player records as phase 3.
 - llm-core 84340e0 "chore: release v0.4.0": version, CHANGELOG `[0.4.0]`, lock, docs index. `main` fast-forwarded to it, annotated tag `v0.4.0`. 207 tests pass; pyright shows the same transcription errors as before.
-- Waiting on the user's push of llm-core `main` and `v0.4.0` before laife pins the tag.
+- The user pushed llm-core `main` and `v0.4.0`.
+- After the user's push (the GitHub tag resolves to 84340e0): laife pins `@v0.4.0`; `uv lock` moved only llm-core; `make undev` replaced the editable install. `make check` passes, 272; `make headless` ends at the same positions with the same per-player records as before the pin.
