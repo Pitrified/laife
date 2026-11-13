@@ -13,6 +13,7 @@ from unittest.mock import patch
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
 
+from laife.entities.action import ActionEnvelope
 from laife.entities.action import ActionMove
 from laife.entities.action import ActionPickerInput
 from laife.entities.utils.directions import CardinalDirection
@@ -20,9 +21,11 @@ from laife.entities.world_map_observation import WorldMapObservation
 from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionStatus
+from laife.llm.mission_generator import MissionGeneratorInput
 from laife.llm.mission_generator import MissionGeneratorResult
 from laife.llm.player_brain import PlayerBrain
 from laife.llm.player_brain import PlayerBrainConfig
+from laife.llm.player_planner import PlayerPlannerInput
 from laife.llm.player_planner import PlayerPlannerResult
 from laife.llm.player_replier import PlayerReplyInput
 from laife.llm.player_replier import PlayerReplyOutput
@@ -74,10 +77,10 @@ def observation() -> WorldMapObservation:
 def test_brain_builds_its_chains_on_one_config(brain: PlayerBrain) -> None:
     """All four chains take the brain's chat config."""
     config = brain.config.chat_config
-    assert brain.action_picker.chat_config is config
-    assert brain.planner.config.chat_config is config
-    assert brain.replier.config.chat_config is config
-    assert brain.mission_generator.config.chat_config is config
+    assert brain.action_chain.chat_config is config
+    assert brain.plan_chain.chat_config is config
+    assert brain.reply_chain.chat_config is config
+    assert brain.mission_chain.chat_config is config
 
 
 # ---------------------------------------------------------------------------
@@ -91,10 +94,10 @@ def test_next_action(
     history: MissionHistory,
     observation: WorldMapObservation,
 ) -> None:
-    """next_action() sends the serialised context and returns the picked action."""
+    """next_action() sends the serialised context and returns the action in the envelope."""
     expected = ActionMove(reason="north", direction=CardinalDirection.North, distance=5)
-    brain.action_picker = MagicMock()
-    brain.action_picker.ainvoke = AsyncMock(return_value=expected)
+    brain.action_chain = MagicMock()
+    brain.action_chain.ainvoke = AsyncMock(return_value=ActionEnvelope(act=expected))
 
     result = asyncio.run(
         brain.next_action(
@@ -108,7 +111,7 @@ def test_next_action(
     )
 
     assert result is expected
-    brain.action_picker.ainvoke.assert_awaited_once_with(
+    brain.action_chain.ainvoke.assert_awaited_once_with(
         ActionPickerInput(
             mission=mission.to_prompt(),
             history=history.to_prompt(),
@@ -131,10 +134,10 @@ def test_plan(
     history: MissionHistory,
     observation: WorldMapObservation,
 ) -> None:
-    """plan() forwards the context to the planner and returns its result."""
+    """plan() sends the serialised context to the plan chain and returns its result."""
     expected = PlayerPlannerResult(sub_missions=["Gather wood"], reason="first step")
-    brain.planner = MagicMock()
-    brain.planner.ainvoke = AsyncMock(return_value=expected)
+    brain.plan_chain = MagicMock()
+    brain.plan_chain.ainvoke = AsyncMock(return_value=expected)
 
     result = asyncio.run(
         brain.plan(
@@ -147,11 +150,13 @@ def test_plan(
     )
 
     assert result is expected
-    brain.planner.ainvoke.assert_awaited_once_with(
-        mission=mission,
-        history=history,
-        observation=observation,
-        player_state="(0, 0)",
+    brain.plan_chain.ainvoke.assert_awaited_once_with(
+        PlayerPlannerInput(
+            mission=mission.to_prompt(),
+            history=history.to_prompt(),
+            observation=observation.to_prompt(),
+            player_state="(0, 0)",
+        )
     )
 
 
@@ -161,10 +166,10 @@ def test_plan(
 
 
 def test_propose_mission(brain: PlayerBrain, observation: WorldMapObservation) -> None:
-    """propose_mission() forwards the context to the generator and returns its result."""
+    """propose_mission() sends the serialised context to the mission chain."""
     expected = MissionGeneratorResult(objective="Find water", reason="thirsty")
-    brain.mission_generator = MagicMock()
-    brain.mission_generator.ainvoke = AsyncMock(return_value=expected)
+    brain.mission_chain = MagicMock()
+    brain.mission_chain.ainvoke = AsyncMock(return_value=expected)
 
     result = asyncio.run(
         brain.propose_mission(
@@ -176,10 +181,12 @@ def test_propose_mission(brain: PlayerBrain, observation: WorldMapObservation) -
     )
 
     assert result is expected
-    brain.mission_generator.ainvoke.assert_awaited_once_with(
-        observation=observation,
-        player_state="(0, 0)",
-        inventory=INVENTORY,
+    brain.mission_chain.ainvoke.assert_awaited_once_with(
+        MissionGeneratorInput(
+            observation=observation.to_prompt(),
+            player_state="(0, 0)",
+            inventory=INVENTORY,
+        )
     )
 
 
@@ -190,8 +197,8 @@ def test_propose_mission(brain: PlayerBrain, observation: WorldMapObservation) -
 
 def test_reply(brain: PlayerBrain, mission: Mission, history: MissionHistory) -> None:
     """reply() sends the message and own context, and returns the reply text."""
-    brain.replier = MagicMock()
-    brain.replier.ainvoke = AsyncMock(return_value=PlayerReplyOutput(reply="Sure."))
+    brain.reply_chain = MagicMock()
+    brain.reply_chain.ainvoke = AsyncMock(return_value=PlayerReplyOutput(reply="Sure."))
 
     result = asyncio.run(
         brain.reply(
@@ -206,7 +213,7 @@ def test_reply(brain: PlayerBrain, mission: Mission, history: MissionHistory) ->
     )
 
     assert result == "Sure."
-    brain.replier.ainvoke.assert_awaited_once_with(
+    brain.reply_chain.ainvoke.assert_awaited_once_with(
         PlayerReplyInput(
             sender_name="bob",
             sender_prompt="Name: bob",
@@ -226,10 +233,10 @@ def test_reply(brain: PlayerBrain, mission: Mission, history: MissionHistory) ->
 @pytest.mark.parametrize(
     ("method", "chain", "stage"),
     [
-        ("next_action", "action_picker", "action"),
-        ("plan", "planner", "plan"),
-        ("propose_mission", "mission_generator", "mission"),
-        ("reply", "replier", "reply"),
+        ("next_action", "action_chain", "action"),
+        ("plan", "plan_chain", "plan"),
+        ("propose_mission", "mission_chain", "mission"),
+        ("reply", "reply_chain", "reply"),
     ],
 )
 def test_each_call_is_timed(

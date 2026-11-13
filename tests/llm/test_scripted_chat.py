@@ -94,7 +94,9 @@ def test_runner_judges_take_the_given_config() -> None:
     """WorldRunner(chat_config=...) feeds its judges that config."""
     config = ScriptedChatConfig()
     runner = WorldRunner(chat_config=config)
-    assert runner.build_judge.chat_config is config
+    judge = runner.judge
+    chains = [judge.build_chain, judge.craft_chain, judge.complete_chain]
+    assert all(c.chat_config is config for c in chains)
 
 
 def test_player_chains_take_the_given_config() -> None:
@@ -109,9 +111,9 @@ def test_player_chains_take_the_given_config() -> None:
     )
     brain = player.brain
     configs = [
-        brain.action_picker.chat_config,
-        brain.planner.config.chat_config,
-        brain.replier.config.chat_config,
-        brain.mission_generator.config.chat_config,
+        brain.action_chain.chat_config,
+        brain.plan_chain.chat_config,
+        brain.reply_chain.chat_config,
+        brain.mission_chain.chat_config,
     ]
     assert all(c is config for c in configs)

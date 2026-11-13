@@ -8,14 +8,14 @@ For the shared chain pattern and how the chains fit a turn see [the LLM chains g
 
 - [`player_brain.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_brain.py) - the brain.
   Owns the player's four chains: the action picker, which turns an observation and the current mission into the next action, and the three below. Times each call.
-- [`player_planner.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_planner.py) - the planner.
-  Decomposes a mission into ordered sub-missions.
-- [`player_replier.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_replier.py) - the replier.
-  Generates an in-character reply to a message from another player, without touching world I/O.
-- [`mission_generator.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/mission_generator.py) - the mission generator.
-  Proposes a fresh mission objective from the current world observation.
+- [`player_planner.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_planner.py) - the planner's input and output.
+  The planner decomposes a mission into ordered sub-missions.
+- [`player_replier.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_replier.py) - the replier's input and output.
+  The replier writes an in-character reply to a message from another player.
+- [`mission_generator.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/mission_generator.py) - the mission generator's input and output.
+  The generator proposes a fresh mission objective from the current world observation.
 
-Each chain pairs a `BaseModelKwargs` input, whose fields define the required prompt variables, with a prompt template and a validated pydantic output.
+Each chain pairs a `BaseModelKwargs` input, whose fields define the required prompt variables, with a prompt template and a validated pydantic output; the brain builds the chains from them.
 
 ## Mission model
 

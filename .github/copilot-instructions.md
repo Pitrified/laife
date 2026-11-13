@@ -156,7 +156,7 @@ platform.node().lower().startswith("pmn-14g4")  # g4, else g7
 | Rendering     | `src/laife/rendering/world_renderer.py` | `WorldRenderer` reads `WorldRunner` state and converts it into Pygame sprites/window; display dependency is isolated here, `WorldRunner` has none |
 | Simulation    | `src/laife/entities/world_runner.py`    | Authoritative state, processes `WReq` messages                                                                                                    |
 | Entities      | `src/laife/entities/`                   | `Player`, `Building`, `Utensil`, `Terrain`                                                                                                        |
-| AI brain      | `src/laife/llm/player_brain.py`         | `PlayerBrain.think()` → `BaseAction`                                                                                                              |
+| AI brain      | `src/laife/llm/player_brain.py`         | `PlayerBrain` owns the player's chains; `next_action()` → `BaseAction`                                                                            |
 | Actions       | `src/laife/entities/action.py`          | The `Actions` discriminated union of `BaseAction` subclasses                                                                                      |
 | Missions      | `src/laife/llm/mission.py`              | `Mission` owns `MissionHistory`; supports nested sub-missions                                                                                     |
 | LLM services  | `src/laife/params/llm_services/`        | Which llm-core chat, embeddings and vector store configs this game uses                                                                           |

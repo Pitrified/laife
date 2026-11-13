@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in progress
 ---
 
 # Phase 4 - chain wrappers
@@ -99,3 +99,27 @@ ANS 2026-11-13: yes, in this phase.
 
 - No class in `src/laife` only wraps a `StructuredLLMChain`; `WorldRunner` builds no chain.
 - `make check` passes; `make headless` gives the same positions and the same `llm_call` records as before the phase.
+
+## Decided by the agent while implementing
+
+For the user's review, 2026-11-13.
+
+- `WorldJudge` builds its three chains through one private `_chain(prompt)` helper, since they share the input and output models; the brain spells out its four, each on its own models.
+- `check_build` takes the `Building` and formats it, as the runner did; `check_craft` and `check_complete` take the request's strings.
+- `next_action` unwraps `.act` after the timed block, so the timing covers only the chain call.
+- `test_world_judge.py` also lost its test of `MissingPromptVariablesError`'s message: it tests llm-core's class, which llm-core's suite matches by message. laife's test that the error is a `ValueError` went with `test_structured_chain.py` and was not moved.
+- `tests/llm/test_player_planner.py` now holds only the `Player.plan` tests; the name is kept.
+- The architecture table in `.github/copilot-instructions.md` still named `PlayerBrain.think()`, renamed in phase 3; the row now names `next_action()`.
+- llm-core: the two wrong-output-type tests replace the built chain with a `RunnableLambda` returning a string; they set `_chain` with `# noqa: SLF001`, as the lazy-init tests in the same file do.
+
+## Outcome
+
+- The five wrappers, the three `*Config` models and the sync `invoke`s are gone; the chain modules hold only their models, with one-line input docstrings.
+- `PlayerBrain` holds `action_chain`, `plan_chain`, `reply_chain`, `mission_chain` and builds the planner and mission input itself.
+- `WorldJudge(WorldJudgeConfig)` holds `build_chain`, `craft_chain`, `complete_chain`, with `check_build`, `check_craft`, `check_complete`; `WorldRunner` builds `self.judge` and builds no chain.
+- Tests: the wrapper tests and `tests/llm/test_structured_chain.py` are deleted; brain and judge tests mock the chain attributes and assert input and result; runner build tests mock `runner.judge.check_build`.
+  The count went from 292 to 272: 17 wrapper and chain tests and the exception test removed, 4 judge tests added (a fifth replaces the chat-config check), and `tests/test_models_build.py` lost the three `*Config` cases and gained `WorldJudgeConfig`.
+- `make check` passes. `make headless` with the default seed ends at the same positions; per player, the sequence of `llm_call`, action and world request records matches the run before the change.
+  The turn stamped on a `reply` record is the replier's turn when the message arrives, so it follows the interleaving of the two players: one run after the change stamped both replies a turn differently, a second run matched the baseline exactly.
+- Docs: the chains guide has a section on the world judge and no longer points at docstring notes; the llm and entities library pages and the glossary describe the modules as holding models.
+- llm-core: branch `test/structured_chain_wrong_type` adds the wrong-output-type case for `invoke` and `ainvoke`; its suite, ruff and pyright pass. Not committed; the patch release and laife's pin move are still open.

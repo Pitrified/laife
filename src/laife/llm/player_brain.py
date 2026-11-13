@@ -2,23 +2,21 @@
 
 from typing import TYPE_CHECKING
 
+from llm_core.chains.structured_chain import StructuredLLMChain
 from llm_core.chat.config.base import ChatConfig
 from llm_core.prompts.prompt_loader import PromptLoader
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 from pydantic import BaseModel
 
-from laife.entities.action import ActionPicker
+from laife.entities.action import ActionEnvelope
 from laife.entities.action import ActionPickerInput
 from laife.entities.action import BaseAction
-from laife.llm.mission_generator import MissionGenerator
-from laife.llm.mission_generator import MissionGeneratorConfig
+from laife.llm.mission_generator import MissionGeneratorInput
 from laife.llm.mission_generator import MissionGeneratorResult
-from laife.llm.player_planner import PlayerPlanner
-from laife.llm.player_planner import PlayerPlannerConfig
+from laife.llm.player_planner import PlayerPlannerInput
 from laife.llm.player_planner import PlayerPlannerResult
-from laife.llm.player_replier import PlayerReplier
-from laife.llm.player_replier import PlayerReplierConfig
 from laife.llm.player_replier import PlayerReplyInput
+from laife.llm.player_replier import PlayerReplyOutput
 from laife.meta.logger import timed_llm_call
 
 if TYPE_CHECKING:
@@ -53,27 +51,29 @@ class PlayerBrain:
         """Build the four chains from config; *player_name* labels the timing records."""
         self.config = config
         self.player_name = player_name
-        self.action_picker = ActionPicker(
+        self.action_chain = StructuredLLMChain(
             chat_config=config.chat_config,
             prompt_str=PromptLoader(config.action_prompt).load_prompt(),
+            input_model=ActionPickerInput,
+            output_model=ActionEnvelope,
         )
-        self.planner = PlayerPlanner(
-            PlayerPlannerConfig(
-                chat_config=config.chat_config,
-                prompt_loader_config=config.plan_prompt,
-            )
+        self.plan_chain = StructuredLLMChain(
+            chat_config=config.chat_config,
+            prompt_str=PromptLoader(config.plan_prompt).load_prompt(),
+            input_model=PlayerPlannerInput,
+            output_model=PlayerPlannerResult,
         )
-        self.replier = PlayerReplier(
-            PlayerReplierConfig(
-                chat_config=config.chat_config,
-                prompt_loader_config=config.reply_prompt,
-            )
+        self.reply_chain = StructuredLLMChain(
+            chat_config=config.chat_config,
+            prompt_str=PromptLoader(config.reply_prompt).load_prompt(),
+            input_model=PlayerReplyInput,
+            output_model=PlayerReplyOutput,
         )
-        self.mission_generator = MissionGenerator(
-            MissionGeneratorConfig(
-                chat_config=config.chat_config,
-                prompt_loader_config=config.mission_prompt,
-            )
+        self.mission_chain = StructuredLLMChain(
+            chat_config=config.chat_config,
+            prompt_str=PromptLoader(config.mission_prompt).load_prompt(),
+            input_model=MissionGeneratorInput,
+            output_model=MissionGeneratorResult,
         )
 
     def _timed(self, stage: str, turn: int) -> AbstractContextManager[None]:
@@ -96,7 +96,7 @@ class PlayerBrain:
     ) -> BaseAction:
         """Pick the next action for *mission*."""
         with self._timed("action", turn):
-            return await self.action_picker.ainvoke(
+            envelope = await self.action_chain.ainvoke(
                 ActionPickerInput(
                     mission=mission.to_prompt(),
                     history=history.to_prompt(),
@@ -106,6 +106,7 @@ class PlayerBrain:
                     nearby_players=observation.nearby_players_to_prompt(),
                 )
             )
+        return envelope.act
 
     async def plan(
         self,
@@ -117,11 +118,13 @@ class PlayerBrain:
     ) -> PlayerPlannerResult:
         """Decompose *mission* into ordered sub-mission objectives."""
         with self._timed("plan", turn):
-            return await self.planner.ainvoke(
-                mission=mission,
-                history=history,
-                observation=observation,
-                player_state=player_state,
+            return await self.plan_chain.ainvoke(
+                PlayerPlannerInput(
+                    mission=mission.to_prompt(),
+                    history=history.to_prompt(),
+                    observation=observation.to_prompt(),
+                    player_state=player_state,
+                )
             )
 
     async def propose_mission(
@@ -133,10 +136,12 @@ class PlayerBrain:
     ) -> MissionGeneratorResult:
         """Propose a mission objective for the current situation."""
         with self._timed("mission", turn):
-            return await self.mission_generator.ainvoke(
-                observation=observation,
-                player_state=player_state,
-                inventory=inventory,
+            return await self.mission_chain.ainvoke(
+                MissionGeneratorInput(
+                    observation=observation.to_prompt(),
+                    player_state=player_state,
+                    inventory=inventory,
+                )
             )
 
     async def reply(
@@ -151,7 +156,7 @@ class PlayerBrain:
     ) -> str:
         """Write an in-character reply to *message* from *sender_name*."""
         with self._timed("reply", turn):
-            result = await self.replier.ainvoke(
+            result = await self.reply_chain.ainvoke(
                 PlayerReplyInput(
                     sender_name=sender_name,
                     sender_prompt=sender_prompt,

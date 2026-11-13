@@ -95,7 +95,7 @@ See [world request](#world-request) and [world response](#world-response).
 
 ## World judge
 
-The LLM chain the world uses to decide whether a build or craft action is valid, returning a success flag with feedback.
+`WorldJudge`, the LLM chains the world uses to decide whether a build, a craft or a reported mission completion is valid, returning a success flag with feedback.
 This is the world's reasoning, distinct from the player's brain.
 See [`entities/world_judge.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_judge.py).
 

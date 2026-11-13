@@ -26,7 +26,7 @@ It delegates decisions to [the LLM chains](llm.md), converts the chosen action i
 
 ## Actions
 
-[`action.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/action.py) defines `BaseAction` and the concrete actions the brain can choose, along with the action picker chain and its input model.
+[`action.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/action.py) defines `BaseAction` and the concrete actions the brain can choose, along with the action picker's input model and `ActionEnvelope`, its output.
 Every action carries the reason it was chosen.
 
 ## Buildings, terrain, utensils
@@ -40,7 +40,7 @@ These entities render to prompt text relative to a point of view, and serialize 
 ## Observation and judging
 
 - [`world_map_observation.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_map_observation.py) - the structured spatial snapshot a player perceives, with relative positions and cardinal directions.
-- [`world_judge.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_judge.py) - the LLM judge that decides whether a build or craft action is valid.
+- [`world_judge.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_judge.py) - `WorldJudge`, the LLM judge that decides whether a build, a craft or a reported completion is valid; `WorldRunner` acts on its verdict.
 
 ## Utilities
 
