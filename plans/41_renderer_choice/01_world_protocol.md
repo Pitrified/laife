@@ -1,5 +1,5 @@
 ---
-status: in progress
+status: done
 ---
 
 # Phase 1 - World protocol, no client
@@ -127,3 +127,15 @@ Continuing the numbering of [`00_start.md`](00_start.md); answers go here.
   - b. Another port the user already keeps free on g7.
   - Recommended: a; on g7, 8000 and 8001 are listening on localhost and 8002 is free (checked 2026-11-14).
   - ANS: a, 8002.
+
+## What the implementation found
+
+- FastAPI runs a plain `def` route in a worker thread, so every route is `async def`; otherwise `/state` would read the live game from outside the loop.
+- The sink takes loguru's `serialize=True` line, the same text the file sink writes, so `parse_line` is the one conversion for both; it is public now.
+- `test_models_build` picks up every new pydantic model by itself, which is why the test count grew by more than the tests written.
+- The stream test waits on nothing: listening on the socket before uvicorn starts queues the client's connection. Shown failing within seconds, not hanging, with the sink publishing nothing.
+- `_cancel` first awaited tasks that were already done, which re-raises their exception inside `finally` and skips cancelling the rest; it now leaves done tasks alone.
+- The pause logged by `--paused` happens before the sink is added, so it is in the file but not in the stream; harmless, since the snapshot carries `paused`.
+- For the page, outside this phase:
+  - `history` resets when a mission starts and when a plan is made, so a snapshot's history can be empty right after either. The "latest actions" list is better built from `action` events in the stream than from the snapshot.
+  - A successful build or craft marks the root mission completed (`self.mission.record_action_success()` in `Player`), even with sub-missions still pending. With the default script, the plan's two steps are gone by turn 3. Existing game behaviour; a backlog question, not this folder's.
