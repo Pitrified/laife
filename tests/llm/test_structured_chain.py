@@ -8,10 +8,9 @@ from unittest.mock import patch
 from llm_core.chains.structured_chain import MissingPromptVariablesError
 from llm_core.chains.structured_chain import StructuredLLMChain
 from llm_core.chat.config.ollama import OllamaChatConfig
+from llm_core.data_models.basemodel_kwargs import BaseModelKwargs
 from pydantic import BaseModel
 import pytest
-
-from laife.data_models.basemodel_kwargs import BaseModelKwargs
 
 # ---------------------------------------------------------------------------
 # Test models

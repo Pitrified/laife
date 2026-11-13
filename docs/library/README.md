@@ -15,11 +15,10 @@ For cross-cutting explanations see [the guides](../guides/README.md).
 - [embed](embed.md) - the sentence-transformers embedding wrapper.
 - [meta](meta.md) - the singleton metaclass and the structured logger.
 - [ui](ui.md) - the asynchronous console logger.
-- [data_models](data_models.md) - the shared pydantic base.
 
 ## How the packages relate
 
-The pure logic lives in `entities`, `llm`, `config`, and `data_models`, with no pygame dependency.
+The pure logic lives in `entities`, `llm` and `config`, with no pygame dependency.
 `prompts` holds the template text the `llm` chains load at runtime.
 `rendering` and `ui` are presentation layers that observe the logic.
 `params` and `config` supply settings to all of them.

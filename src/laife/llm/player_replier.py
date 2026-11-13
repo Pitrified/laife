@@ -4,11 +4,10 @@ from dataclasses import dataclass
 
 from llm_core.chains.structured_chain import StructuredLLMChain
 from llm_core.chat.config.base import ChatConfig
+from llm_core.data_models.basemodel_kwargs import BaseModelKwargs
 from llm_core.prompts.prompt_loader import PromptLoader
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 from pydantic import BaseModel
-
-from laife.data_models.basemodel_kwargs import BaseModelKwargs
 
 
 class PlayerReplyInput(BaseModelKwargs):

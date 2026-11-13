@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 1 - mechanical
@@ -31,3 +31,10 @@ Two changes with no behaviour change. Context: [`00_start.md`](00_start.md).
 
 - No `*args, **kwargs` forwarding and no `noqa: ANN002/ANN003` left in `world_channel.py`.
 - `make check` passes with the same test count, including the strict docs build; `make headless` gives the same positions as on `main`.
+
+## Outcome
+
+- `BaseModelKwargs` imported from llm-core in six files; `src/laife/data_models/`, its docs page and nav entry removed.
+- `WReq` and the six `WRec*` are `@dataclass(kw_only=True, eq=False)`; the `*args, **kwargs` forwarding and its `noqa` lines are gone. `WRecMove` and `WRecInteract` keep a `__str__`.
+- No call site needed a change.
+- `make check` passes with the same test count; `make headless` with the default seed ends with both players at the same positions as before the phase.

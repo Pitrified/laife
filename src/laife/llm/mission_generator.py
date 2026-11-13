@@ -5,12 +5,11 @@ from typing import TYPE_CHECKING
 
 from llm_core.chains.structured_chain import StructuredLLMChain
 from llm_core.chat.config.base import ChatConfig
+from llm_core.data_models.basemodel_kwargs import BaseModelKwargs
 from llm_core.prompts.prompt_loader import PromptLoader
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 from pydantic import BaseModel
 from pydantic import Field
-
-from laife.data_models.basemodel_kwargs import BaseModelKwargs
 
 if TYPE_CHECKING:
     from laife.entities.world_map_observation import WorldMapObservation

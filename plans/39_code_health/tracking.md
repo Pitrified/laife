@@ -20,7 +20,7 @@ Analysis and questions in [`00_start.md`](00_start.md).
 
 | #  | Phase                       | Plan                                           | Status |
 | -- | --------------------------- | ---------------------------------------------- | ------ |
-| 1  | A: mechanical               | [`01_mechanical.md`](01_mechanical.md)         | planned |
+| 1  | A: mechanical               | [`01_mechanical.md`](01_mechanical.md)         | done    |
 | 2  | C: OpenAI only and install  | [`02_openai_only.md`](02_openai_only.md)       | planned |
 | 3  | B1: thinking into the brain | [`03_player_brain.md`](03_player_brain.md)     | draft  |
 | 4  | B2: chain wrappers          | [`04_chain_wrappers.md`](04_chain_wrappers.md) | draft  |
@@ -34,3 +34,4 @@ Append-only. Newest at the bottom.
 - 2026-11-13 : picked five items from `plan.md` with the user; read the wrappers, `PlayerBrain`, the world requests, the provider params and the install; Q1, Q2 and the order answered; Q3-Q5 open.
 - 2026-11-13 : assessed `Player`, `PlayerBrain`, `laife.embed` and the prompt loading; Q3-Q5 answered; the brain move split out as phase 3, the wrappers moved to phase 4; mind state and chain timing added to `plan.md`.
 - 2026-11-13 : consistency review of phases 1 and 2 against the code: docs pages and nav, `eq=False`, the test placeholder config, `dev-llm-core` extras, `nokeys.env`; unused dependencies decided with the user; phases 1 and 2 set to `planned`.
+- 2026-11-13 : plan committed; phase 1 done.

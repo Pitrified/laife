@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from llm_core.chains.structured_chain import StructuredLLMChain
+from llm_core.data_models.basemodel_kwargs import BaseModelKwargs
 from pydantic import BaseModel
 from pydantic import Field
 
-from laife.data_models.basemodel_kwargs import BaseModelKwargs
 from laife.entities.utils.directions import CardinalDirection
 
 if TYPE_CHECKING:

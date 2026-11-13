@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from dataclasses import field
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
@@ -145,181 +147,85 @@ class WResInteract(WRes):
         return f"WResInteract(status={self.status}, reply={self.reply!r})"
 
 
+@dataclass(kw_only=True, eq=False)
 class WReq:
-    """A request to the world."""
+    """A request to the world.
 
-    def __init__(
-        self,
-        response_queue: asyncio.Queue[WRes],
-    ) -> None:
-        """Initialize the request."""
-        self.response_queue = response_queue
-        # Correlation metadata stamped by Player._world_request before the
-        # request is enqueued; lets the struct log tie a request back to the
-        # player turn that issued it.  Named player_name (not player) because
-        # WRecMove already has a `player` attribute holding the actual Player
-        # instance it's moving.
-        self.player_name: str = ""
-        self.turn: int = -1
+    Compared by identity: a request is a one-off message owed its own reply
+    on ``response_queue``, so two with the same fields are still two requests.
+    """
 
-    def __str__(self) -> str:
-        """Return the string representation of the request."""
-        return (
-            f"WReq(id={id(self)}, player_name={self.player_name!r}, turn={self.turn}"
-            f", response_queue={self.response_queue})"
-        )
+    response_queue: asyncio.Queue[WRes]
+    # Correlation metadata stamped by Player._world_request before the
+    # request is enqueued; lets the struct log tie a request back to the
+    # player turn that issued it.  Named player_name (not player) because
+    # WRecMove already has a `player` attribute holding the actual Player
+    # instance it's moving.
+    player_name: str = field(default="", init=False)
+    turn: int = field(default=-1, init=False)
 
 
+@dataclass(kw_only=True, eq=False)
 class WRecBuild(WReq):
     """A building request."""
 
-    def __init__(
-        self,
-        building: Building,
-        observation: str,
-        player_state: str,
-        *args,  # noqa: ANN002
-        **kwargs,  # noqa: ANN003
-    ) -> None:
-        """Initialize the building request."""
-        super().__init__(*args, **kwargs)
-        self.building = building
-        self.observation = observation
-        self.player_state = player_state
-
-    def __str__(self) -> str:
-        """Return the string representation of the request."""
-        return (
-            f"WRecBuild(id={id(self)}"
-            f", response_queue={self.response_queue}"
-            f", building={self.building})"
-        )
+    building: Building
+    observation: str
+    player_state: str
 
 
+@dataclass(kw_only=True, eq=False)
 class WRecCraft(WReq):
     """A craft request."""
 
-    def __init__(
-        self,
-        utensil_name: str,
-        description: str,
-        observation: str,
-        player_state: str,
-        *args,  # noqa: ANN002
-        **kwargs,  # noqa: ANN003
-    ) -> None:
-        """Initialize the craft request."""
-        super().__init__(*args, **kwargs)
-        self.utensil_name = utensil_name
-        self.description = description
-        self.observation = observation
-        self.player_state = player_state
-
-    def __str__(self) -> str:
-        """Return the string representation of the request."""
-        return (
-            f"WRecCraft(id={id(self)}"
-            f", utensil_name={self.utensil_name}"
-            f", response_queue={self.response_queue})"
-        )
+    utensil_name: str
+    description: str
+    observation: str
+    player_state: str
 
 
+@dataclass(kw_only=True, eq=False)
 class WRecObserve(WReq):
     """A request for a world-state observation centred on *position*."""
 
-    def __init__(
-        self,
-        position: Position,
-        *args,  # noqa: ANN002
-        **kwargs,  # noqa: ANN003
-    ) -> None:
-        """Initialize the observe request."""
-        super().__init__(*args, **kwargs)
-        self.position = position
-
-    def __str__(self) -> str:
-        """Return the string representation of the request."""
-        return (
-            f"WRecObserve(id={id(self)}"
-            f", position={self.position}"
-            f", response_queue={self.response_queue})"
-        )
+    position: Position
 
 
+@dataclass(kw_only=True, eq=False)
 class WRecMove(WReq):
     """Request to validate and confirm a one-step player move."""
 
-    def __init__(
-        self,
-        player: Player,
-        new_position: Position,
-        *args,  # noqa: ANN002
-        **kwargs,  # noqa: ANN003
-    ) -> None:
-        """Initialize the move request."""
-        super().__init__(*args, **kwargs)
-        self.player = player
-        self.new_position = new_position
+    player: Player
+    new_position: Position
 
     def __str__(self) -> str:
-        """Return the string representation of the request."""
-        return (
-            f"WRecMove(id={id(self)}, player={self.player.name}, new_position={self.new_position})"
-        )
+        """Name the player rather than printing the whole Player object."""
+        return f"WRecMove(player={self.player.name}, new_position={self.new_position})"
 
 
+@dataclass(kw_only=True, eq=False)
 class WRecComplete(WReq):
     """Request the world to verify that a focus mission is done."""
 
-    def __init__(
-        self,
-        objective: str,
-        outcome: str,
-        observation: str,
-        player_state: str,
-        *args,  # noqa: ANN002
-        **kwargs,  # noqa: ANN003
-    ) -> None:
-        """Initialize the completion verification request."""
-        super().__init__(*args, **kwargs)
-        self.objective = objective
-        self.outcome = outcome
-        self.observation = observation
-        self.player_state = player_state
-
-    def __str__(self) -> str:
-        """Return the string representation of the request."""
-        return (
-            f"WRecComplete(id={id(self)}"
-            f", objective={self.objective!r}"
-            f", response_queue={self.response_queue})"
-        )
+    objective: str
+    outcome: str
+    observation: str
+    player_state: str
 
 
+@dataclass(kw_only=True, eq=False)
 class WRecInteract(WReq):
     """Request to route a natural-language message from one player to another."""
 
-    def __init__(
-        self,
-        sender_name: str,
-        sender_prompt: str,
-        target_name: str,
-        message: str,
-        *args,  # noqa: ANN002
-        **kwargs,  # noqa: ANN003
-    ) -> None:
-        """Initialize the interact request."""
-        super().__init__(*args, **kwargs)
-        self.sender_name = sender_name
-        self.sender_prompt = sender_prompt
-        self.target_name = target_name
-        self.message = message
+    sender_name: str
+    sender_prompt: str
+    target_name: str
+    message: str
 
     def __str__(self) -> str:
-        """Return the string representation of the request."""
+        """Leave out the long sender prompt."""
         return (
-            f"WRecInteract(id={id(self)}"
-            f", sender={self.sender_name!r}"
+            f"WRecInteract(sender={self.sender_name!r}"
             f", target={self.target_name!r}"
             f", message={self.message!r})"
         )
