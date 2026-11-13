@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 1 - `reasoning_effort` on `ChatOpenAIConfig`
@@ -25,3 +25,10 @@ laife:
 
 - `make check` passes in llm-core (on its own venv) and in laife on `make dev-llm-core`.
 - `make headless` unchanged: same positions, same `llm_call` records.
+
+## Outcome
+
+- llm-core `feat/v0_4_items` 18a91fe: the field, two tests (left out when `None`, reaches the built `ChatOpenAI`), an `Unreleased` CHANGELOG entry.
+  llm-core's suite passes; pyright reports the same transcription errors as on `main`, none new.
+- laife: the comment in `ChatParams.load_params` updated, settings unchanged; the backlog item "Tuning the chat params" added under "Engine".
+- `make check` passes on the editable llm-core, 272 tests. `make headless` ends at the same positions; per player, the action, request and `llm_call` records match the run before the phase. Reply records are compared as a count, since where one falls follows the other player's interleaving.

@@ -26,8 +26,7 @@ class ChatParams:
 
     def load_params(self) -> None:
         """Load the params for chat services."""
-        # luna only accepts temperature 1 unless reasoning is off,
-        # and ChatOpenAIConfig has no reasoning_effort field.
+        # luna only accepts temperature 1 unless reasoning_effort is "none".
         self.openai = ChatOpenAIConfig(
             temperature=1,
             model="gpt-6-luna",

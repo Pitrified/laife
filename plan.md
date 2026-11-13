@@ -37,6 +37,12 @@ A `--seed` argument or an env var would make a live run start from a known world
 The headless run answers from a fixed script.
 Replaying a live run's recorded answers would use the same seam, `ScriptedChatConfig` per player; it diverges as soon as the world differs from the recording, so it waits for a case that needs it (folder 38).
 
+### Tuning the chat params
+
+laife's model, temperature and `reasoning_effort` (`ChatParams.load_params`) were picked to make a live run work, never tuned.
+gpt-6-luna takes only temperature 1 unless `reasoning_effort` is `"none"`; fala-language-tutor's prompt lab compared models and efforts for its own prompts (its folder 14).
+A change is checked by a live run capped by turns and approved first, since it spends the prepaid OpenAI credit (folder 40).
+
 ### A failed reply stops the world
 
 An exception in the target's `receive_message()` escapes `WorldRunner.route_interaction` and ends `WorldRunner.simulate()`: the live game stops with a traceback, the headless run re-raises it.
