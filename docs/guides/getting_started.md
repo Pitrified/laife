@@ -28,7 +28,9 @@ uv run python game/main.py
 
 A pygame window opens with the world, the players, and the buildings.
 Press `q` to quit.
-The entry point [`game/main.py`](https://github.com/Pitrified/laife/blob/main/game/main.py) shows how the world is assembled; see [the architecture guide](architecture.md) for what each piece does.
+The entry point [`game/main.py`](https://github.com/Pitrified/laife/blob/main/game/main.py) starts the pieces; the starting world is built in [`world_setup.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_setup.py). See [the architecture guide](architecture.md) for what each piece does.
+
+To run with no window and no provider, see [Headless run](headless.md).
 
 ## Checks
 

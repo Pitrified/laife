@@ -1,4 +1,4 @@
-.PHONY: help sync hooks run tui lint format typecheck test plans prose docs-check check nbstrip docs dev-llm-core undev
+.PHONY: help sync hooks run headless tui lint format typecheck test plans prose docs-check check nbstrip docs dev-llm-core undev
 
 MAKEFLAGS += --no-print-directory
 .DEFAULT_GOAL := help
@@ -9,6 +9,8 @@ MAKEFLAGS += --no-print-directory
 UV_RUN := uv run --no-sync
 
 LLM_CORE_PATH ?= ../llm-core
+TURNS ?= 6
+SEED ?= 0
 
 help:  ## Show this help (list targets and their descriptions)
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -31,6 +33,9 @@ hooks:  ## Install the pre-commit git hooks, once per clone
 
 run:  ## Run the game
 	$(UV_RUN) game/main.py
+
+headless:  ## Run with no window and a scripted LLM; TURNS=6 SEED=0
+	$(UV_RUN) game/headless.py --turns $(TURNS) --seed $(SEED)
 
 tui:  ## Run the observability TUI (tails the newest cache/game_*.jsonl)
 	$(UV_RUN) python -m laife.observability.tui

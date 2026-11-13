@@ -34,6 +34,8 @@ from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
 
 if TYPE_CHECKING:
+    from llm_core.chat.config.base import ChatConfig
+
     from laife.config.types import Position
     from laife.entities.building import Building
     from laife.entities.player import Player
@@ -48,8 +50,12 @@ class WorldRunner:
     to operate (enabling headless simulation and testing).
     """
 
-    def __init__(self) -> None:
-        """Initialise the runner with empty entity lists and an input queue."""
+    def __init__(self, chat_config: ChatConfig | None = None) -> None:
+        """Initialise the runner with empty entity lists and an input queue.
+
+        *chat_config* feeds the build, craft and complete judges; ``None``
+        takes ``llm_services.chat.default``.
+        """
         # authoritative entity lists (no pygame data structures)
         self.players: list[Player] = []
         self.buildings: list[Building] = []
@@ -60,6 +66,8 @@ class WorldRunner:
 
         # LLM judges for build and craft actions
         laife_params = get_laife_params()
+        if chat_config is None:
+            chat_config = laife_params.llm_services.chat.default
         build_prompt = PromptLoader(
             PromptLoaderConfig(
                 base_prompt_fol=laife_params.paths.prompts_fol,
@@ -73,11 +81,11 @@ class WorldRunner:
             )
         ).load_prompt()
         self.build_judge = WorldActionJudge(
-            chat_config=laife_params.llm_services.chat.default,
+            chat_config=chat_config,
             prompt_str=build_prompt,
         )
         self.craft_judge = WorldActionJudge(
-            chat_config=laife_params.llm_services.chat.default,
+            chat_config=chat_config,
             prompt_str=craft_prompt,
         )
         complete_prompt = PromptLoader(
@@ -87,7 +95,7 @@ class WorldRunner:
             )
         ).load_prompt()
         self.complete_judge = WorldActionJudge(
-            chat_config=laife_params.llm_services.chat.default,
+            chat_config=chat_config,
             prompt_str=complete_prompt,
         )
 

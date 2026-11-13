@@ -105,7 +105,9 @@ What exists today and its limits:
 
 - `make run` opens the pygame window and calls the configured LLM provider for every player turn. It needs a display and real credentials, so it costs money and is run by or with the user.
 - `make tui` reads the newest structured log; `SimControl` pauses and steps the loop.
-- There is no headless run with a scripted LLM yet. It is a `plan.md` item, and until it exists a change to game behaviour is not verified by an agent alone: say so rather than calling it done.
+- `make headless` runs the same world with no window and a scripted LLM, `TURNS` and `SEED` overridable, and writes the log `make tui` reads. It is the run an agent can do: no display, no provider, a few seconds. `docs/guides/headless.md` has what it runs.
+- What it does not cover: anything drawn on screen, and how a real model behaves. A change to the renderer or to a prompt is still not verified by an agent alone: say so rather than calling it done.
+- A new chain, or a new output model on an existing one, needs an answer in `laife.llm.scripted_chat`; until it has one, the headless run fails with `UnscriptedSchemaError`.
 
 ## Unattended work
 

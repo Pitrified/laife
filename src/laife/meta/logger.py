@@ -71,8 +71,8 @@ def configure_logging(
     log_file: str | Path | None = None,
     *,
     enqueue: bool = True,
-) -> None:
-    """Set up the JSON-lines file sink.
+) -> Path:
+    """Set up the JSON-lines file sink and return its path.
 
     Removes loguru's default stderr handler (``Alog`` handles console output)
     and adds a single file handler that writes one JSON object per line.
@@ -108,6 +108,7 @@ def configure_logging(
         level=level,
         enqueue=enqueue,
     )
+    return Path(log_file)
 
 
 def _suppress_known_warnings() -> None:

@@ -59,6 +59,8 @@ from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
 
 if TYPE_CHECKING:
+    from llm_core.chat.config.base import ChatConfig
+
     from laife.config.types import Position
     from laife.config.types import Size
     from laife.entities.sim_control import SimControl
@@ -84,11 +86,15 @@ class Player:
         state: PlayerState = PlayerState.IDLE,
         size: Size = (1, 1),
         sim_control: SimControl | None = None,
+        chat_config: ChatConfig | None = None,
     ) -> None:
         """Create the player.
 
         The play loop is NOT started here.  The caller is responsible for
         starting it (e.g. via asyncio.create_task or asyncio.gather).
+
+        *chat_config* feeds all four of the player's chains; ``None`` takes
+        ``llm_services.chat.default``.
         """
         self.name: str = name
         self.player_type: str = player_type
@@ -110,9 +116,11 @@ class Player:
 
         # cognition
         laife_params = get_laife_params()
+        if chat_config is None:
+            chat_config = laife_params.llm_services.chat.default
         self.brain = PlayerBrain(
             PlayerBrainConfig(
-                chat_config=laife_params.llm_services.chat.default,
+                chat_config=chat_config,
                 prompt_loader_config=PromptLoaderConfig(
                     base_prompt_fol=laife_params.paths.prompts_fol,
                     prompt_name="player_brain",
@@ -121,7 +129,7 @@ class Player:
         )
         self.planner = PlayerPlanner(
             PlayerPlannerConfig(
-                chat_config=laife_params.llm_services.chat.default,
+                chat_config=chat_config,
                 prompt_loader_config=PromptLoaderConfig(
                     base_prompt_fol=laife_params.paths.prompts_fol,
                     prompt_name="player_planner",
@@ -130,7 +138,7 @@ class Player:
         )
         self.replier = PlayerReplier(
             PlayerReplierConfig(
-                chat_config=laife_params.llm_services.chat.default,
+                chat_config=chat_config,
                 prompt_loader_config=PromptLoaderConfig(
                     base_prompt_fol=laife_params.paths.prompts_fol,
                     prompt_name="player_reply",
@@ -139,7 +147,7 @@ class Player:
         )
         self.mission_generator = MissionGenerator(
             MissionGeneratorConfig(
-                chat_config=laife_params.llm_services.chat.default,
+                chat_config=chat_config,
                 prompt_loader_config=PromptLoaderConfig(
                     base_prompt_fol=laife_params.paths.prompts_fol,
                     prompt_name="mission_generator",
@@ -180,9 +188,14 @@ class Player:
     # Agent loop
     # ------------------------------------------------------------------
 
-    async def play(self) -> None:
-        """Run the agent decision loop (intended to run as an asyncio task)."""
-        while True:
+    async def play(self, max_turns: int | None = None) -> None:
+        """Run the agent decision loop (intended to run as an asyncio task).
+
+        Returns once ``self.turn`` reaches *max_turns*; ``None`` loops until
+        cancelled. A player that has returned still answers messages, since
+        the world calls :meth:`receive_message` directly.
+        """
+        while max_turns is None or self.turn < max_turns:
             # Hold here while paused; the turn about to start is self.turn + 1.
             if self.sim_control is not None:
                 await self.sim_control.wait_turn(self.name, self.turn + 1)
