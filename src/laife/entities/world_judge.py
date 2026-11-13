@@ -9,6 +9,8 @@ from llm_core.prompts.prompt_loader import PromptLoader
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 from pydantic import BaseModel
 
+from laife.meta.logger import log_llm_call
+
 if TYPE_CHECKING:
     from laife.entities.building import Building
 
@@ -48,19 +50,21 @@ class WorldJudge:
     def __init__(self, config: WorldJudgeConfig) -> None:
         """Build the three chains from config."""
         self.config = config
-        self.build_chain = self._chain(config.build_prompt)
-        self.craft_chain = self._chain(config.craft_prompt)
-        self.complete_chain = self._chain(config.complete_prompt)
+        self.build_chain = self._chain(config.build_prompt, "judge_build")
+        self.craft_chain = self._chain(config.craft_prompt, "judge_craft")
+        self.complete_chain = self._chain(config.complete_prompt, "judge_complete")
 
     def _chain(
-        self, prompt: PromptLoaderConfig
+        self, prompt: PromptLoaderConfig, name: str
     ) -> StructuredLLMChain[WorldJudgeInput, WorldJudgeResult]:
-        """Build one judge chain on *prompt*."""
+        """Build one judge chain on *prompt*, reporting its calls under *name*."""
         return StructuredLLMChain(
             chat_config=self.config.chat_config,
             prompt_str=PromptLoader(prompt).load_prompt(),
             input_model=WorldJudgeInput,
             output_model=WorldJudgeResult,
+            name=name,
+            on_call=log_llm_call,
         )
 
     async def check_build(

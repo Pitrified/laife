@@ -23,7 +23,6 @@ A chain points at its folder by name; the loader resolves the template from ther
 
 Each player has one [`PlayerBrain`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_brain.py), which owns the player's four chains: action, planner, replier and mission generator.
 `Player` calls one brain method per decision (`next_action`, `plan`, `reply`, `propose_mission`), passing plain values, and applies the result to its own state and mission.
-The brain times each call as an `llm_call` record labelled by stage.
 It holds no world queue, so a reply, which the world requests from inside its own loop, cannot reach the world.
 
 ## The world judge
@@ -31,6 +30,13 @@ It holds no world queue, so a reply, which the world requests from inside its ow
 [`WorldJudge`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_judge.py) is the same split on the world's side.
 It owns three chains on one input and output model, one per judged request: build, craft and complete.
 `WorldRunner` builds it, runs the free checks such as collision before calling it, and turns the verdict into a world response.
+
+## Timing
+
+Every chain is built with a `name` and `on_call=log_llm_call` (in `laife.meta.logger`), so each call that returns writes one `llm_call` record with the name as its stage, the model and the elapsed seconds.
+Player and turn are not passed to the chain: they come from `slog.contextualize`, set by `Player.play` for each turn and by `WorldRunner.simulate` around each request, so a judge's call is logged as the requester's.
+A reply runs inside the world's task while it handles the sender's request; `Player.receive_message` sets its own context, or the reply would be logged as the sender's.
+A new chain is timed by passing the same two arguments.
 
 ## The chains
 

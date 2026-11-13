@@ -100,7 +100,9 @@ class WorldRunner:
                 turn=player_input.turn,
                 kind=type(player_input).__name__,
             ).info(EVT_WORLD_REQUEST)
-            wrsp = await self.handle_player_input(player_input)
+            # The judges' LLM calls are logged as the requester's.
+            with slog.contextualize(player=player_input.player_name, turn=player_input.turn):
+                wrsp = await self.handle_player_input(player_input)
             self.input_queue.task_done()
             await player_input.response_queue.put(wrsp)
             alg.log("W: Sent response to player")

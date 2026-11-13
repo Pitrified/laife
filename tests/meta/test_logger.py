@@ -12,9 +12,9 @@ from laife.meta.log_events import EVT_ACTION
 from laife.meta.log_events import EVT_LLM_CALL
 from laife.meta.log_events import EVT_WORLD_REQUEST
 from laife.meta.logger import configure_logging
+from laife.meta.logger import log_llm_call
 from laife.meta.logger import restore_default_logging
 from laife.meta.logger import slog
-from laife.meta.logger import timed_llm_call
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -118,43 +118,57 @@ def test_configure_logging_creates_parent_dirs(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# timed_llm_call
+# log_llm_call
 # ---------------------------------------------------------------------------
 
 
-def test_timed_llm_call_emits_llm_call_record(tmp_path: Path) -> None:
-    """timed_llm_call must emit one EVT_LLM_CALL with player, turn, model, stage, elapsed."""
+def _llm_call_extra(log_file: Path) -> dict:
+    """Return the extra fields of the only record in *log_file*."""
+    lines = log_file.read_text().splitlines()
+    assert len(lines) == 1
+    return json.loads(lines[0])["record"]["extra"]
+
+
+def test_log_llm_call_takes_player_and_turn_from_context(tmp_path: Path) -> None:
+    """log_llm_call writes stage, model and elapsed, and player and turn from the context."""
     log_file = tmp_path / "game.jsonl"
     configure_logging(level="INFO", log_file=log_file, enqueue=False)
 
-    with timed_llm_call(player="Alice", turn=4, model="gpt-4o", stage="plan"):
-        pass
+    with slog.contextualize(player="Alice", turn=4):
+        log_llm_call("plan", "gpt-4o", 1.23456)
 
-    lines = log_file.read_text().splitlines()
-    assert len(lines) == 1
-    extra = json.loads(lines[0])["record"]["extra"]
+    extra = _llm_call_extra(log_file)
     assert extra["event"] == EVT_LLM_CALL
     assert extra["player"] == "Alice"
     assert extra["turn"] == 4
     assert extra["model"] == "gpt-4o"
     assert extra["stage"] == "plan"
-    assert "elapsed" in extra
+    assert extra["elapsed"] == 1.235
 
 
-def test_timed_llm_call_skips_record_on_error(tmp_path: Path) -> None:
-    """A call that raises inside the block must not emit an EVT_LLM_CALL record."""
+def test_log_llm_call_without_context(tmp_path: Path) -> None:
+    """Outside a context the record has no player or turn."""
     log_file = tmp_path / "game.jsonl"
     configure_logging(level="INFO", log_file=log_file, enqueue=False)
 
-    msg = "boom"
-    with (
-        pytest.raises(ValueError, match=msg),
-        timed_llm_call(player="Alice", turn=1, model="gpt-4o", stage="action"),
-    ):
-        raise ValueError(msg)
+    log_llm_call("action", "gpt-4o", 0.5)
 
-    content = log_file.read_text() if log_file.exists() else ""
-    assert content == ""
+    extra = _llm_call_extra(log_file)
+    assert "player" not in extra
+    assert "turn" not in extra
+
+
+def test_bound_value_wins_over_context(tmp_path: Path) -> None:
+    """A record that binds player itself keeps it inside another player's context."""
+    log_file = tmp_path / "game.jsonl"
+    configure_logging(level="INFO", log_file=log_file, enqueue=False)
+
+    with slog.contextualize(player="Alice", turn=4):
+        slog.bind(event=EVT_ACTION, player="Bob", turn=2).info(EVT_ACTION)
+
+    extra = _llm_call_extra(log_file)
+    assert extra["player"] == "Bob"
+    assert extra["turn"] == 2
 
 
 # ---------------------------------------------------------------------------

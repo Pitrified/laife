@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 2 - timing in the chain
@@ -39,3 +39,21 @@ laife:
 
 - `make check` passes in both repos.
 - `make headless`: same positions; the `llm_call` records for action, plan, mission and reply match the previous run on player, turn and stage; the judges now write `llm_call` records with the requester's player and turn.
+
+## Decided by the agent while implementing
+
+For the user's review, 2026-11-13.
+
+- The context is set with `slog.contextualize` at the three sites directly; no laife helper around it.
+- `Player.play` wraps the whole turn after `self.turn += 1`, so the pause wait before it is outside any context.
+- `on_call` runs after the output type check, so a wrong output type reports nothing, like a call that raises.
+- The brain's timing test is now one test that each chain carries its stage name and `log_llm_call`; the judge's names are checked through the new `tests/entities/test_llm_call_context.py`, which sends a craft and an interaction through `WorldRunner.simulate` and reads the records.
+- The reply test was shown failing with the context in `receive_message` removed: the record said `p0, 2`, the sender's.
+
+## Outcome
+
+- llm-core 8b8e9f9: `StructuredLLMChain.name` and `on_call`, five tests (invoke, ainvoke, wrong output type, a raising model, no callback), CHANGELOG.
+- laife: `log_llm_call` replaces `timed_llm_call`; `PlayerBrain` lost `player_name`, the `turn` arguments and `_timed`; the judge chains are named `judge_build`, `judge_craft`, `judge_complete`; the context is set in `Player.play`, `Player.receive_message` and `WorldRunner.simulate`.
+- Tests: 272, as before: the four parametrized brain timing cases and the two `timed_llm_call` tests went; one brain test, three logger tests (context, no context, bound value wins) and two context tests came in.
+- `make check` passes. `make headless` ends at the same positions; per player, the action, request and non-judge `llm_call` records match the baseline. The judges now write `llm_call` records, each with the player and turn of the build, craft or complete request it answers; the reply records carry the replier.
+- Docs: a "Timing" section in the chains guide, `log_llm_call` on the meta page; `plan.md` item "Timing every LLM call" removed.

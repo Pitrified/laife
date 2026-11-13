@@ -103,11 +103,6 @@ It gets a folder of its own, not mixed with other work.
 One player instance has one brain instance, tightly tied, so a mind state shared between the two can exist.
 To be assessed and planned on its own (folder 39 gave the brain the chains, not the state).
 
-### Timing every LLM call
-
-`timed_llm_call` in `laife.meta.logger` is wrapped by hand around some call sites; the world judges are not timed.
-Timing belongs lower, in the chain, possibly in llm-core's `StructuredLLMChain`, with the player and turn context coming from the log context rather than from arguments.
-
 ### Singleton reset
 
 The `Singleton` metaclass, used by `LaifeParams` and `Alog`, has no reset hook.

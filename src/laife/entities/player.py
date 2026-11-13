@@ -127,7 +127,6 @@ class Player:
                     base_prompt_fol=prompts_fol, prompt_name="mission_generator"
                 ),
             ),
-            player_name=name,
         )
         # Mission starts PENDING; the first play() iteration will generate a real objective.
         self.mission = Mission(
@@ -175,33 +174,35 @@ class Player:
             if self.sim_control is not None:
                 await self.sim_control.wait_turn(self.name, self.turn + 1)
             self.turn += 1
-            # Refresh observation before deciding
-            await self.observe()
-            # Generate a mission if none is active yet or the previous one finished.
-            if self.mission.status == MissionStatus.PENDING or self.mission.is_terminal():
-                new_obj = await self._generate_mission_objective()
-                self._start_new_mission(new_obj)
-            alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
-            # Think on how to solve the mission
-            action = await self.think(focus=self.mission.active_focus())
-            match action:
-                case ActionMove() as act:
-                    wrsp = await self.move(act)
-                case ActionBuild() as act:
-                    wrsp = await self.build(act)
-                case ActionCraft() as act:
-                    wrsp = await self.craft(act)
-                case ActionPlan() as act:
-                    wrsp = await self.plan(act)
-                case ActionComplete() as act:
-                    wrsp = await self.complete(act)
-                case ActionInteract() as act:
-                    wrsp = await self.interact(act)
-                case _:
-                    wrsp = await self.action_error(action)
-            he = MissionHistoryEntry(action=action, result=str(wrsp))
-            self.history.add_history_entry(he)
-            self._update_mission_from_response(action, wrsp)
+            # Player and turn of every LLM call made in this turn (log_llm_call).
+            with slog.contextualize(player=self.name, turn=self.turn):
+                # Refresh observation before deciding
+                await self.observe()
+                # Generate a mission if none is active yet or the previous one finished.
+                if self.mission.status == MissionStatus.PENDING or self.mission.is_terminal():
+                    new_obj = await self._generate_mission_objective()
+                    self._start_new_mission(new_obj)
+                alg.log(f"PLAYER.play {self.name}: needs to {self.mission}")
+                # Think on how to solve the mission
+                action = await self.think(focus=self.mission.active_focus())
+                match action:
+                    case ActionMove() as act:
+                        wrsp = await self.move(act)
+                    case ActionBuild() as act:
+                        wrsp = await self.build(act)
+                    case ActionCraft() as act:
+                        wrsp = await self.craft(act)
+                    case ActionPlan() as act:
+                        wrsp = await self.plan(act)
+                    case ActionComplete() as act:
+                        wrsp = await self.complete(act)
+                    case ActionInteract() as act:
+                        wrsp = await self.interact(act)
+                    case _:
+                        wrsp = await self.action_error(action)
+                he = MissionHistoryEntry(action=action, result=str(wrsp))
+                self.history.add_history_entry(he)
+                self._update_mission_from_response(action, wrsp)
 
     # ------------------------------------------------------------------
     # Mission lifecycle helpers
@@ -262,7 +263,6 @@ class Player:
             observation=self.last_observation,
             player_state=self.render_state(),
             inventory=self.inventory_to_prompt(),
-            turn=self.turn,
         )
         alg.log(f"PLAYER {self.name}: proposed mission '{result.objective}' - {result.reason}")
         return result.objective
@@ -286,7 +286,6 @@ class Player:
             observation=self.last_observation,
             player_state=self.render_state(),
             inventory=self.inventory_to_prompt(),
-            turn=self.turn,
         )
         alg.log(f"PLAYER.play {self.name}: picked {action}")
         slog.bind(
@@ -352,7 +351,6 @@ class Player:
             history=self.history,
             observation=self.last_observation,
             player_state=self.render_state(),
-            turn=self.turn,
         )
         for sub_objective in result.sub_missions:
             self.mission.add_sub_mission(sub_objective)
@@ -509,17 +507,18 @@ class Player:
         This method must never put anything onto world_input_queue.
         It is called directly by WorldRunner inside handle_player_input and
         must remain free of all world I/O - only the external LLM call is
-        awaited.
+        awaited. It runs in the world's task, so it sets its own player and
+        turn as the log context of its LLM call.
         """
-        return await self.brain.reply(
-            sender_name=sender_name,
-            sender_prompt=sender_prompt,
-            message=message,
-            player_state=self.render_state(),
-            mission=self.mission,
-            history=self.history,
-            turn=self.turn,
-        )
+        with slog.contextualize(player=self.name, turn=self.turn):
+            return await self.brain.reply(
+                sender_name=sender_name,
+                sender_prompt=sender_prompt,
+                message=message,
+                player_state=self.render_state(),
+                mission=self.mission,
+                history=self.history,
+            )
 
     async def interact(self, action: ActionInteract) -> WResInteract | WResError:
         """Send a natural-language message to a nearby player and await the reply.

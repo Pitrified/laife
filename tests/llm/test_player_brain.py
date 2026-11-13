@@ -8,7 +8,6 @@ input is caught here.
 import asyncio
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
-from unittest.mock import patch
 
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
@@ -30,6 +29,7 @@ from laife.llm.player_planner import PlayerPlannerResult
 from laife.llm.player_replier import PlayerReplyInput
 from laife.llm.player_replier import PlayerReplyOutput
 from laife.llm.scripted_chat import ScriptedChatConfig
+from laife.meta.logger import log_llm_call
 from laife.params.laife_params import get_laife_params
 
 INVENTORY = "Empty - no utensils carried."
@@ -53,7 +53,7 @@ def brain_config() -> PlayerBrainConfig:
 @pytest.fixture
 def brain(brain_config: PlayerBrainConfig) -> PlayerBrain:
     """PlayerBrain built from config (no LLM calls made during construction)."""
-    return PlayerBrain(brain_config, player_name="tester")
+    return PlayerBrain(brain_config)
 
 
 @pytest.fixture
@@ -106,7 +106,6 @@ def test_next_action(
             observation=observation,
             player_state="(10, 20)",
             inventory=INVENTORY,
-            turn=3,
         )
     )
 
@@ -145,7 +144,6 @@ def test_plan(
             history=history,
             observation=observation,
             player_state="(0, 0)",
-            turn=3,
         )
     )
 
@@ -176,7 +174,6 @@ def test_propose_mission(brain: PlayerBrain, observation: WorldMapObservation) -
             observation=observation,
             player_state="(0, 0)",
             inventory=INVENTORY,
-            turn=3,
         )
     )
 
@@ -208,7 +205,6 @@ def test_reply(brain: PlayerBrain, mission: Mission, history: MissionHistory) ->
             player_state="(0, 0)",
             mission=mission,
             history=history,
-            turn=3,
         )
     )
 
@@ -226,58 +222,18 @@ def test_reply(brain: PlayerBrain, mission: Mission, history: MissionHistory) ->
 
 
 # ---------------------------------------------------------------------------
-# timing: one llm_call record per method, labelled by stage
+# timing: each chain reports its calls to log_llm_call under its stage name
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    ("method", "chain", "stage"),
-    [
-        ("next_action", "action_chain", "action"),
-        ("plan", "plan_chain", "plan"),
-        ("propose_mission", "mission_chain", "mission"),
-        ("reply", "reply_chain", "reply"),
-    ],
-)
-def test_each_call_is_timed(
-    brain: PlayerBrain,
-    mission: Mission,
-    history: MissionHistory,
-    observation: WorldMapObservation,
-    method: str,
-    chain: str,
-    stage: str,
-) -> None:
-    """Each method times its chain call with its stage, the player name and the turn."""
-    mock_chain = MagicMock()
-    mock_chain.ainvoke = AsyncMock(return_value=MagicMock())
-    setattr(brain, chain, mock_chain)
-    kwargs = {
-        "next_action": {
-            "mission": mission,
-            "history": history,
-            "observation": observation,
-            "player_state": "",
-            "inventory": INVENTORY,
-        },
-        "plan": {
-            "mission": mission,
-            "history": history,
-            "observation": observation,
-            "player_state": "",
-        },
-        "propose_mission": {"observation": observation, "player_state": "", "inventory": INVENTORY},
-        "reply": {
-            "sender_name": "bob",
-            "sender_prompt": "",
-            "message": "hi",
-            "player_state": "",
-            "mission": mission,
-            "history": history,
-        },
-    }[method]
-
-    with patch("laife.llm.player_brain.timed_llm_call") as mock_timed:
-        asyncio.run(getattr(brain, method)(**kwargs, turn=7))
-
-    mock_timed.assert_called_once_with(player="tester", turn=7, model="scripted", stage=stage)
+def test_each_chain_is_timed(brain: PlayerBrain) -> None:
+    """Each chain carries its stage name and log_llm_call as its on_call."""
+    chains = {
+        "action": brain.action_chain,
+        "plan": brain.plan_chain,
+        "mission": brain.mission_chain,
+        "reply": brain.reply_chain,
+    }
+    for stage, chain in chains.items():
+        assert chain.name == stage
+        assert chain.on_call is log_llm_call

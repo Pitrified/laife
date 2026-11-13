@@ -17,11 +17,9 @@ from laife.llm.player_planner import PlayerPlannerInput
 from laife.llm.player_planner import PlayerPlannerResult
 from laife.llm.player_replier import PlayerReplyInput
 from laife.llm.player_replier import PlayerReplyOutput
-from laife.meta.logger import timed_llm_call
+from laife.meta.logger import log_llm_call
 
 if TYPE_CHECKING:
-    from contextlib import AbstractContextManager
-
     from laife.entities.world_map_observation import WorldMapObservation
     from laife.llm.mission import Mission
     from laife.llm.mission import MissionHistory
@@ -40,49 +38,48 @@ class PlayerBrainConfig(BaseModel):
 class PlayerBrain:
     """The thinking of one player: owns the player's four LLM chains.
 
-    Each method takes plain values, times its one LLM call and returns the
-    parsed result; applying it to the player is the caller's job. The brain
+    Each method takes plain values and returns the parsed result of its one
+    LLM call; applying it to the player is the caller's job. Every chain
+    reports its call to ``log_llm_call`` under its name. The brain
     holds no world queue, so nothing it does can reach the world: the world
     calls :meth:`reply` from inside its own loop, where a world request would
     deadlock.
     """
 
-    def __init__(self, config: PlayerBrainConfig, player_name: str) -> None:
-        """Build the four chains from config; *player_name* labels the timing records."""
+    def __init__(self, config: PlayerBrainConfig) -> None:
+        """Build the four chains from config."""
         self.config = config
-        self.player_name = player_name
         self.action_chain = StructuredLLMChain(
             chat_config=config.chat_config,
             prompt_str=PromptLoader(config.action_prompt).load_prompt(),
             input_model=ActionPickerInput,
             output_model=ActionEnvelope,
+            name="action",
+            on_call=log_llm_call,
         )
         self.plan_chain = StructuredLLMChain(
             chat_config=config.chat_config,
             prompt_str=PromptLoader(config.plan_prompt).load_prompt(),
             input_model=PlayerPlannerInput,
             output_model=PlayerPlannerResult,
+            name="plan",
+            on_call=log_llm_call,
         )
         self.reply_chain = StructuredLLMChain(
             chat_config=config.chat_config,
             prompt_str=PromptLoader(config.reply_prompt).load_prompt(),
             input_model=PlayerReplyInput,
             output_model=PlayerReplyOutput,
+            name="reply",
+            on_call=log_llm_call,
         )
         self.mission_chain = StructuredLLMChain(
             chat_config=config.chat_config,
             prompt_str=PromptLoader(config.mission_prompt).load_prompt(),
             input_model=MissionGeneratorInput,
             output_model=MissionGeneratorResult,
-        )
-
-    def _timed(self, stage: str, turn: int) -> AbstractContextManager[None]:
-        """Time one LLM call of this brain under *stage*."""
-        return timed_llm_call(
-            player=self.player_name,
-            turn=turn,
-            model=self.config.chat_config.model,
-            stage=stage,
+            name="mission",
+            on_call=log_llm_call,
         )
 
     async def next_action(
@@ -92,20 +89,18 @@ class PlayerBrain:
         observation: WorldMapObservation,
         player_state: str,
         inventory: str,
-        turn: int,
     ) -> BaseAction:
         """Pick the next action for *mission*."""
-        with self._timed("action", turn):
-            envelope = await self.action_chain.ainvoke(
-                ActionPickerInput(
-                    mission=mission.to_prompt(),
-                    history=history.to_prompt(),
-                    observation=observation.to_prompt(),
-                    player_state=player_state,
-                    inventory=inventory,
-                    nearby_players=observation.nearby_players_to_prompt(),
-                )
+        envelope = await self.action_chain.ainvoke(
+            ActionPickerInput(
+                mission=mission.to_prompt(),
+                history=history.to_prompt(),
+                observation=observation.to_prompt(),
+                player_state=player_state,
+                inventory=inventory,
+                nearby_players=observation.nearby_players_to_prompt(),
             )
+        )
         return envelope.act
 
     async def plan(
@@ -114,35 +109,31 @@ class PlayerBrain:
         history: MissionHistory,
         observation: WorldMapObservation,
         player_state: str,
-        turn: int,
     ) -> PlayerPlannerResult:
         """Decompose *mission* into ordered sub-mission objectives."""
-        with self._timed("plan", turn):
-            return await self.plan_chain.ainvoke(
-                PlayerPlannerInput(
-                    mission=mission.to_prompt(),
-                    history=history.to_prompt(),
-                    observation=observation.to_prompt(),
-                    player_state=player_state,
-                )
+        return await self.plan_chain.ainvoke(
+            PlayerPlannerInput(
+                mission=mission.to_prompt(),
+                history=history.to_prompt(),
+                observation=observation.to_prompt(),
+                player_state=player_state,
             )
+        )
 
     async def propose_mission(
         self,
         observation: WorldMapObservation,
         player_state: str,
         inventory: str,
-        turn: int,
     ) -> MissionGeneratorResult:
         """Propose a mission objective for the current situation."""
-        with self._timed("mission", turn):
-            return await self.mission_chain.ainvoke(
-                MissionGeneratorInput(
-                    observation=observation.to_prompt(),
-                    player_state=player_state,
-                    inventory=inventory,
-                )
+        return await self.mission_chain.ainvoke(
+            MissionGeneratorInput(
+                observation=observation.to_prompt(),
+                player_state=player_state,
+                inventory=inventory,
             )
+        )
 
     async def reply(
         self,
@@ -152,18 +143,16 @@ class PlayerBrain:
         player_state: str,
         mission: Mission,
         history: MissionHistory,
-        turn: int,
     ) -> str:
         """Write an in-character reply to *message* from *sender_name*."""
-        with self._timed("reply", turn):
-            result = await self.reply_chain.ainvoke(
-                PlayerReplyInput(
-                    sender_name=sender_name,
-                    sender_prompt=sender_prompt,
-                    message=message,
-                    own_state=player_state,
-                    own_mission=mission.to_prompt(),
-                    own_history=history.to_prompt(),
-                )
+        result = await self.reply_chain.ainvoke(
+            PlayerReplyInput(
+                sender_name=sender_name,
+                sender_prompt=sender_prompt,
+                message=message,
+                own_state=player_state,
+                own_mission=mission.to_prompt(),
+                own_history=history.to_prompt(),
             )
+        )
         return result.reply

@@ -19,20 +19,14 @@ At call sites::
     slog.bind(event=EVT_ACTION, player="Alice", action="build").info(EVT_ACTION)
 """
 
-from contextlib import contextmanager
 import datetime as dt
 from pathlib import Path
 import sys
-import time
-from typing import TYPE_CHECKING
 import warnings
 
 from loguru import logger
 
 from laife.meta.log_events import EVT_LLM_CALL
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
 
 # Module-level bound logger.  Import ``slog`` at call sites; never import
 # ``logger`` from loguru directly so that all structured calls flow through
@@ -40,29 +34,21 @@ if TYPE_CHECKING:
 slog = logger.bind(logger_name="laife")
 
 
-@contextmanager
-def timed_llm_call(*, player: str, turn: int, model: str, stage: str) -> Iterator[None]:
-    """Time an LLM network call and emit one ``EVT_LLM_CALL`` record on exit.
+def log_llm_call(name: str, model: str, elapsed: float) -> None:
+    """Write one ``EVT_LLM_CALL`` record; the ``on_call`` of every game chain.
 
-    Wrap the awaited chain call so every LLM round trip - action, plan, reply,
-    mission - reports its latency uniformly::
-
-        with timed_llm_call(player=name, turn=turn, model=model, stage="plan"):
-            result = await chain.ainvoke(...)
-
-    ``stage`` distinguishes the call site (``action``/``plan``/``reply``/
-    ``mission``).  If the wrapped call raises, no record is emitted - only
-    completed calls are timed, matching the original inline sites.
+    llm-core's ``StructuredLLMChain`` calls it after each call that returns,
+    with the chain's *name* (written as ``stage``), the model name and the
+    elapsed seconds. Player and turn are not arguments: they come from
+    ``slog.contextualize(player=..., turn=...)`` around the call. A call made
+    in the world's task, such as a reply or a judge, gets the world's context
+    unless the code around it sets its own.
     """
-    t0 = time.monotonic()
-    yield
     slog.bind(
         event=EVT_LLM_CALL,
-        player=player,
-        turn=turn,
         model=model,
-        stage=stage,
-        elapsed=round(time.monotonic() - t0, 3),
+        stage=name,
+        elapsed=round(elapsed, 3),
     ).info(EVT_LLM_CALL)
 
 

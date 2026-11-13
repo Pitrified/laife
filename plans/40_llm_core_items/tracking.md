@@ -16,7 +16,7 @@ Analysis and questions in [`00_start.md`](00_start.md).
 | # | Phase                    | Plan                                             | Status |
 | - | ------------------------ | ------------------------------------------------ | ------ |
 | 1 | reasoning_effort         | [`01_reasoning_effort.md`](01_reasoning_effort.md) | done    |
-| 2 | timing in the chain      | [`02_timing.md`](02_timing.md)                   | planned |
+| 2 | timing in the chain      | [`02_timing.md`](02_timing.md)                   | done    |
 | 3 | scripted chat            | [`03_scripted_chat.md`](03_scripted_chat.md)     | planned |
 | 4 | Singleton, release, pin  | [`04_singleton.md`](04_singleton.md)             | planned |
 
@@ -30,3 +30,4 @@ Append-only. Newest at the bottom.
 - 2026-11-13 : Q1-Q5 answered; phase files written; checked loguru's merge of context and bound extra.
 - 2026-11-13 : user said commit and implement; phases set to planned.
 - 2026-11-13 : phase 1 done: llm-core 18a91fe, laife comment and backlog item.
+- 2026-11-13 : phase 2 done: llm-core 8b8e9f9; laife times every chain through log_llm_call, judges included.
