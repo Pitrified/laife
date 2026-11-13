@@ -12,6 +12,9 @@ Whether pygame stays as the renderer.
 Options: pygame as now; a text-only runner beside a renderer (`scratch_space/rebirth_/` had it); a web page reading the world state, served from g7 over the tailnet and opened from g4 or the phone, as the sibling repo abyss does.
 Also decides the Python pin: pygame 2.6 has no 3.14 wheel, and the `==3.14.*` pin uses nothing newer than 3.12 (folder 33).
 The visual wishes wait on this choice: tiled terrain and grass instead of flat colours, buildings with a garden, utensils held by the player, a window that shows more state and answers the mouse.
+The same pass trims the engine's terminal output and the logs.
+The terminal is not the main interface: the window and `make tui` are.
+Today a run prints every `alg.log` line, and the structured log has one line per move step; whether the structured log keeps its shape is reassessed with it.
 
 ### Renderer checks without a screen
 
@@ -60,6 +63,13 @@ The async-inbox strategy proposed in `24_player_interaction/00.1_strategy2_upgra
 ### Shared missions
 
 A player shares its mission with the world and can ask others for help.
+
+### The complete judge sees no history
+
+A live run on gpt-6-luna (2026-11-13, folder 34): a player moved 10 steps east, claimed its mission "move 10 steps east" complete, and the complete judge rejected it.
+Its feedback: the current position is known, but no starting position or other evidence confirms the move.
+The player then moved east again to make the move "recorded".
+`WorldRunner.judge_complete()` gets the objective, the player's own claimed outcome, the observation and `Player.render_state()` (name, position, state); not the mission history. So a mission about moving cannot be confirmed.
 
 ### Players that can die
 

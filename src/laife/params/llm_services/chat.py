@@ -30,7 +30,12 @@ class ChatParams:
 
     def load_params(self) -> None:
         """Load the params for chat services."""
-        self.openai = ChatOpenAIConfig()
+        # luna only accepts temperature 1 unless reasoning is off,
+        # and ChatOpenAIConfig has no reasoning_effort field.
+        self.openai = ChatOpenAIConfig(
+            temperature=1,
+            model="gpt-6-luna",
+        )
 
         self.azure = AzureOpenAIChatConfig(
             temperature=1,
