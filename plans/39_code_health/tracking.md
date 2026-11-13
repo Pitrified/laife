@@ -23,7 +23,7 @@ Analysis and questions in [`00_start.md`](00_start.md).
 | -- | --------------------------- | ---------------------------------------------- | ------ |
 | 1  | A: mechanical               | [`01_mechanical.md`](01_mechanical.md)         | done    |
 | 2  | C: OpenAI only and install  | [`02_openai_only.md`](02_openai_only.md)       | done    |
-| 3  | B1: thinking into the brain | [`03_player_brain.md`](03_player_brain.md)     | planned |
+| 3  | B1: thinking into the brain | [`03_player_brain.md`](03_player_brain.md)     | done    |
 | 4  | B2: chain wrappers          | [`04_chain_wrappers.md`](04_chain_wrappers.md) | draft  |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
@@ -39,3 +39,4 @@ Append-only. Newest at the bottom.
 - 2026-11-13 : phase 1 committed; phase 2 implemented and checked, waiting for the user's review of the lock.
 - 2026-11-13 : lock reviewed; phase 2 done.
 - 2026-11-13 : phase 3 planned with the user, Q6-Q9 answered.
+- 2026-11-13 : phase 3 done; agent decisions listed in its file.

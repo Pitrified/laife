@@ -40,21 +40,13 @@ from laife.llm.mission import Mission
 from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionHistoryEntry
 from laife.llm.mission import MissionStatus
-from laife.llm.mission_generator import MissionGenerator
-from laife.llm.mission_generator import MissionGeneratorConfig
 from laife.llm.player_brain import PlayerBrain
 from laife.llm.player_brain import PlayerBrainConfig
-from laife.llm.player_planner import PlayerPlanner
-from laife.llm.player_planner import PlayerPlannerConfig
-from laife.llm.player_replier import PlayerReplier
-from laife.llm.player_replier import PlayerReplierConfig
-from laife.llm.player_replier import PlayerReplyInput
 from laife.meta.log_events import EVT_ACTION
 from laife.meta.log_events import EVT_MISSION_START
 from laife.meta.log_events import EVT_MISSION_TRANSITION
 from laife.meta.log_events import EVT_WORLD_RESPONSE
 from laife.meta.logger import slog
-from laife.meta.logger import timed_llm_call
 from laife.params.laife_params import get_laife_params
 from laife.ui.alog import alg
 
@@ -93,7 +85,7 @@ class Player:
         The play loop is NOT started here.  The caller is responsible for
         starting it (e.g. via asyncio.create_task or asyncio.gather).
 
-        *chat_config* feeds all four of the player's chains; ``None`` takes
+        *chat_config* feeds all four of the brain's chains; ``None`` takes
         ``llm_services.chat.default``.
         """
         self.name: str = name
@@ -118,41 +110,24 @@ class Player:
         laife_params = get_laife_params()
         if chat_config is None:
             chat_config = laife_params.llm_services.chat.default
+        prompts_fol = laife_params.paths.prompts_fol
         self.brain = PlayerBrain(
             PlayerBrainConfig(
                 chat_config=chat_config,
-                prompt_loader_config=PromptLoaderConfig(
-                    base_prompt_fol=laife_params.paths.prompts_fol,
-                    prompt_name="player_brain",
+                action_prompt=PromptLoaderConfig(
+                    base_prompt_fol=prompts_fol, prompt_name="player_brain"
                 ),
-            )
-        )
-        self.planner = PlayerPlanner(
-            PlayerPlannerConfig(
-                chat_config=chat_config,
-                prompt_loader_config=PromptLoaderConfig(
-                    base_prompt_fol=laife_params.paths.prompts_fol,
-                    prompt_name="player_planner",
+                plan_prompt=PromptLoaderConfig(
+                    base_prompt_fol=prompts_fol, prompt_name="player_planner"
                 ),
-            )
-        )
-        self.replier = PlayerReplier(
-            PlayerReplierConfig(
-                chat_config=chat_config,
-                prompt_loader_config=PromptLoaderConfig(
-                    base_prompt_fol=laife_params.paths.prompts_fol,
-                    prompt_name="player_reply",
+                reply_prompt=PromptLoaderConfig(
+                    base_prompt_fol=prompts_fol, prompt_name="player_reply"
                 ),
-            )
-        )
-        self.mission_generator = MissionGenerator(
-            MissionGeneratorConfig(
-                chat_config=chat_config,
-                prompt_loader_config=PromptLoaderConfig(
-                    base_prompt_fol=laife_params.paths.prompts_fol,
-                    prompt_name="mission_generator",
+                mission_prompt=PromptLoaderConfig(
+                    base_prompt_fol=prompts_fol, prompt_name="mission_generator"
                 ),
-            )
+            ),
+            player_name=name,
         )
         # Mission starts PENDING; the first play() iteration will generate a real objective.
         self.mission = Mission(
@@ -283,17 +258,12 @@ class Player:
         Uses the cached observation so no extra world round-trip is needed.
         """
         alg.log(f"PLAYER {self.name}: generating new mission objective")
-        with timed_llm_call(
-            player=self.name,
+        result = await self.brain.propose_mission(
+            observation=self.last_observation,
+            player_state=self.render_state(),
+            inventory=self.inventory_to_prompt(),
             turn=self.turn,
-            model=self.mission_generator.config.chat_config.model,
-            stage="mission",
-        ):
-            result = await self.mission_generator.ainvoke(
-                observation=self.last_observation,
-                player_state=self.render_state(),
-                inventory=self.inventory_to_prompt(),
-            )
+        )
         alg.log(f"PLAYER {self.name}: proposed mission '{result.objective}' - {result.reason}")
         return result.objective
 
@@ -310,13 +280,12 @@ class Player:
         self.state = PlayerState.THINKING
         target = focus if focus is not None else self.mission
         alg.log(f"{self.name} is thinking about '{target.objective}'")
-        action = await self.brain.think(
+        action = await self.brain.next_action(
             mission=target,
             history=self.history,
             observation=self.last_observation,
             player_state=self.render_state(),
             inventory=self.inventory_to_prompt(),
-            player=self.name,
             turn=self.turn,
         )
         alg.log(f"PLAYER.play {self.name}: picked {action}")
@@ -378,18 +347,13 @@ class Player:
         """Decompose the current mission into sub-missions using the planner LLM."""
         alg.log(f"PLAYER.plan {self.name}: planning for '{action.reason}'")
         self.state = PlayerState.THINKING
-        with timed_llm_call(
-            player=self.name,
+        result = await self.brain.plan(
+            mission=self.mission,
+            history=self.history,
+            observation=self.last_observation,
+            player_state=self.render_state(),
             turn=self.turn,
-            model=self.planner.config.chat_config.model,
-            stage="plan",
-        ):
-            result = await self.planner.ainvoke(
-                mission=self.mission,
-                history=self.history,
-                observation=self.last_observation,
-                player_state=self.render_state(),
-            )
+        )
         for sub_objective in result.sub_missions:
             self.mission.add_sub_mission(sub_objective)
         self.mission.advance()  # activate the first pending step immediately
@@ -547,23 +511,15 @@ class Player:
         must remain free of all world I/O - only the external LLM call is
         awaited.
         """
-        with timed_llm_call(
-            player=self.name,
+        return await self.brain.reply(
+            sender_name=sender_name,
+            sender_prompt=sender_prompt,
+            message=message,
+            player_state=self.render_state(),
+            mission=self.mission,
+            history=self.history,
             turn=self.turn,
-            model=self.replier.config.chat_config.model,
-            stage="reply",
-        ):
-            result = await self.replier.ainvoke(
-                PlayerReplyInput(
-                    sender_name=sender_name,
-                    sender_prompt=sender_prompt,
-                    message=message,
-                    own_state=self.render_state(),
-                    own_mission=self.mission.to_prompt(),
-                    own_history=self.history.to_prompt(),
-                )
-            )
-        return result.reply
+        )
 
     async def interact(self, action: ActionInteract) -> WResInteract | WResError:
         """Send a natural-language message to a nearby player and await the reply.

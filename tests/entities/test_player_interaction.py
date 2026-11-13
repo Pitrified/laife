@@ -24,14 +24,8 @@ def _make_player(runner: WorldRunner, name: str = "alice") -> Player:
         "laife.entities.player",
         get_laife_params=MagicMock(return_value=MagicMock()),
         PlayerBrainConfig=MagicMock(),
-        PlayerPlannerConfig=MagicMock(),
-        PlayerReplierConfig=MagicMock(),
         PromptLoaderConfig=MagicMock(),
         PlayerBrain=MagicMock(return_value=MagicMock()),
-        PlayerPlanner=MagicMock(return_value=MagicMock()),
-        PlayerReplier=MagicMock(return_value=MagicMock()),
-        MissionGeneratorConfig=MagicMock(),
-        MissionGenerator=MagicMock(return_value=MagicMock()),
     ):
         player = Player(
             name=name,
@@ -172,7 +166,7 @@ def test_receive_message_never_touches_world_queue() -> None:
     runner = WorldRunner()
     player = _make_player(runner, name="alice")
 
-    player.replier.ainvoke = AsyncMock(return_value=MagicMock(reply="I'm fine, thanks."))
+    player.brain.reply = AsyncMock(return_value="I'm fine, thanks.")
 
     queue_size_before = runner.input_queue.qsize()
     reply = asyncio.run(
@@ -203,7 +197,7 @@ def test_full_round_trip() -> None:
         alice = _make_player(runner, name="alice")
         bob = _make_player(runner, name="bob")
 
-        bob.replier.ainvoke = AsyncMock(return_value=MagicMock(reply="Happy to help!"))
+        bob.brain.reply = AsyncMock(return_value="Happy to help!")
 
         action = ActionInteract(
             reason="Need assistance.",
@@ -241,7 +235,7 @@ def test_n_player_no_deadlock() -> None:
         players = [_make_player(runner, name=n) for n in names]
 
         for p in players:
-            p.replier.ainvoke = AsyncMock(return_value=MagicMock(reply=f"Reply from {p.name}"))
+            p.brain.reply = AsyncMock(return_value=f"Reply from {p.name}")
 
         async def send_interact(sender: Player, target_name: str) -> WResInteract | WResError:
             action = ActionInteract(

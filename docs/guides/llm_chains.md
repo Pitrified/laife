@@ -19,9 +19,16 @@ See for example [`world_judge.py`](https://github.com/Pitrified/laife/blob/main/
 The template text itself lives in [the prompts package](../library/prompts.md), one folder per chain with versioned `vN.jinja` files.
 A chain points at its folder by name; the loader resolves the template from there, so prompt wording can change without touching the chain code.
 
+## The player's brain
+
+Each player has one [`PlayerBrain`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_brain.py), which owns the player's four chains: action, planner, replier and mission generator.
+`Player` calls one brain method per decision (`next_action`, `plan`, `reply`, `propose_mission`), passing plain values, and applies the result to its own state and mission.
+The brain times each call as an `llm_call` record labelled by stage.
+It holds no world queue, so a reply, which the world requests from inside its own loop, cannot reach the world.
+
 ## The chains
 
-- Brain - [`llm/player_brain.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_brain.py).
+- Action picker - [`entities/action.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/action.py), called by `PlayerBrain.next_action`.
   Given the observation and the current mission, returns the next action.
   This is the core decision step of a turn.
 - Planner - [`llm/player_planner.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_planner.py).

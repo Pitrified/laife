@@ -12,8 +12,8 @@ See [`entities/action.py`](https://github.com/Pitrified/laife/blob/main/src/laif
 
 ## Brain
 
-The LLM chain that, given an observation and the current mission, returns the next action.
-This is the core decision step of a player's turn.
+A player's thinking: it owns the player's four LLM chains and returns their parsed results, which the player applies.
+Its `next_action` returns the next action, the core decision step of a player's turn.
 See [the llm package](../library/llm.md).
 
 ## Building

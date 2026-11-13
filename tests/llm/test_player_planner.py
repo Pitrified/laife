@@ -90,7 +90,7 @@ def stubbed_player() -> Player:
     player.mission = Mission(objective="Build a house", status=MissionStatus.ACTIVE)
     player.history = MissionHistory()
     player.last_observation = WorldMapObservation.from_position((0, 0))
-    player.planner = MagicMock()
+    player.brain = MagicMock()
     player.turn = 0
     return player
 
@@ -197,7 +197,7 @@ def test_ainvoke_returns_result(planner: PlayerPlanner) -> None:
 def test_plan_handler_adds_sub_missions(stubbed_player: Player) -> None:
     """Player.plan() must write each sub-mission into the mission tree."""
     sub_missions = ["Gather wood", "Craft axe", "Build wall"]
-    stubbed_player.planner.ainvoke = AsyncMock(
+    stubbed_player.brain.plan = AsyncMock(
         return_value=PlayerPlannerResult(
             sub_missions=sub_missions,
             reason="Step by step.",
@@ -217,7 +217,7 @@ def test_plan_handler_resets_history(stubbed_player: Player) -> None:
             result="ok",
         )
     )
-    stubbed_player.planner.ainvoke = AsyncMock(
+    stubbed_player.brain.plan = AsyncMock(
         return_value=PlayerPlannerResult(
             sub_missions=["Do something"],
             reason="Replanning.",
@@ -231,7 +231,7 @@ def test_plan_handler_resets_history(stubbed_player: Player) -> None:
 
 def test_plan_handler_returns_success(stubbed_player: Player) -> None:
     """Player.plan() must return WResPlan(SUCCESS, ...) after planning."""
-    stubbed_player.planner.ainvoke = AsyncMock(
+    stubbed_player.brain.plan = AsyncMock(
         return_value=PlayerPlannerResult(
             sub_missions=["Sub 1"],
             reason="One thing at a time.",

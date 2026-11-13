@@ -7,7 +7,7 @@ For the shared chain pattern and how the chains fit a turn see [the LLM chains g
 ## Chains
 
 - [`player_brain.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_brain.py) - the brain.
-  Turns an observation and the current mission into the next action.
+  Owns the player's four chains: the action picker, which turns an observation and the current mission into the next action, and the three below. Times each call.
 - [`player_planner.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_planner.py) - the planner.
   Decomposes a mission into ordered sub-missions.
 - [`player_replier.py`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/player_replier.py) - the replier.

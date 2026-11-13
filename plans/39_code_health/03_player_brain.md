@@ -1,5 +1,5 @@
 ---
-status: planned
+status: done
 ---
 
 # Phase 3 - the thinking moves into `PlayerBrain`
@@ -73,3 +73,21 @@ A mocked chain records what it was called with, so a chain that later starts usi
 
 - `Player` builds no chain and calls no chain directly.
 - `make check` passes; `make headless` gives the same positions as on `main`.
+
+## Decided by the agent while implementing
+
+For the user's review, 2026-11-13.
+
+- `reply` takes the mission and history objects, like the other three methods, rather than strings `Player` renders; the brain renders them.
+- `PlayerBrainConfig` fields are `action_prompt`, `plan_prompt`, `reply_prompt`, `mission_prompt`.
+- The three timing tests on `Player` moved to the brain as one parametrized test over the four stages; the action stage had no timing test before.
+- Brain tests load the game's own prompts rather than temp prompt folders, since the chains are mocked after construction.
+
+## Outcome
+
+- `PlayerBrain(config, player_name)` owns the action picker, planner, replier and mission generator, with `next_action`, `plan`, `propose_mission`, `reply`; each wraps its call in `timed_llm_call`.
+- `Player` builds only the brain and calls one brain method per decision; it no longer imports a chain or `timed_llm_call`.
+- Tests: the brain tests mock each chain and assert its input and the returned result; the `Player` tests mock `player.brain`. The `patch.multiple` helpers in six test files lost the chain classes `Player` no longer imports.
+  A stress test in `test_player_interaction.py` still set `p.replier`; pyright caught it before the tests ran. Left as it was, the replies would have gone to the real chain.
+- `make check` passes, 292 tests. `make headless` with the default seed ends with both players at the same positions as before, and the `llm_call` records per player and stage are identical.
+- Docs: the chains guide has a section on the brain; the glossary, architecture guide and llm library page describe it as the owner of the chains.

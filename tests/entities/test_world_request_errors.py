@@ -34,14 +34,8 @@ def _make_player(runner: WorldRunner, name: str = "alice") -> Player:
         "laife.entities.player",
         get_laife_params=MagicMock(return_value=MagicMock()),
         PlayerBrainConfig=MagicMock(),
-        PlayerPlannerConfig=MagicMock(),
-        PlayerReplierConfig=MagicMock(),
         PromptLoaderConfig=MagicMock(),
         PlayerBrain=MagicMock(return_value=MagicMock()),
-        PlayerPlanner=MagicMock(return_value=MagicMock()),
-        PlayerReplier=MagicMock(return_value=MagicMock()),
-        MissionGeneratorConfig=MagicMock(),
-        MissionGenerator=MagicMock(return_value=MagicMock()),
     ):
         player = Player(
             name=name,
@@ -95,7 +89,7 @@ def test_play_survives_interact_error_and_continues() -> None:
         runner = WorldRunner()
         alice = _make_player(runner)
         alice.mission.status = MissionStatus.ACTIVE
-        alice.brain.think = AsyncMock(
+        alice.brain.next_action = AsyncMock(
             return_value=ActionInteract(
                 reason="Gather crops.",
                 target_name="Big ol Farm",

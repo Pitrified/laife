@@ -27,8 +27,8 @@ Requests and responses live in [`entities/world_channel.py`](https://github.com/
 ## A player is an agent
 
 A [`Player`](../library/entities.md) owns its position, state, inventory, and current mission.
-Its decision making is delegated to the LLM chains in [the llm package](../library/llm.md):
-the brain picks the next action, the planner breaks a hard mission into sub-missions, and the replier answers messages from other players.
+Its decision making is delegated to its brain, which owns the LLM chains in [the llm package](../library/llm.md):
+it picks the next action, breaks a hard mission into sub-missions, proposes a new mission, and answers messages from other players.
 The player turns the chosen action into a world request and applies the response to its own state and mission history.
 
 ## Rendering observes, never mutates
