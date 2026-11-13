@@ -106,6 +106,12 @@ Load the map from data instead of the hardcoded setup in `game/main.py`.
 
 From folder 33 unless noted; each is checked against the code there.
 
+### Mission tree: reload and ids
+
+`Mission.parent_mission` is excluded from dumps (folder 41), so a mission tree written to JSON carries the parent only through the nesting of `steps`.
+- Reload: `Mission.model_validate` rebuilds the tree with every `parent_mission` at `None`, and `advance()` then stops propagating upward. A validator that walks `steps` after loading and sets each step's parent to its container fixes it; wanted when something loads missions back.
+- Ids: a mission is identified only by its place in the tree. An id field lets the page, the log or another mission refer to one sub-mission, and lets a sub-mission dumped on its own name its parent.
+
 ### Player mind state
 
 `PlayerBrain` thinks for one player; the mind state (`mission`, `history`, `last_observation`, `inventory`) lives on `Player`, and `_update_mission_from_response` mixes world results into it.
