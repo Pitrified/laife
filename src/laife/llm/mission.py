@@ -57,13 +57,19 @@ MAX_MISSION_FAILURES: int = 5
 
 
 class Mission(BaseModel):
-    """A mission composed of ordered mission steps."""
+    """A mission composed of ordered mission steps.
+
+    ``parent_mission`` is left out of every dump: it points back up the tree,
+    which pydantic refuses as a circular reference. A dumped tree carries the
+    parent through the nesting of ``steps``; a tree validated back from a dump
+    has every ``parent_mission`` at ``None``.
+    """
 
     objective: str
     sub_mission_level: int = 0
     status: MissionStatus = MissionStatus.PENDING
     steps: list[Mission] = Field(default_factory=list)
-    parent_mission: Mission | None = None
+    parent_mission: Mission | None = Field(default=None, exclude=True)
     consecutive_failures: int = 0
     max_failures: int = MAX_MISSION_FAILURES
 

@@ -107,6 +107,7 @@ What exists today and its limits:
 - `make run` opens the pygame window and calls the configured LLM provider for every player turn. It needs a display and real credentials, so it costs money and is run by or with the user.
 - `make tui` reads the newest structured log; `SimControl` pauses and steps the loop.
 - `make headless` runs the same world with no window and a scripted LLM, `TURNS` and `SEED` overridable, and writes the log `make tui` reads. It is the run an agent can do: no display, no provider, a few seconds. `docs/guides/headless.md` has what it runs.
+- `make headless SERVE=1` also serves the world on `127.0.0.1:8002` until Ctrl-C (`TURNS=0` for no limit, `PAUSED=1`, `PACE`); `curl` reads `/state` and `/events`. `docs/guides/web.md` has the routes.
 - What it does not cover: anything drawn on screen, and how a real model behaves. A change to the renderer or to a prompt is still not verified by an agent alone: say so rather than calling it done.
 - A new chain, or a new output model on an existing one, needs an answer in `ScriptedChatConfig.build_answers` in `laife.llm.scripted_chat`; until it has one, the headless run fails with `UnscriptedSchemaError`.
 
@@ -162,6 +163,7 @@ platform.node().lower().startswith("pmn-14g4")  # g4, else g7
 | LLM services  | `src/laife/params/llm_services/`        | Which llm-core chat, embeddings and vector store configs this game uses                                                                           |
 | Config/params | `src/laife/params/`                     | Singleton `LaifeParams`; `LaifePaths` for all filesystem refs                                                                                     |
 | Observability | `src/laife/observability/`              | The Textual TUI over the structured log                                                                                                           |
+| Web           | `src/laife/web/`                        | The world over HTTP: `GET /state`, SSE events from the structured log, pause controls; FastAPI run as a task in the game's loop                  |
 
 ## Key patterns
 

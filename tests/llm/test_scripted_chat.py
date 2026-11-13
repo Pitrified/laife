@@ -125,3 +125,19 @@ def test_player_chains_take_the_given_config() -> None:
         brain.mission_chain.chat_config,
     ]
     assert all(c is config for c in configs)
+
+
+def test_pace_delays_awaited_answers_only() -> None:
+    """A paced model answers an awaited call after the pace, a sync call at once."""
+    pace = 0.2
+    model = ScriptedChatConfig(pace=pace).create_chat_model()
+    runnable = model.with_structured_output(WorldJudgeResult)
+
+    async def timed() -> float:
+        loop = asyncio.get_running_loop()
+        start = loop.time()
+        await runnable.ainvoke("prompt")
+        return loop.time() - start
+
+    assert asyncio.run(timed()) >= pace
+    assert isinstance(runnable.invoke("prompt"), WorldJudgeResult)

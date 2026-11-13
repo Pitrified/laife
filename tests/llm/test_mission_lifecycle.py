@@ -98,3 +98,23 @@ def test_is_terminal(status: MissionStatus, expected: bool) -> None:  # noqa: FB
     """is_terminal returns True only for COMPLETED and FAILED."""
     m = Mission(objective="x", status=status)
     assert m.is_terminal() is expected
+
+
+# ---------------------------------------------------------------------------
+# Serialization
+# ---------------------------------------------------------------------------
+
+
+def test_mission_tree_dumps_nested_without_parent() -> None:
+    """A two-level tree dumps with its steps nested and no parent link."""
+    root = Mission(objective="root")
+    root.add_sub_mission("a")
+    root.steps[0].add_sub_mission("b")
+    dumped = root.model_dump(mode="json")
+    child = dumped["steps"][0]
+    assert child["objective"] == "a"
+    assert child["steps"][0]["objective"] == "b"
+    assert "parent_mission" not in dumped
+    assert "parent_mission" not in child
+    # The link is still there in memory.
+    assert root.steps[0].steps[0].parent_mission is root.steps[0]

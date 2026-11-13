@@ -1,5 +1,5 @@
 ---
-status: draft
+status: in progress
 priority: 1
 description: |
   Which frontend shows the world and how it talks to the game loop: pygame as now, pygame-ce, a web app served from g7, or an engine such as Godot or Flutter.

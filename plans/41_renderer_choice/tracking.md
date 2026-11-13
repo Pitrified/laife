@@ -12,7 +12,7 @@ Assessment, options and open questions in [`00_start.md`](00_start.md).
 
 | # | Phase | Plan | Status |
 | - | ----- | ---- | ------ |
-| 1 | world protocol, no client | [`01_world_protocol.md`](01_world_protocol.md) | planned |
+| 1 | world protocol, no client | [`01_world_protocol.md`](01_world_protocol.md) | in progress |
 | 2 | page skeleton | not written | draft |
 | 3 | player detail and zoom | not written | draft |
 | 4 | retire pygame | not written | draft |

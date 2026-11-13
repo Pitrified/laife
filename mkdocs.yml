@@ -83,6 +83,7 @@ nav:
       - Architecture: guides/architecture.md
       - Game loop: guides/game_loop.md
       - Headless run: guides/headless.md
+      - Serving the world: guides/web.md
       - LLM chains: guides/llm_chains.md
       - Params and config: guides/params_config.md
       - Glossary: guides/glossary.md
@@ -94,6 +95,7 @@ nav:
       - llm: library/llm.md
       - prompts: library/prompts.md
       - rendering: library/rendering.md
+      - web: library/web.md
       - params: library/params.md
       - config: library/config.md
       - meta: library/meta.md

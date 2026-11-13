@@ -8,6 +8,7 @@ for module-by-module detail see [the library docs](../library/README.md).
 - [Architecture](architecture.md) - the main pieces and how they talk to each other.
 - [Game loop](game_loop.md) - one full turn, from observation to world response.
 - [Headless run](headless.md) - the game with no window and a scripted LLM, for development.
+- [Serving the world](web.md) - the world over HTTP: snapshot, event stream, pause controls.
 - [LLM chains](llm_chains.md) - the player brain, planner, replier, mission generator, and world judge.
 - [Params and config](params_config.md) - environments, paths, and LLM service settings.
 - [Glossary](glossary.md) - the domain terms used across the project.

@@ -11,6 +11,11 @@ UV_RUN := uv run --no-sync
 LLM_CORE_PATH ?= ../llm-core
 TURNS ?= 6
 SEED ?= 0
+SERVE ?=
+HOST ?= 127.0.0.1
+PORT ?= 8002
+PACE ?=
+PAUSED ?=
 
 help:  ## Show this help (list targets and their descriptions)
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -34,8 +39,9 @@ hooks:  ## Install the pre-commit git hooks, once per clone
 run:  ## Run the game
 	$(UV_RUN) game/main.py
 
-headless:  ## Run with no window and a scripted LLM; TURNS=6 SEED=0
-	$(UV_RUN) game/headless.py --turns $(TURNS) --seed $(SEED)
+headless:  ## Run with no window and a scripted LLM; TURNS=6 SEED=0; SERVE=1 serves it (HOST PORT PACE PAUSED=1)
+	$(UV_RUN) game/headless.py --turns $(TURNS) --seed $(SEED) \
+		$(if $(SERVE),--serve --host $(HOST) --port $(PORT) $(if $(PACE),--pace $(PACE)) $(if $(PAUSED),--paused))
 
 tui:  ## Run the observability TUI (tails the newest cache/game_*.jsonl)
 	$(UV_RUN) python -m laife.observability.tui

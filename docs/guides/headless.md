@@ -11,6 +11,8 @@ make tui                       # opens the newest log, this run's
 
 It prints each player's turn count and position, and the path of the structured log it wrote under `cache/`.
 
+`make headless SERVE=1` serves the world over HTTP while it plays and keeps serving until Ctrl-C; see [Serving the world](web.md).
+
 ## What runs
 
 The world and the players are the live game's: [`setup_world`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_setup.py) builds them for both `make run` and `make headless`.

@@ -10,6 +10,7 @@ For cross-cutting explanations see [the guides](../guides/README.md).
 - [llm](llm.md) - the player brain, planner, replier, mission generator, and the mission model.
 - [prompts](prompts.md) - the versioned Jinja templates that drive the LLM chains.
 - [rendering](rendering.md) - the pygame view layer and sprites.
+- [web](web.md) - the world served over HTTP: snapshot, event stream, pause controls.
 - [params](params.md) - environment-aware settings, paths, and LLM service params.
 - [config](config.md) - type aliases and project-level constants.
 - [meta](meta.md) - the structured logger.
@@ -19,7 +20,7 @@ For cross-cutting explanations see [the guides](../guides/README.md).
 
 The pure logic lives in `entities`, `llm` and `config`, with no pygame dependency.
 `prompts` holds the template text the `llm` chains load at runtime.
-`rendering` and `ui` are presentation layers that observe the logic.
+`rendering`, `web` and `ui` are presentation layers that observe the logic; `web` also drives the pause control.
 `params` and `config` supply settings to all of them.
 `meta` holds support utilities.
 See [the architecture guide](../guides/architecture.md) for the runtime picture.
