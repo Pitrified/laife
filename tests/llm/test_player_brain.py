@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 
-from llm_core.chat.config.ollama import OllamaChatConfig
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
 
@@ -18,6 +17,7 @@ from laife.llm.mission import MissionHistory
 from laife.llm.mission import MissionStatus
 from laife.llm.player_brain import PlayerBrain
 from laife.llm.player_brain import PlayerBrainConfig
+from laife.llm.scripted_chat import ScriptedChatConfig
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -47,9 +47,9 @@ def prompt_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def brain_config(prompt_dir: Path) -> PlayerBrainConfig:
-    """PlayerBrainConfig backed by OllamaChatConfig and a temp prompt dir."""
+    """PlayerBrainConfig backed by ScriptedChatConfig and a temp prompt dir."""
     return PlayerBrainConfig(
-        chat_config=OllamaChatConfig(),
+        chat_config=ScriptedChatConfig(),
         prompt_loader_config=PromptLoaderConfig(
             base_prompt_fol=prompt_dir,
             prompt_name="player_brain",

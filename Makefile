@@ -90,7 +90,7 @@ docs:  ## Serve the docs locally with MkDocs
 # The targets above use --no-sync; `make undev` is the deliberate way back.
 
 dev-llm-core:  ## Install llm-core from a local editable path (see DEPS notes)
-	uv pip install -e "$(LLM_CORE_PATH)[all]"
+	uv pip install -e "$(LLM_CORE_PATH)[openai,chroma]"
 	@echo "llm-core installed from $(LLM_CORE_PATH)"
 	@echo "WARNING: a bare 'uv run' or 'uv sync' reverts this to the pinned tag."
 	@echo "         use make targets (they pass --no-sync), or 'make undev' to revert on purpose."

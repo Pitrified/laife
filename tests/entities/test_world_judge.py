@@ -6,7 +6,6 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 from llm_core.chains.structured_chain import MissingPromptVariablesError
-from llm_core.chat.config.ollama import OllamaChatConfig
 import pytest
 
 from laife.entities.building import Building
@@ -18,6 +17,7 @@ from laife.entities.world_judge import WorldActionJudge
 from laife.entities.world_judge import WorldJudgeInput
 from laife.entities.world_judge import WorldJudgeResult
 from laife.entities.world_runner import WorldRunner
+from laife.llm.scripted_chat import ScriptedChatConfig
 
 # ---------------------------------------------------------------------------
 # Shared fixtures / constants
@@ -34,13 +34,13 @@ INCOMPLETE_PROMPT = "Action: {{ action_type }}\n"
 
 
 @pytest.fixture
-def chat_config() -> OllamaChatConfig:
-    """OllamaChatConfig for use in tests (no real LLM calls made)."""
-    return OllamaChatConfig()
+def chat_config() -> ScriptedChatConfig:
+    """ScriptedChatConfig for use in tests (no real LLM calls made)."""
+    return ScriptedChatConfig()
 
 
 @pytest.fixture
-def judge(chat_config: OllamaChatConfig) -> WorldActionJudge:
+def judge(chat_config: ScriptedChatConfig) -> WorldActionJudge:
     """WorldActionJudge with __post_init__ patched to avoid LLM initialisation."""
     with patch(
         "laife.entities.world_judge.WorldActionJudge.__post_init__",
@@ -136,13 +136,13 @@ def test_missing_prompt_variables_error_message() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_judge_raises_on_incomplete_prompt(chat_config: OllamaChatConfig) -> None:
+def test_judge_raises_on_incomplete_prompt(chat_config: ScriptedChatConfig) -> None:
     """WorldActionJudge must raise MissingPromptVariablesError if prompt lacks required vars."""
     with pytest.raises(MissingPromptVariablesError):
         WorldActionJudge(chat_config=chat_config, prompt_str=INCOMPLETE_PROMPT)
 
 
-def test_judge_accepts_valid_prompt(chat_config: OllamaChatConfig) -> None:
+def test_judge_accepts_valid_prompt(chat_config: ScriptedChatConfig) -> None:
     """WorldActionJudge must not raise when all required variables are present."""
     with patch("laife.entities.world_judge.WorldActionJudge.__post_init__", lambda _: None):
         j = WorldActionJudge(chat_config=chat_config, prompt_str=VALID_PROMPT)

@@ -7,7 +7,6 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 from llm_core.chains.structured_chain import MissingPromptVariablesError
-from llm_core.chat.config.ollama import OllamaChatConfig
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
 
@@ -16,6 +15,7 @@ from laife.llm.mission_generator import MissionGenerator
 from laife.llm.mission_generator import MissionGeneratorConfig
 from laife.llm.mission_generator import MissionGeneratorInput
 from laife.llm.mission_generator import MissionGeneratorResult
+from laife.llm.scripted_chat import ScriptedChatConfig
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -47,9 +47,9 @@ def prompt_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def generator_config(prompt_dir: Path) -> MissionGeneratorConfig:
-    """MissionGeneratorConfig backed by OllamaChatConfig and a temp prompt dir."""
+    """MissionGeneratorConfig backed by ScriptedChatConfig and a temp prompt dir."""
     return MissionGeneratorConfig(
-        chat_config=OllamaChatConfig(),
+        chat_config=ScriptedChatConfig(),
         prompt_loader_config=PromptLoaderConfig(
             base_prompt_fol=prompt_dir,
             prompt_name="mission_generator",
@@ -74,7 +74,7 @@ def generator(generator_config: MissionGeneratorConfig) -> MissionGenerator:
 
 def test_generator_config_instantiation(generator_config: MissionGeneratorConfig) -> None:
     """MissionGeneratorConfig should hold the chat and prompt_loader configs."""
-    assert isinstance(generator_config.chat_config, OllamaChatConfig)
+    assert isinstance(generator_config.chat_config, ScriptedChatConfig)
     assert generator_config.prompt_loader_config.prompt_name == "mission_generator"
 
 
@@ -103,7 +103,7 @@ def test_generator_input_fields() -> None:
 def test_generator_construction_valid_prompt(prompt_dir: Path) -> None:
     """MissionGenerator should construct without error given a complete prompt."""
     config = MissionGeneratorConfig(
-        chat_config=OllamaChatConfig(),
+        chat_config=ScriptedChatConfig(),
         prompt_loader_config=PromptLoaderConfig(
             base_prompt_fol=prompt_dir,
             prompt_name="mission_generator",
@@ -119,7 +119,7 @@ def test_generator_construction_missing_variable(tmp_path: Path) -> None:
     d.mkdir()
     (d / "v1.jinja").write_text(INCOMPLETE_PROMPT, encoding="utf-8")
     config = MissionGeneratorConfig(
-        chat_config=OllamaChatConfig(),
+        chat_config=ScriptedChatConfig(),
         prompt_loader_config=PromptLoaderConfig(
             base_prompt_fol=tmp_path,
             prompt_name="mission_generator",

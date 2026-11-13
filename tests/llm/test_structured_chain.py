@@ -7,10 +7,11 @@ from unittest.mock import patch
 
 from llm_core.chains.structured_chain import MissingPromptVariablesError
 from llm_core.chains.structured_chain import StructuredLLMChain
-from llm_core.chat.config.ollama import OllamaChatConfig
 from llm_core.data_models.basemodel_kwargs import BaseModelKwargs
 from pydantic import BaseModel
 import pytest
+
+from laife.llm.scripted_chat import ScriptedChatConfig
 
 # ---------------------------------------------------------------------------
 # Test models
@@ -35,13 +36,13 @@ INCOMPLETE_PROMPT = "Foo: {{ foo }}\n"  # missing 'bar'
 
 
 @pytest.fixture
-def chat_config() -> OllamaChatConfig:
-    """OllamaChatConfig for use in tests (no real LLM calls made)."""
-    return OllamaChatConfig()
+def chat_config() -> ScriptedChatConfig:
+    """ScriptedChatConfig for use in tests (no real LLM calls made)."""
+    return ScriptedChatConfig()
 
 
 @pytest.fixture
-def chain(chat_config: OllamaChatConfig) -> StructuredLLMChain[_SampleInput, _SampleOutput]:
+def chain(chat_config: ScriptedChatConfig) -> StructuredLLMChain[_SampleInput, _SampleOutput]:
     """StructuredLLMChain with __post_init__ patched to avoid LLM initialisation."""
     with patch(
         "llm_core.chains.structured_chain.StructuredLLMChain.__post_init__",
@@ -84,7 +85,7 @@ def test_missing_prompt_variables_error_is_value_error() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_chain_raises_on_missing_prompt_vars(chat_config: OllamaChatConfig) -> None:
+def test_chain_raises_on_missing_prompt_vars(chat_config: ScriptedChatConfig) -> None:
     """StructuredLLMChain must raise MissingPromptVariablesError if prompt is incomplete."""
     with pytest.raises(MissingPromptVariablesError) as exc_info:
         StructuredLLMChain(
@@ -96,7 +97,7 @@ def test_chain_raises_on_missing_prompt_vars(chat_config: OllamaChatConfig) -> N
     assert "bar" in str(exc_info.value)
 
 
-def test_chain_accepts_complete_prompt(chat_config: OllamaChatConfig) -> None:
+def test_chain_accepts_complete_prompt(chat_config: ScriptedChatConfig) -> None:
     """StructuredLLMChain must not raise when all required variables are present."""
     with patch("llm_core.chains.structured_chain.StructuredLLMChain.__post_init__", lambda _: None):
         c = StructuredLLMChain(

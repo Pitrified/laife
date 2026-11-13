@@ -7,7 +7,6 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 from llm_core.chains.structured_chain import MissingPromptVariablesError
-from llm_core.chat.config.ollama import OllamaChatConfig
 from llm_core.prompts.prompt_loader import PromptLoaderConfig
 import pytest
 
@@ -26,6 +25,7 @@ from laife.llm.player_planner import PlayerPlanner
 from laife.llm.player_planner import PlayerPlannerConfig
 from laife.llm.player_planner import PlayerPlannerInput
 from laife.llm.player_planner import PlayerPlannerResult
+from laife.llm.scripted_chat import ScriptedChatConfig
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -60,9 +60,9 @@ def prompt_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def planner_config(prompt_dir: Path) -> PlayerPlannerConfig:
-    """PlayerPlannerConfig backed by OllamaChatConfig and a temp prompt dir."""
+    """PlayerPlannerConfig backed by ScriptedChatConfig and a temp prompt dir."""
     return PlayerPlannerConfig(
-        chat_config=OllamaChatConfig(),
+        chat_config=ScriptedChatConfig(),
         prompt_loader_config=PromptLoaderConfig(
             base_prompt_fol=prompt_dir,
             prompt_name="player_planner",
@@ -120,7 +120,7 @@ def test_planner_raises_on_missing_prompt_variables(
     bad_dir.mkdir()
     (bad_dir / "v1.jinja").write_text(INCOMPLETE_PROMPT, encoding="utf-8")
     config = PlayerPlannerConfig(
-        chat_config=OllamaChatConfig(),
+        chat_config=ScriptedChatConfig(),
         prompt_loader_config=PromptLoaderConfig(
             base_prompt_fol=prompt_dir,
             prompt_name="player_planner_bad",

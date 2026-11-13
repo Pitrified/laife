@@ -39,7 +39,6 @@ It is a view layer: it observes the world but does not change it, so the simulat
 ## Memory and grounding
 
 Buildings, terrain, and utensils can be serialized to LangChain documents and stored in a vector store, so the brain can retrieve relevant world entities before deciding.
-The embedding wrapper lives in [the embed package](../library/embed.md).
 
 ## Where to go next
 

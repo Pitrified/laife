@@ -169,7 +169,7 @@ platform.node().lower().startswith("pmn-14g4")  # g4, else g7
 Players put `WReq` subclasses (e.g., `WRecBuild`, `WRecObserve`) into `WorldRunner.input_queue`. Each request carries its own `response_queue`; the runner puts a `WRes` back there. This decouples the simulation loop from any display dependency.
 
 **LLM provider abstraction via llm-core config subclasses**
-Chat models, embeddings and vector stores are built from llm-core config objects (`ChatConfig.create_chat_model()`, `EmbeddingsConfig.create_embeddings()`, `VectorStoreConfig`), with provider subclasses for Ollama, OpenAI, Azure OpenAI and HuggingFace. Never instantiate the LangChain objects directly.
+Chat models, embeddings and vector stores are built from llm-core config objects (`ChatConfig.create_chat_model()`, `EmbeddingsConfig.create_embeddings()`, `VectorStoreConfig`), configured for OpenAI only; llm-core's Ollama, Azure OpenAI and HuggingFace subclasses sit behind extras laife does not install. Never instantiate the LangChain objects directly.
 
 **Structured chains**
 Every LLM call that returns a model goes through llm-core's `StructuredLLMChain[InputT, OutputT]`.
