@@ -17,6 +17,7 @@ from laife.entities.world_channel import WResStatus
 from laife.entities.world_judge import WorldActionJudge
 from laife.entities.world_judge import WorldJudgeInput
 from laife.entities.world_judge import WorldJudgeResult
+from laife.entities.world_runner import WorldRunner
 
 # ---------------------------------------------------------------------------
 # Shared fixtures / constants
@@ -236,3 +237,47 @@ def test_wrec_build_stores_observation_and_state() -> None:
     assert req.building is building
     assert req.observation == "Clear area."
     assert req.player_state == "Player at (0, 0) - idle"
+
+
+# ---------------------------------------------------------------------------
+# judge_and_build - collision check before the paid judge
+# ---------------------------------------------------------------------------
+
+
+def _build_request(position: tuple[int, int]) -> WRecBuild:
+    bt = BuildingType(building_type="house", description="A house.", size=(10, 10))
+    return WRecBuild(
+        building=Building(name="New House", building_type=bt, position=position),
+        observation="Clear area.",
+        player_state="Player at (0, 0) - idle",
+        response_queue=asyncio.Queue(),
+    )
+
+
+def test_judge_and_build_colliding_skips_judge() -> None:
+    """A colliding build returns the collision error without calling the judge."""
+    runner = WorldRunner()
+    runner.add_building(_build_request((0, 0)).building)
+    runner.build_judge.ainvoke = AsyncMock()
+
+    res = asyncio.run(runner.judge_and_build(_build_request((5, 5))))
+
+    assert res.status == WResStatus.ERROR
+    assert "collides" in res.feedback
+    runner.build_judge.ainvoke.assert_not_called()
+    assert len(runner.buildings) == 1
+
+
+def test_judge_and_build_free_spot_asks_judge() -> None:
+    """A build on a free spot goes through the judge and is added when approved."""
+    runner = WorldRunner()
+    runner.build_judge.ainvoke = AsyncMock(
+        return_value=WorldJudgeResult(success=True, feedback="Fine."),
+    )
+    req = _build_request((100, 100))
+
+    res = asyncio.run(runner.judge_and_build(req))
+
+    assert res.status == WResStatus.SUCCESS
+    runner.build_judge.ainvoke.assert_awaited_once()
+    assert runner.buildings == [req.building]
