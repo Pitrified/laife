@@ -78,6 +78,16 @@ Its feedback: the current position is known, but no starting position or other e
 The player then moved east again to make the move "recorded".
 `WorldRunner.judge_complete()` gets the objective, the player's own claimed outcome, the observation and `Player.render_state()` (name, position, state); not the mission history. So a mission about moving cannot be confirmed.
 
+A second live run, on g4 after folder 40 (log `game_20261113T222654.jsonl`), repeated it: p1 took the mission "Move 20 tiles east to search for a resource to gather", moved 20 steps east, claimed it complete on turn 2 and was rejected.
+On turn 3 its reason was that "the displacement could not be verified from the observation", and it moved 20 east again "to establish a fresh, verifiable move".
+
+### Distance in the observation is not a step count
+
+The observation gives each nearby entity a cardinal direction and its Euclidean distance (`WorldMapObservation`); an `ActionMove` counts steps, and a diagonal step is `(+1, -1)`, about 1.41 of distance.
+In the same g4 run p0 read "Alex's House is 12 tiles to the northeast", asked for 12 steps northeast, and the 8th step was blocked by the house: it aimed at the house's own position, inside its footprint.
+The world handled it correctly; on turn 2 p0 read the house as 2.2 away and moved 1 north.
+Open: whether the observation should give `(dx, dy)` in steps, or the building's edge rather than its position.
+
 ### Players that can die
 
 An alive state on the player, and what ends it.

@@ -34,3 +34,4 @@ Append-only. Newest at the bottom.
 - 2026-11-13 : phase 3 done: llm-core 7f11dd3; laife's script on llm-core's ScriptedChatConfig.
 - 2026-11-13 : phase 4 Singleton committed (7837b4f); llm-core v0.4.0 tagged locally on main (84340e0); pin waits for the push.
 - 2026-11-13 : user pushed llm-core v0.4.0; laife pinned to it; folder 40 done (4/4).
+- 2026-11-13 : merged into `main` (5275041). The user ran `make check`, `make headless`, `make tui` and `make run` on g4, all working; the live log shows the judge's `llm_call` under the requester. Its observations went to `plan.md`.
