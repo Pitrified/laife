@@ -11,7 +11,8 @@ Analysis and questions in [`00_start.md`](00_start.md).
 - `PlayerBrain` owns the four player chains; the mind state stays on `Player` and goes to the backlog (Q3).
 - `laife.embed` and its notebook are deleted (Q4).
 - Prompt loading keeps `PromptLoaderConfig`, no helper (Q5).
-- Order A, C, brain, wrappers.
+- Order A, C, brain, wrappers; brain and wrappers are two phases and two commits (Q8).
+- Brain methods take plain values; the brain gets the player name, the turn is passed per call; brain tests mock the chains (Q6, Q7, Q9).
 - Requests are `@dataclass(kw_only=True, eq=False)` (phase 1).
 - Tests use `ScriptedChatConfig` as the placeholder; `default` keeps its name (phase 2).
 - `langgraph` and `pysqlite3-binary` go, the latter if chroma passes a check; `ipywidgets` stays (phase 2).
@@ -22,7 +23,7 @@ Analysis and questions in [`00_start.md`](00_start.md).
 | -- | --------------------------- | ---------------------------------------------- | ------ |
 | 1  | A: mechanical               | [`01_mechanical.md`](01_mechanical.md)         | done    |
 | 2  | C: OpenAI only and install  | [`02_openai_only.md`](02_openai_only.md)       | done    |
-| 3  | B1: thinking into the brain | [`03_player_brain.md`](03_player_brain.md)     | draft  |
+| 3  | B1: thinking into the brain | [`03_player_brain.md`](03_player_brain.md)     | planned |
 | 4  | B2: chain wrappers          | [`04_chain_wrappers.md`](04_chain_wrappers.md) | draft  |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
@@ -37,3 +38,4 @@ Append-only. Newest at the bottom.
 - 2026-11-13 : plan committed; phase 1 done.
 - 2026-11-13 : phase 1 committed; phase 2 implemented and checked, waiting for the user's review of the lock.
 - 2026-11-13 : lock reviewed; phase 2 done.
+- 2026-11-13 : phase 3 planned with the user, Q6-Q9 answered.
