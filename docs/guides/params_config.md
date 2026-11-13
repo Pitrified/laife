@@ -15,7 +15,7 @@ Both default from environment variables, `ENV_STAGE_TYPE` and `ENV_LOCATION_TYPE
 ## The params singleton
 
 [`LaifeParams`](https://github.com/Pitrified/laife/blob/main/src/laife/params/laife_params.py) is the single entry point for project settings.
-It is a singleton, built on the [`Singleton` metaclass](../library/meta.md), so the whole process shares one instance.
+It is a singleton, built on llm-core's [`Singleton` metaclass](https://github.com/Pitrified/llm-core/blob/main/src/llm_core/metaclasses/singleton.py), so the whole process shares one instance.
 It aggregates the paths and the LLM service params, and is constructed from an `EnvType`.
 
 Access it where you need settings rather than threading values through call signatures.

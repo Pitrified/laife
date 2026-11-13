@@ -67,7 +67,6 @@ Some things are easy to get wrong and worth a sentence somewhere when they chang
 
 - the prompt templates and their versioning, see [the prompts page](../library/prompts.md);
 - the environment variables that select stage and location, see [params and config](params_config.md);
-- the SDL2 requirement for pygame, see [getting started](getting_started.md);
-- resetting the singleton between tests, see [the meta page](../library/meta.md).
+- the SDL2 requirement for pygame, see [getting started](getting_started.md).
 
 When you add a new cross-cutting concern, consider whether it belongs in a guide and whether a term belongs in [the glossary](glossary.md).

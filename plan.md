@@ -95,9 +95,3 @@ From folder 33 unless noted; each is checked against the code there.
 `PlayerBrain` thinks for one player; the mind state (`mission`, `history`, `last_observation`, `inventory`) lives on `Player`, and `_update_mission_from_response` mixes world results into it.
 One player instance has one brain instance, tightly tied, so a mind state shared between the two can exist.
 To be assessed and planned on its own (folder 39 gave the brain the chains, not the state).
-
-### Singleton reset
-
-The `Singleton` metaclass, used by `LaifeParams` and `Alog`, has no reset hook.
-Folder 33 proposed one because tests seemed to reach into `Singleton._instances`; checked 2026-11-12, none does.
-Low priority: nothing needs a reset yet.
