@@ -1,5 +1,5 @@
 ---
-status: in progress
+status: done
 ---
 
 # Phase 2 - Dependency upgrade, llm-core then laife
@@ -45,11 +45,12 @@ It was phase 3 of the Gemini effort; the user split it out and deferred Gemini (
 - llm-core: suite green on the new lock, tagged, guide written.
 - laife: on the new tag and lock, `make check` passes, `make headless` runs, the pydantic warning is gone from the test run.
 
-## Outcome so far
+## Outcome
 
-- llm-core `v0.3.0` committed and tagged locally (its folder `07_deps_update`), push pending, by the user.
+- llm-core `v0.3.0` released (its folder `07_deps_update`), pushed by the user.
 - laife relocked with `uv lock --upgrade` while still pinned to `@v0.2.2`; the exactly pinned tools did not move. No code change.
   `make check` passes; test warnings 27 to 15, the pydantic one gone.
   The rest: pygame's AVX2 notice (phase 3, parked) and `asyncio.iscoroutinefunction` deprecations from chromadb and langsmith, upstream.
 - `make headless` runs and ends at the same positions as before the upgrade.
-- Left: pin `@v0.3.0` once the tag is pushed, relock, `make check`; `make run` on g4 by the user.
+- Pinned `@v0.3.0`, `uv lock --upgrade-package llm-core`: `make check` and `make headless` pass, same warnings and positions as on the relock.
+- Not verified: the live provider path on openai 3 and langchain-openai 1.7; `make run` on g4 by the user.

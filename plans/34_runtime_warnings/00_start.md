@@ -1,6 +1,6 @@
 ---
-status: in progress
-priority: 1
+status: draft
+priority: 0
 description: |
   Noise and waste a run shows: the pydantic V1 warning, fixed by a dependency upgrade through llm-core, and the build judge paid before the free collision check.
   `SystemExit` on quit and pygame's AVX2 notice are parked with the renderer question.
@@ -100,3 +100,7 @@ Taken with the user.
 - Q1: 0.3.0.
 - Q2: raise only what the code needs.
 - Q3: the dependency update is split out of the Gemini effort in llm-core as its own folder, `07_deps_update`; Gemini is deferred and replanned there.
+
+## State 2026-11-13
+
+Phases 4 and 2 are done. What is left, phases 1 and 3, is parked with the renderer question, so the folder goes back to `draft` until that is decided.
