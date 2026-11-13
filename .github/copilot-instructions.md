@@ -94,6 +94,7 @@ Planning is cooperative: the functional and technical details are worked out wit
 
 - **Small primitives over complete APIs.** A function that answers one question well composes; a method for every phrasing of the question does not.
 - **No config knobs without a case.** A parameter with one caller and one value is a constant.
+- **A config object stays a config object even with one field.** `PromptLoaderConfig` holds only a prompt name today; a helper taking `name` instead would grow a parameter for each field added later, such as a version. Build and pass the config; do not unpack it into arguments.
 - **Build the case in front of you,** not the general one it might become.
 - **Errors say what is wrong and with which input.** Raise a named exception (`UnknownEnvLocationError`), not a bare `ValueError`.
 
