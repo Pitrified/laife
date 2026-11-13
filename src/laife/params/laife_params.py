@@ -8,9 +8,9 @@ There is a parameter regarding the environment type (stage and location), which
 is used to load different paths and other parameters based on the environment.
 """
 
+from llm_core.metaclasses.singleton import Singleton
 from loguru import logger as lg
 
-from laife.meta.singleton import Singleton
 from laife.params.env_type import EnvType
 from laife.params.laife_paths import LaifePaths
 from laife.params.llm_services import LLMServicesParams

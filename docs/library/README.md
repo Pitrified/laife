@@ -12,7 +12,7 @@ For cross-cutting explanations see [the guides](../guides/README.md).
 - [rendering](rendering.md) - the pygame view layer and sprites.
 - [params](params.md) - environment-aware settings, paths, and LLM service params.
 - [config](config.md) - type aliases and project-level constants.
-- [meta](meta.md) - the singleton metaclass and the structured logger.
+- [meta](meta.md) - the structured logger.
 - [ui](ui.md) - the asynchronous console logger.
 
 ## How the packages relate

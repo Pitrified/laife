@@ -2,7 +2,7 @@
 
 import asyncio
 
-from laife.meta.singleton import Singleton
+from llm_core.metaclasses.singleton import Singleton
 
 
 class Alog(metaclass=Singleton):

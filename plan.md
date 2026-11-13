@@ -37,6 +37,12 @@ A `--seed` argument or an env var would make a live run start from a known world
 The headless run answers from a fixed script.
 Replaying a live run's recorded answers would use the same seam, `ScriptedChatConfig` per player; it diverges as soon as the world differs from the recording, so it waits for a case that needs it (folder 38).
 
+### Tuning the chat params
+
+laife's model, temperature and `reasoning_effort` (`ChatParams.load_params`) were picked to make a live run work, never tuned.
+gpt-6-luna takes only temperature 1 unless `reasoning_effort` is `"none"`; fala-language-tutor's prompt lab compared models and efforts for its own prompts (its folder 14).
+A change is checked by a live run capped by turns and approved first, since it spends the prepaid OpenAI credit (folder 40).
+
 ### A failed reply stops the world
 
 An exception in the target's `receive_message()` escapes `WorldRunner.route_interaction` and ends `WorldRunner.simulate()`: the live game stops with a traceback, the headless run re-raises it.
@@ -84,26 +90,8 @@ Load the map from data instead of the hardcoded setup in `game/main.py`.
 
 From folder 33 unless noted; each is checked against the code there.
 
-### Scripted chat model to llm-core
-
-`laife.llm.scripted_chat` answers structured-output calls by schema.
-The model and config are general and could sit beside llm-core's `FakeChatModel`, which cycles one list regardless of schema; the default script and the per-schema answers stay in laife.
-Moving it means an llm-core release and a tag bump here (folder 38).
-It gets a folder of its own, not mixed with other work.
-
 ### Player mind state
 
 `PlayerBrain` thinks for one player; the mind state (`mission`, `history`, `last_observation`, `inventory`) lives on `Player`, and `_update_mission_from_response` mixes world results into it.
 One player instance has one brain instance, tightly tied, so a mind state shared between the two can exist.
 To be assessed and planned on its own (folder 39 gave the brain the chains, not the state).
-
-### Timing every LLM call
-
-`timed_llm_call` in `laife.meta.logger` is wrapped by hand around some call sites; the world judges are not timed.
-Timing belongs lower, in the chain, possibly in llm-core's `StructuredLLMChain`, with the player and turn context coming from the log context rather than from arguments.
-
-### Singleton reset
-
-The `Singleton` metaclass, used by `LaifeParams` and `Alog`, has no reset hook.
-Folder 33 proposed one because tests seemed to reach into `Singleton._instances`; checked 2026-11-12, none does.
-Low priority: nothing needs a reset yet.

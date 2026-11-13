@@ -20,11 +20,11 @@ What can differ is the interleaving of the two players' events in the log.
 The turn stamped on a reply can differ too: a reply runs inside the sender's world request and carries the receiver's current turn.
 
 Every chain gets a `ScriptedChatConfig` from [`laife.llm.scripted_chat`](https://github.com/Pitrified/laife/blob/main/src/laife/llm/scripted_chat.py) in place of the provider.
-The scripted model ignores the prompt and answers by output model:
+It subclasses llm-core's `ScriptedChatConfig` (`llm_core.testing.scripted_chat_model`), whose model ignores the prompt and answers by output model from the game's `build_answers`:
 
 - the player brain gets the next action of that player's script, cycling;
 - the judges approve, and the mission generator, planner and replier return fixed values;
-- an output model it has no answer for raises `UnscriptedSchemaError`, so a new chain fails the run instead of being answered with a guess.
+- an output model it has no answer for raises llm-core's `UnscriptedSchemaError`, so a new chain fails the run instead of being answered with a guess.
 
 The default script is one action of each type, ending with `complete`, so a run of six turns per player goes through every branch of the turn loop.
 
