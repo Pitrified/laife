@@ -6,26 +6,32 @@ What is already built is in the `done` folders under `plans/`; `python3 scripts/
 
 ## Engine
 
-### Renderer: pygame or a web app
-
-Whether pygame stays as the renderer.
-Options: pygame as now; a text-only runner beside a renderer (`scratch_space/rebirth_/` had it); a web page reading the world state, served from g7 over the tailnet and opened from g4 or the phone, as the sibling repo abyss does.
-Also decides the Python pin: pygame 2.6 has no 3.14 wheel, and the `==3.14.*` pin uses nothing newer than 3.12 (folder 33).
-The visual wishes wait on this choice: tiled terrain and grass instead of flat colours, buildings with a garden, utensils held by the player, a window that shows more state and answers the mouse.
-The same pass trims the engine's terminal output and the logs.
-The terminal is not the main interface: the window and `make tui` are.
-Today a run prints every `alg.log` line, and the structured log has one line per move step; whether the structured log keeps its shape is reassessed with it.
-`Player` and `WorldRunner` call `alg.log` and `slog` for the same event in a few places; whether one call feeds both channels is decided with the log shape.
-
 ### Renderer checks without a screen
 
 The headless run skips `WorldRenderer`, so nothing an agent runs exercises the drawing code.
-Checks specific to the renderer: SDL's dummy video driver, or frames saved to images and compared.
-They depend on which renderer stays (item above).
+Checks specific to the renderer: SDL's dummy video driver, or frames saved to images and compared; with a web page, Playwright screenshots.
+They depend on which renderer stays (folder 41).
 
 ### Runtime warnings
 
-`SystemExit` on quit and pygame's AVX2 notice, drafted in folder `34_runtime_warnings` and parked there until the renderer is decided.
+`SystemExit` on quit and pygame's AVX2 notice, drafted in folder `34_runtime_warnings` and parked there until the renderer is decided (folder 41).
+
+### Terminal output and log shape
+
+The terminal is not the main interface: the window and `make tui` are.
+Today a run prints every `alg.log` line, and the structured log has one line per move step; whether the structured log keeps its shape is reassessed, and a web view reading events from it (folder 41) is one reason to.
+`Player` and `WorldRunner` call `alg.log` and `slog` for the same event in a few places; whether one call feeds both channels is decided with the log shape.
+
+### Visual wishes
+
+Tiled terrain and grass instead of flat colours, buildings with a garden, utensils held by the player.
+They wait on the renderer choice (folder 41).
+
+### Sprite loading
+
+`SpriteLoader` (`src/laife/rendering/sprites.py`) is hand-rolled: sheet coordinates in a Python dict, one PNG per player state, picked by name.
+The usual shape is a texture atlas with a JSON descriptor, exported by a tool such as TexturePacker or Aseprite and read directly by PixiJS (`Spritesheet`) and Phaser; Tiled covers maps the same way.
+Assess whether to move to that format before more sprites are added; it goes with the web client (folder 41), which replaces the pygame loader.
 
 ### Seed for the live game
 
