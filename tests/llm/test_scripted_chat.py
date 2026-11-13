@@ -1,8 +1,9 @@
-"""Tests for the scripted chat model."""
+"""Tests for the game's script on llm-core's scripted chat model."""
 
 import asyncio
 
 from llm_core.chains.structured_chain import StructuredLLMChain
+from llm_core.testing.scripted_chat_model import UnscriptedSchemaError
 import pytest
 
 from laife.entities.action import ActionEnvelope
@@ -17,8 +18,6 @@ from laife.llm.player_replier import PlayerReplyInput
 from laife.llm.player_replier import PlayerReplyOutput
 from laife.llm.scripted_chat import EmptyScriptError
 from laife.llm.scripted_chat import ScriptedChatConfig
-from laife.llm.scripted_chat import ScriptedChatModel
-from laife.llm.scripted_chat import UnscriptedSchemaError
 from laife.llm.scripted_chat import default_script
 
 
@@ -34,17 +33,26 @@ from laife.llm.scripted_chat import default_script
 )
 def test_every_game_schema_is_answered(schema: type) -> None:
     """Each output model the game's chains ask for gets a valid instance."""
-    model = ScriptedChatModel(script=default_script("p1"))
+    model = ScriptedChatConfig(script=default_script("p1")).create_chat_model()
     assert isinstance(model.answer(schema), schema)
 
 
 def test_script_cycles() -> None:
     """The brain gets the script in order and starts over at the end."""
     script = default_script("p1")
-    model = ScriptedChatModel(script=script)
+    model = ScriptedChatConfig(script=script).create_chat_model()
     got = [model.answer(ActionEnvelope).act for _ in range(len(script) + 1)]  # type: ignore[attr-defined]
     assert [type(a) for a in got[: len(script)]] == [type(a) for a in script]
     assert isinstance(got[-1], ActionPlan)
+
+
+def test_each_model_has_its_own_cycle() -> None:
+    """Two models built from one config each start at the top of the script."""
+    config = ScriptedChatConfig(script=default_script("p1"))
+    first = config.create_chat_model()
+    second = config.create_chat_model()
+    first.answer(ActionEnvelope)
+    assert isinstance(second.answer(ActionEnvelope).act, ActionPlan)  # type: ignore[attr-defined]
 
 
 def test_default_script_targets_other_player() -> None:
@@ -55,14 +63,14 @@ def test_default_script_targets_other_player() -> None:
 
 def test_unknown_schema_raises() -> None:
     """An output model with no scripted answer fails by name."""
-    model = ScriptedChatModel(script=[])
+    model = ScriptedChatConfig().create_chat_model()
     with pytest.raises(UnscriptedSchemaError):
         model.answer(PlayerReplyInput)
 
 
 def test_empty_script_raises_on_action() -> None:
     """A model with no script cannot pick an action."""
-    model = ScriptedChatModel(script=[])
+    model = ScriptedChatConfig().create_chat_model()
     with pytest.raises(EmptyScriptError):
         model.answer(ActionEnvelope)
 

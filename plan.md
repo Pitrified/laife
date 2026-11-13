@@ -90,13 +90,6 @@ Load the map from data instead of the hardcoded setup in `game/main.py`.
 
 From folder 33 unless noted; each is checked against the code there.
 
-### Scripted chat model to llm-core
-
-`laife.llm.scripted_chat` answers structured-output calls by schema.
-The model and config are general and could sit beside llm-core's `FakeChatModel`, which cycles one list regardless of schema; the default script and the per-schema answers stay in laife.
-Moving it means an llm-core release and a tag bump here (folder 38).
-It gets a folder of its own, not mixed with other work.
-
 ### Player mind state
 
 `PlayerBrain` thinks for one player; the mind state (`mission`, `history`, `last_observation`, `inventory`) lives on `Player`, and `_update_mission_from_response` mixes world results into it.
