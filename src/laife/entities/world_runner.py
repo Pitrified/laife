@@ -180,7 +180,13 @@ class WorldRunner:
         )
 
     async def judge_and_build(self, req: WRecBuild) -> WResBuild:
-        """Validate a build request with the LLM judge then add the building."""
+        """Check collisions, then validate with the LLM judge, then add the building.
+
+        The collision check runs first because it is free and the judge is a paid call.
+        """
+        collision = self.check_building_collision(req.building)
+        if collision is not None:
+            return collision
         judge_input = WorldJudgeInput(
             action_type="build",
             action_details=(
@@ -195,10 +201,7 @@ class WorldRunner:
         result = await self.build_judge.ainvoke(judge_input)
         if not result.success:
             return WResBuild(status=WResStatus.ERROR, feedback=result.feedback)
-        # Judge approved - fall through to spatial check
-        spatial_res = self.add_building(req.building)
-        if spatial_res.status == WResStatus.ERROR:
-            return spatial_res
+        self.buildings.append(req.building)
         return WResBuild(status=WResStatus.SUCCESS, feedback=result.feedback)
 
     async def judge_craft(self, req: WRecCraft) -> WResCraft:
@@ -231,14 +234,21 @@ class WorldRunner:
             feedback=result.feedback,
         )
 
-    def add_building(self, building: Building) -> WResBuild:
-        """Add a building after checking for spatial collisions."""
+    def check_building_collision(self, building: Building) -> WResBuild | None:
+        """Return the error response if *building* collides with an existing one, else None."""
         for existing in self.buildings:
             if aabb_collides(building.position, building.size, existing.position, existing.size):
                 return WResBuild(
                     status=WResStatus.ERROR,
                     feedback="Building collides with an existing building.",
                 )
+        return None
+
+    def add_building(self, building: Building) -> WResBuild:
+        """Add a building after checking for spatial collisions."""
+        collision = self.check_building_collision(building)
+        if collision is not None:
+            return collision
         self.buildings.append(building)
         return WResBuild(status=WResStatus.SUCCESS, feedback="Building added.")
 

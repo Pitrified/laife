@@ -1,8 +1,9 @@
 ---
-status: draft
-priority: 0
+status: in progress
+priority: 1
 description: |
-  Three startup and shutdown warnings seen in real runs: `SystemExit` on quit, the pydantic V1 warning on 3.14, pygame's AVX2 notice.
+  Noise and waste a run shows: the pydantic V1 warning, fixed by a dependency upgrade through llm-core, and the build judge paid before the free collision check.
+  `SystemExit` on quit and pygame's AVX2 notice are parked with the renderer question.
 ---
 
 # runtime warnings cleanup - bootstrap
@@ -70,3 +71,32 @@ Lowest priority of the three.
   and can we move to it without touching the llm_core migration?
 - Warning 3: is `pygame-ce` a drop-in for our usage, and do we care about blit
   performance at all at this scale?
+
+## Decisions 2026-11-13
+
+Taken with the user.
+
+- Only what the headless run verifies is in scope now: the judge order (phase 4) and the pydantic warning (phase 2).
+  Phases 1 and 3, `SystemExit` on quit and the AVX2 notice, are parked: they live in the renderer, and pygame or a web app is still an open point in `plan.md`.
+- Order: phase 4, then phase 2.
+- The judge order joins this folder from the backlog: it is the same theme, a run doing something it should not, here paying for a judge call that cannot change the outcome.
+- Warning 2 is fixed by upgrading, not filtered: langchain-core 1.8.0 no longer warns on import (checked in a scratch venv).
+  The answer to the open question above.
+- The upgrade covers the whole lock, which is months old, and goes through llm-core:
+  upgrade llm-core, release a new tag, write a guide for its dependents, then move laife to the tag.
+  Other dependents may break and keep the old pin until their own upgrade pass; llm-core is 0.x for this reason.
+- llm-core already plans its lock refresh, as phase 3 of its Gemini effort; phase 2 here runs that phase rather than writing a second one.
+
+## Open questions 2026-11-13
+
+- Q1: the new llm-core version. 0.3.0, since dependents may break, or 0.2.3?
+- Q2: llm-core's lower bounds in `pyproject.toml` (`langchain-core>=0.3` and so on).
+  Raise them to the versions the new lock was tested with, or leave them and raise only what the code needs?
+- Q3: the Gemini effort's phase 3 says to bump laife in its phase 5, with Gemini.
+  Running the refresh alone now moves laife ahead of that; its phase file needs a line saying so.
+
+## Answers 2026-11-13
+
+- Q1: 0.3.0.
+- Q2: raise only what the code needs.
+- Q3: the dependency update is split out of the Gemini effort in llm-core as its own folder, `07_deps_update`; Gemini is deferred and replanned there.

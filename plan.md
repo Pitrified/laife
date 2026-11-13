@@ -21,7 +21,7 @@ They depend on which renderer stays (item above).
 
 ### Runtime warnings
 
-Folder `34_runtime_warnings` holds three drafted fixes: `SystemExit` on quit, the pydantic V1 warning on 3.14, pygame's AVX2 notice.
+`SystemExit` on quit and pygame's AVX2 notice, drafted in folder `34_runtime_warnings` and parked there until the renderer is decided.
 
 ### Seed for the live game
 
@@ -72,10 +72,6 @@ Load the map from data instead of the hardcoded setup in `game/main.py`.
 ## Code health
 
 From folder 33 unless noted; each is checked against the code there.
-
-### Judge after the collision check
-
-`WorldRunner.judge_and_build()` pays for the LLM judge before the free collision check. Swap the order.
 
 ### One base for the LLM chain wrappers
 
