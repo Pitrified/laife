@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 priority: 0
 description: |
   Code health items picked from the `plan.md` backlog: the duplicated `BaseModelKwargs`, the world request boilerplate, the unused providers and the install weight, the player's thinking moved into `PlayerBrain`, and the chain wrappers around llm-core's `StructuredLLMChain`.

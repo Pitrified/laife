@@ -1117,7 +1117,7 @@ tui = [
 requires-dist = [
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "ipywidgets", specifier = ">=8.1.3" },
-    { name = "llm-core", extras = ["openai", "chroma"], git = "https://github.com/Pitrified/llm-core?rev=v0.3.0" },
+    { name = "llm-core", extras = ["openai", "chroma"], git = "https://github.com/Pitrified/llm-core?rev=v0.3.1" },
     { name = "loguru", specifier = ">=0.7.2" },
     { name = "pygame", specifier = ">=2.6.0" },
     { name = "rich", specifier = ">=13.9.2" },
@@ -1333,8 +1333,8 @@ wheels = [
 
 [[package]]
 name = "llm-core"
-version = "0.3.0"
-source = { git = "https://github.com/Pitrified/llm-core?rev=v0.3.0#9f83c81db9026d7cf4e226de0177805229ea4539" }
+version = "0.3.1"
+source = { git = "https://github.com/Pitrified/llm-core?rev=v0.3.1#7012d68f90ab7ef56141721882f037af314a9279" }
 dependencies = [
     { name = "dotenv" },
     { name = "jinja2" },

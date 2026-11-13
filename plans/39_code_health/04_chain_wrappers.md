@@ -1,5 +1,5 @@
 ---
-status: in progress
+status: done
 ---
 
 # Phase 4 - chain wrappers
@@ -122,4 +122,5 @@ For the user's review, 2026-11-13.
 - `make check` passes. `make headless` with the default seed ends at the same positions; per player, the sequence of `llm_call`, action and world request records matches the run before the change.
   The turn stamped on a `reply` record is the replier's turn when the message arrives, so it follows the interleaving of the two players: one run after the change stamped both replies a turn differently, a second run matched the baseline exactly.
 - Docs: the chains guide has a section on the world judge and no longer points at docstring notes; the llm and entities library pages and the glossary describe the modules as holding models.
-- llm-core: branch `test/structured_chain_wrong_type` adds the wrong-output-type case for `invoke` and `ainvoke`; its suite, ruff and pyright pass. Not committed; the patch release and laife's pin move are still open.
+- llm-core: the wrong-output-type case for `invoke` and `ainvoke` is in its suite, released as v0.3.1 with no library change.
+  laife pins `@v0.3.1`; the lock moved only llm-core. `make check` passes and `make headless` ends at the same positions on it.
