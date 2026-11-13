@@ -1,5 +1,5 @@
 ---
-status: planned
+status: in progress
 ---
 
 # Phase 4 - Singleton, release and pin
@@ -28,3 +28,17 @@ laife, after the user has pushed the tag:
 
 - `make check` passes on the pinned tag, and `make headless` ends at the same positions as after phase 3.
 - Folder 40 done.
+
+## Decided by the agent while implementing
+
+For the user's review, 2026-11-13.
+
+- No laife test covered `Singleton`, so none was deleted.
+- llm-core's `docs/index.md` lists the `on_call` callback and the scripted model, and `testing/` in the layout.
+- llm-core `feat/v0_4_items` was fast-forwarded into llm-core `main` and tagged there, as this file planned; the branch is kept.
+
+## Outcome
+
+- laife 7837b4f: `LaifeParams` and `Alog` use llm-core's `Singleton`; the copy, its docs section and the docs line on clearing it are gone; `plan.md` "Singleton reset" removed. `make check` passes, 272; `make headless` same positions and per-player records as phase 3.
+- llm-core 84340e0 "chore: release v0.4.0": version, CHANGELOG `[0.4.0]`, lock, docs index. `main` fast-forwarded to it, annotated tag `v0.4.0`. 207 tests pass; pyright shows the same transcription errors as before.
+- Waiting on the user's push of llm-core `main` and `v0.4.0` before laife pins the tag.
