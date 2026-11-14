@@ -16,7 +16,7 @@ Assessment, options and open questions in [`00_start.md`](00_start.md).
 | 2 | clean stop, and a quit route | [`02_clean_stop.md`](02_clean_stop.md) | done |
 | 3 | page skeleton | [`03_page_skeleton.md`](03_page_skeleton.md) | done |
 | 4 | PixiJS, zoom and pan, the player detail | [`04_pixi_detail.md`](04_pixi_detail.md) | done |
-| 5 | retire pygame | not written | draft |
+| 5 | retire pygame | [`05_retire_pygame.md`](05_retire_pygame.md) | in progress |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
@@ -42,3 +42,5 @@ Append-only. Newest at the bottom.
 - 2026-11-14 : Q17-Q20 answered as recommended: trimmed vendoring copy with a backlog note, stream actions only, centre once on select, Pillow for the canvas check. Phase 4 planned and started.
 - 2026-11-14 : phase 4 implemented (39825cc): `ui/vendor.toml` with pixi.js 8.22.0 and pixi-viewport 6.0.3, `laife.web.vendor` and `make vendor`, `/vendor` route checking the lock; world on PixiJS with drag, wheel, pinch, fit and sliding moves; detail view with the whole mission tree, inventory and 30 actions, centring on select; quit closes the stream first. `make check` passes, 308 tests, no network; `make e2e` passes in about 11 s, its quit check shown failing with the fix removed. Backlog: vendoring shared with abyss. Waiting on the user's check on g4.
 - 2026-11-14 : phase 4 done: the user checked the page on the phone over Tailscale, served on g7's tailnet address (log `game_20261114T095327.jsonl`): pause, pinch zoom, selecting a player and its detail, quit; the run ended cleanly.
+- 2026-11-14 : phase 5 sub-plan written: `serve_run` shared by `make run` and the headless serve, the live game on the page with a turn cap, `quit` and `stopped` log events, pygame and `src/laife/rendering/` removed, folder 34 phases 1 and 3 discarded. Live check on g4 at most 24 calls for 2 players and 3 turns. Q21-Q24 open.
+- 2026-11-14 : Q21-Q24 answered as recommended: `LIVE_TURNS` default 3, `make run` starts paused, `--seed` folded in, localhost by default. Phase 5 planned and started.
