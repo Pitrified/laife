@@ -95,3 +95,13 @@ What a call costs on gpt-6-luna is not known here; the OpenAI usage page shows i
   - b. The tailnet address by default, so the phone reaches it without a flag.
   - Recommended: a; one default for both runs, and the live run is started on g4, where the browser is local.
   - ANS: a.
+
+## What the implementation found
+
+- `make run` takes its own `LIVE_SEED` rather than `SEED`, for the reason `LIVE_TURNS` exists: `SEED` defaults to 0 for the headless run, and the live game stays unseeded unless asked.
+- `PAUSED` now means `1` to pause the headless serve and `0` to start the live game running; the headless target tests for `1` rather than any value, so `PAUSED=0` no longer pauses it.
+- The pre-commit hook that blocks privileged commands caught the word in the CONTRIBUTING text being deleted; that edit went through the editor instead of a shell script.
+- The backlog item "Seed for the live game" went with Q23; "Runtime warnings" and "Renderer checks without a screen" with the plan.
+- The log check (`quit` then `stopped` last) is shown failing with the quit event removed.
+- Test warnings went from 15 to 14 with pygame gone.
+- Not run on g7: the live entry beyond `--help`. A paused live run makes no provider call until resumed, but live runs are the user's, on g4.
