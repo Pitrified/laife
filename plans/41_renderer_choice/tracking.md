@@ -14,7 +14,7 @@ Assessment, options and open questions in [`00_start.md`](00_start.md).
 | - | ----- | ---- | ------ |
 | 1 | world protocol, no client | [`01_world_protocol.md`](01_world_protocol.md) | done |
 | 2 | clean stop, and a quit route | [`02_clean_stop.md`](02_clean_stop.md) | done |
-| 3 | page skeleton | [`03_page_skeleton.md`](03_page_skeleton.md) | in progress |
+| 3 | page skeleton | [`03_page_skeleton.md`](03_page_skeleton.md) | done |
 | 4 | player detail and zoom | not written | draft |
 | 5 | retire pygame | not written | draft |
 
@@ -36,3 +36,4 @@ Append-only. Newest at the bottom.
 - 2026-11-14 : phase 3 sub-plan written: `ui/world_web/` served by FastAPI, Canvas 2D world, player cards with latest actions from the stream, snapshot refetched on events (at most every 250 ms), pause, step, resume, quit; `/sprites` from a pygame-free sprite table; Playwright test with a screenshot. Checked: playwright 1.63 matches g7's Chromium 1243; positions are pixels, players centred and the rest top-left, as pygame draws them. Q14-Q16 open.
 - 2026-11-14 : Q14-Q16 answered as recommended: view fits the snapshot and only grows, `make e2e` outside `make check`, playwright approved with no JS linter yet. Phase 3 planned and started.
 - 2026-11-14 : phase 3 implemented (6f88a13): `ui/world_web/` page, `/sprites` and static mounts, `laife.config.sprites` without pygame, `make e2e` with Playwright and a screenshot in `cache/e2e/`. `make check` passes, 299 tests and the browser test deselected; `make e2e` passes in about 5 s and fails with the step button disconnected; plain `make headless` unchanged. Waiting on the user's check on g4 before the phase closes.
+- 2026-11-14 : phase 3 done: the user checked the page on g4 through an SSH tunnel to a serving run on g7; the run moved, and pause, step, resume and quit all worked.
