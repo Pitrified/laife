@@ -94,6 +94,24 @@ In the same g4 run p0 read "Alex's House is 12 tiles to the northeast", asked fo
 The world handled it correctly; on turn 2 p0 read the house as 2.2 away and moved 1 north.
 Open: whether the observation should give `(dx, dy)` in steps, or the building's edge rather than its position.
 
+### A build or craft completes the root mission
+
+`Player._update_mission_from_response` calls `self.mission.record_action_success()` on a successful build or craft: the root mission becomes `COMPLETED` even while sub-missions are pending, and the next turn generates a new mission.
+Seen in the headless run (folder 41): after the plan "Build a shed." then "Craft a hammer.", the build on turn 3 completed the whole mission and both steps were dropped.
+To check: whether the success should go to `active_focus()`, the step being worked, and the root complete only through `advance()`, as `ActionComplete` does it.
+
+### History resets on a new mission, a plan and a completed step
+
+`Player.history` is replaced by an empty `MissionHistory` in `_start_new_mission`, in `plan()`, and in `complete()` when a step is confirmed ("fresh slate for the new focus").
+The brain then sees nothing of what it did before the reset, and the web snapshot's history is often short or empty (folder 41).
+To check: whether the resets inside one mission (plan, completed step) are wanted, since the steps belong to the same mission, and whether something longer-lived should keep the actions across missions (see "Interaction memory" and "Player mind state").
+
+### Save and resume a world
+
+Write the whole world to disk, terrains, buildings, players with missions, history and inventory, and start a later run from it.
+Needs the mission tree reload (Code health, "Mission tree: reload and ids") and a serialisable `Player`.
+The web snapshot (folder 41) dumps most of it already, read-only.
+
 ### Players that can die
 
 An alive state on the player, and what ends it.

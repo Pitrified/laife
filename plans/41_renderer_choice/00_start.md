@@ -186,7 +186,8 @@ Taken with the user, from Q1-Q9 below.
 
 ## Phases
 
-Each depends on the one before. The sub-plans are not written yet.
+Each depends on the one before.
+On 2026-11-14 a clean-stop phase was added as phase 2, after a phase 1 defect; the list below keeps its first numbering, and `tracking.md` has the current one: 2 clean stop, 3 page, 4 detail and zoom, 5 retire pygame.
 
 1. **World protocol, no client.** Snapshot, event stream and control endpoints served from the game's asyncio loop; a headless mode that keeps running; tests against the headless engine.
 2. **Page skeleton.** Split screen: the world drawn from the snapshot on a canvas, players with their sprites, the player list with latest actions, pause, resume and step. Playwright check on g7 with a screenshot.
