@@ -14,7 +14,7 @@ Assessment, options and open questions in [`00_start.md`](00_start.md).
 | - | ----- | ---- | ------ |
 | 1 | world protocol, no client | [`01_world_protocol.md`](01_world_protocol.md) | done |
 | 2 | clean stop, and a quit route | [`02_clean_stop.md`](02_clean_stop.md) | done |
-| 3 | page skeleton | not written | draft |
+| 3 | page skeleton | [`03_page_skeleton.md`](03_page_skeleton.md) | in progress |
 | 4 | player detail and zoom | not written | draft |
 | 5 | retire pygame | not written | draft |
 
@@ -33,3 +33,5 @@ Append-only. Newest at the bottom.
 - 2026-11-14 : defect in phase 1: with a client on `/events`, Ctrl-C does not stop a serving run; on g7 the game played on 40 s after SIGINT and exited only when `curl` hung up, since uvicorn waits for open responses and a stream never ends. New phase 2 (clean stop, with the user's question of a quit route assessed in it); the page and later phases move to 3-5. Backlog: save and resume a world, the build/craft completing the root mission, the history reset.
 - 2026-11-14 : Q13 answered a: the quit route comes with the stop fix. Phase 2 planned and started.
 - 2026-11-14 : phase 2 done (940dd49): `EventHub.close()`, one stop path for Ctrl-C (a `uvicorn.Server` subclass) and `POST /control/quit`, `timeout_graceful_shutdown` 3 s. Tests shown failing first: all four new ones on the phase 1 code, and the subprocess `quit` case on the script that printed `stopped` only for Ctrl-C. `make check` passes, 295 tests. On g7 with `curl -N` on `/events`: Ctrl-C and quit each exit within 2 s, the stream closes, `stopped`, no traceback; plain `make headless` unchanged.
+- 2026-11-14 : phase 3 sub-plan written: `ui/world_web/` served by FastAPI, Canvas 2D world, player cards with latest actions from the stream, snapshot refetched on events (at most every 250 ms), pause, step, resume, quit; `/sprites` from a pygame-free sprite table; Playwright test with a screenshot. Checked: playwright 1.63 matches g7's Chromium 1243; positions are pixels, players centred and the rest top-left, as pygame draws them. Q14-Q16 open.
+- 2026-11-14 : Q14-Q16 answered as recommended: view fits the snapshot and only grows, `make e2e` outside `make check`, playwright approved with no JS linter yet. Phase 3 planned and started.
