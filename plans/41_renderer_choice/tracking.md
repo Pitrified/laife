@@ -15,7 +15,7 @@ Assessment, options and open questions in [`00_start.md`](00_start.md).
 | 1 | world protocol, no client | [`01_world_protocol.md`](01_world_protocol.md) | done |
 | 2 | clean stop, and a quit route | [`02_clean_stop.md`](02_clean_stop.md) | done |
 | 3 | page skeleton | [`03_page_skeleton.md`](03_page_skeleton.md) | done |
-| 4 | PixiJS, zoom and pan, the player detail | [`04_pixi_detail.md`](04_pixi_detail.md) | in progress |
+| 4 | PixiJS, zoom and pan, the player detail | [`04_pixi_detail.md`](04_pixi_detail.md) | done |
 | 5 | retire pygame | not written | draft |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
@@ -41,3 +41,4 @@ Append-only. Newest at the bottom.
 - 2026-11-14 : assessed the move to PixiJS for the user (the drawing is a contained rewrite; serving a library is the bigger, one-time part). The user chose PixiJS now with clean vendoring, and a detail view showing one player with its whole mission tree. Phase 4 sub-plan written; pins pixi.js 8.22.0 and pixi-viewport 6.0.3, since 8.23.0 and the 7.x line are under two weeks old. Q17-Q20 open.
 - 2026-11-14 : Q17-Q20 answered as recommended: trimmed vendoring copy with a backlog note, stream actions only, centre once on select, Pillow for the canvas check. Phase 4 planned and started.
 - 2026-11-14 : phase 4 implemented (39825cc): `ui/vendor.toml` with pixi.js 8.22.0 and pixi-viewport 6.0.3, `laife.web.vendor` and `make vendor`, `/vendor` route checking the lock; world on PixiJS with drag, wheel, pinch, fit and sliding moves; detail view with the whole mission tree, inventory and 30 actions, centring on select; quit closes the stream first. `make check` passes, 308 tests, no network; `make e2e` passes in about 11 s, its quit check shown failing with the fix removed. Backlog: vendoring shared with abyss. Waiting on the user's check on g4.
+- 2026-11-14 : phase 4 done: the user checked the page on the phone over Tailscale, served on g7's tailnet address (log `game_20261114T095327.jsonl`): pause, pinch zoom, selecting a player and its detail, quit; the run ended cleanly.

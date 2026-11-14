@@ -1,5 +1,5 @@
 ---
-status: in progress
+status: done
 ---
 
 # Phase 4 - PixiJS, zoom and pan, the player detail
@@ -118,3 +118,4 @@ The abyss pattern (`abyss/src/abyss/ui/vendor.py`, `ui/vendor.toml`), trimmed to
 - Seen on a long run: after 122 turns of the script p0 carries 20 hammers, and the mission tree shows its steps only while the mission is active, since a build or craft completes the root (backlog).
 - Headless Chromium on g7 renders WebGL in software and logs "GPU stall due to ReadPixels" when a screenshot reads the canvas; a console warning, not a page error.
 - `make e2e` now takes about 11 s, 4 of them the wait after quit.
+- The quit route writes nothing to the structured log, so a run's log does not say how it ended; a `quit` event beside `paused` and `resumed` would.
