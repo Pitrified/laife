@@ -16,7 +16,7 @@ Assessment, options and open questions in [`00_start.md`](00_start.md).
 | 2 | clean stop, and a quit route | [`02_clean_stop.md`](02_clean_stop.md) | done |
 | 3 | page skeleton | [`03_page_skeleton.md`](03_page_skeleton.md) | done |
 | 4 | PixiJS, zoom and pan, the player detail | [`04_pixi_detail.md`](04_pixi_detail.md) | done |
-| 5 | retire pygame | [`05_retire_pygame.md`](05_retire_pygame.md) | in progress |
+| 5 | retire pygame | [`05_retire_pygame.md`](05_retire_pygame.md) | done |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
@@ -45,3 +45,4 @@ Append-only. Newest at the bottom.
 - 2026-11-14 : phase 5 sub-plan written: `serve_run` shared by `make run` and the headless serve, the live game on the page with a turn cap, `quit` and `stopped` log events, pygame and `src/laife/rendering/` removed, folder 34 phases 1 and 3 discarded. Live check on g4 at most 24 calls for 2 players and 3 turns. Q21-Q24 open.
 - 2026-11-14 : Q21-Q24 answered as recommended: `LIVE_TURNS` default 3, `make run` starts paused, `--seed` folded in, localhost by default. Phase 5 planned and started.
 - 2026-11-14 : phase 5 implemented (8558c83): `laife.web.run.serve_run` shared by `make run` and the headless serve; `game/main.py` serves the live world, paused, `LIVE_TURNS` 3, `--seed`; `quit` and `stopped` log events; pygame and `src/laife/rendering/` removed with their docs; folder 34 done. `make check` 309 tests, `make e2e` and plain `make headless` pass with pygame uninstalled; no pygame mention left outside `plans/`, `scratch_space/` and the lock. Waiting on the user's live check on g4.
+- 2026-11-14 : phase 5 done: live run on g7 served on the tailnet address, watched and controlled by the user from g4's browser (log `game_20261114T115407.jsonl`): started paused, resumed, 3 turns per player, 9 calls on gpt-6-luna (6 action, 2 mission, 1 judge_complete), quit from the page; `paused`, `resumed`, `quit`, `stopped` logged, no traceback. The complete judge rejected p0's move mission again, added to the backlog item. Folder 41 done.

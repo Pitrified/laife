@@ -1,6 +1,6 @@
 ---
-status: in progress
-priority: 1
+status: done
+priority: 0
 description: |
   Which frontend shows the world and how it talks to the game loop: pygame as now, pygame-ce, a web app served from g7, or an engine such as Godot or Flutter.
   Decides the fate of folder 34's parked phases, the Python pin and the visual wishes in `plan.md`.

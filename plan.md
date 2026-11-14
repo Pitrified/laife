@@ -72,6 +72,8 @@ The player then moved east again to make the move "recorded".
 A second live run, on g4 after folder 40 (log `game_20261113T222654.jsonl`), repeated it: p1 took the mission "Move 20 tiles east to search for a resource to gather", moved 20 steps east, claimed it complete on turn 2 and was rejected.
 On turn 3 its reason was that "the displacement could not be verified from the observation", and it moved 20 east again "to establish a fresh, verifiable move".
 
+A third, the first live run served on the world page (2026-11-14, folder 41, log `game_20261114T115407.jsonl`): p0 took "Move one tile east to scout the nearby terrain", moved east on turn 1, and claimed it complete on turn 2 because "the history confirms that move succeeded"; the judge rejected it, and on turn 3 p0 moved again since "the available observation does not verify" the move.
+
 ### Distance in the observation is not a step count
 
 The observation gives each nearby entity a cardinal direction and its Euclidean distance (`WorldMapObservation`); an `ActionMove` counts steps, and a diagonal step is `(+1, -1)`, about 1.41 of distance.
