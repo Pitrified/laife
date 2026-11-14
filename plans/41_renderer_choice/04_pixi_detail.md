@@ -106,3 +106,15 @@ The abyss pattern (`abyss/src/abyss/ui/vendor.py`, `ui/vendor.toml`), trimmed to
   - b. PixiJS's `extract`, called through a hook the page exposes for tests.
   - Recommended: a; it checks what reached the screen, and the page keeps no test hook.
   - ANS: a.
+
+## What the implementation found
+
+- `pixi.js` 8.22.0's `dist/pixi.min.mjs` has no imports, and `pixi-viewport` 6.0.3 imports only `"pixi.js"`; one import map entry each was enough. Both tarballs matched their pins on the first `make vendor`.
+- The secrets hook read the integrity hashes in `ui/vendor.toml` as secrets; the manifest is excluded as `uv.lock` already was, and as abyss excludes its own.
+- `create_app` passed ruff's complexity limit once the vendor route came in; its routes are now three groups (world, control, files), the file group mounted last.
+- The detail first rendered without the card styles, which were scoped to `.player`; head, meta and action styles are now shared.
+- The first quit check passed even without the fix: its listener was attached after the click, and Chromium waits about 3 s before an `EventSource` reconnects. It now records every request from before the click and waits 4 s; without the fix it catches the page's `/state` after the quit.
+- A new player was first placed by testing for position (0, 0), wrong for a player standing at the origin; a flag replaced it.
+- Seen on a long run: after 122 turns of the script p0 carries 20 hammers, and the mission tree shows its steps only while the mission is active, since a build or craft completes the root (backlog).
+- Headless Chromium on g7 renders WebGL in software and logs "GPU stall due to ReadPixels" when a screenshot reads the canvas; a console warning, not a page error.
+- `make e2e` now takes about 11 s, 4 of them the wait after quit.
