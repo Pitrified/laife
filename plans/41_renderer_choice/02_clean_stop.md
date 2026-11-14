@@ -1,5 +1,5 @@
 ---
-status: in progress
+status: done
 ---
 
 # Phase 2 - Clean stop, and a quit route
@@ -59,3 +59,10 @@ Limits:
   - b. Only the stop fix; quit later or never.
   - Recommended: a, because the fix builds the stop path anyway and the route is one call into it; its real use comes with the live game in phase 5.
   - ANS: a.
+
+## What the implementation found
+
+- The route and the server meet through `app.state.stopping`, an `asyncio.Event` the quit route sets and `serve()` watches, since the app is built before the uvicorn server that serves it.
+- uvicorn's `handle_exit` runs as a signal handler between two steps of the loop, so the subclass hands `hub.close()` to the loop with `call_soon_threadsafe` rather than touching the queues from inside the handler.
+- `game/headless.py` printed `stopped` only on `KeyboardInterrupt`, so the quit route ended silently. Found by the live check, not by the first tests, which called `serve_headless` directly; the subprocess test now runs both ways and its `quit` case fails on the old script.
+- The subprocess test imports the whole game in a fresh interpreter; it adds about a second and a half per case to `make check`.
