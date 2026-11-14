@@ -100,6 +100,11 @@ Open: whether the observation should give `(dx, dy)` in steps, or the building's
 Seen in the headless run (folder 41): after the plan "Build a shed." then "Craft a hammer.", the build on turn 3 completed the whole mission and both steps were dropped.
 To check: whether the success should go to `active_focus()`, the step being worked, and the root complete only through `advance()`, as `ActionComplete` does it.
 
+### Building size units
+
+`Player.build` makes a building of `(action.size, action.size)` at the player's position, and the world is in pixels: the headless script's `size=1` builds a 1 x 1 pixel shed, hidden under the player's sprite on the page (folder 41).
+To check: what unit `ActionBuild.size` is in for the model, and whether a building type's own size should apply instead.
+
 ### History resets on a new mission, a plan and a completed step
 
 `Player.history` is replaced by an empty `MissionHistory` in `_start_new_mission`, in `plan()`, and in `complete()` when a step is confirmed ("fresh slate for the new focus").

@@ -96,3 +96,14 @@ Context: [`00_start.md`](00_start.md) (the user's split-screen wish, Q2 plain Ca
   - b. Approved, but add a JS linter (Biome or ESLint) now.
   - Recommended: a; a linter is worth adding when the JavaScript grows, phase 4 at the earliest.
   - ANS: a, approved; the phase may run unattended.
+
+## What the implementation found
+
+- A mount at `/` placed before the routes would answer `/state`; the mounts go last, and a test checks `/state` still reaches the route.
+- The `action` event carries the action as text (`str(action)`), so the card shows it as the log does, enum reprs included (`<CardinalDirection.East: 'east'>`).
+- Every turn logs an observe response and every move step one more; the action list skips observes and counts repeats (`x2`), which keeps a card readable.
+- A stream also errors when the run stops; the page then asks `/state`, and only a failed fetch ends it, so a dropped connection to a live server reconnects.
+- The subprocess helpers of the stop test moved to `tests/serving.py`, shared with the browser test.
+- The browser test is shown failing with the step button disconnected; it runs in about 5 s.
+- A building built in play is `(action.size, action.size)` pixels at the player's position (`Player.build`); the script's `size=1` gives a 1 x 1 shed under the player's sprite. The page draws it as it is; what unit `ActionBuild.size` is in is a game question, for the backlog.
+- Seen in the screenshot: p1's mission shows `completed` after a craft, the root-mission completion already in the backlog.
