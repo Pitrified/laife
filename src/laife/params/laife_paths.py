@@ -45,8 +45,10 @@ class LaifePaths:
         # static
         self.static_fol = self.root_fol / "static"
         self.sprites_fol = self.static_fol / "sprites"
-        # browser pages, one folder each
+        # browser pages, one folder each, and their third-party files
         self.ui_fol = self.root_fol / "ui"
+        self.vendor_manifest = self.ui_fol / "vendor.toml"
+        self.vendor_fol = self.cache_fol / "vendor"
         # templates
         self.templates_fol = self.root_fol / "templates"
         # prompts
@@ -68,6 +70,8 @@ class LaifePaths:
         s += f"   static_fol: {self.static_fol}\n"
         s += f"  sprites_fol: {self.sprites_fol}\n"
         s += f"       ui_fol: {self.ui_fol}\n"
+        s += f"vendor_manifest: {self.vendor_manifest}\n"
+        s += f"   vendor_fol: {self.vendor_fol}\n"
         s += f"templates_fol: {self.templates_fol}\n"
         s += f"  prompts_fol: {self.prompts_fol}\n"
         return s.rstrip()

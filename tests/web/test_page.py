@@ -27,7 +27,7 @@ def test_page_is_served_without_caching() -> None:
     """/ is the page, and a browser is told to ask again on every load."""
     response = get("/")
     assert response.status_code == httpx.codes.OK
-    assert "<canvas" in response.text
+    assert 'id="world-pane"' in response.text
     assert response.headers["cache-control"] == "no-cache"
 
 

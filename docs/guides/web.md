@@ -20,18 +20,41 @@ The players finishing their turns does not stop the server: the final state stay
 
 ## The page
 
-`/` is the world page, from `ui/world_web/`: the world on a canvas on the left, a card per player on the right, and pause or resume, step and quit at the top.
+`/` is the world page, from `ui/world_web/`: the world on the left, the players on the right, and pause or resume, step, fit and quit at the top.
 From g4, with the run on g7: `ssh -L 8002:127.0.0.1:8002 g7`, then `http://localhost:8002`.
 
-- The snapshot is what is drawn. Each event makes the page fetch a fresh one, at most every 250 ms.
-- A card's latest actions come from the `action` and `world_response` events, not from the snapshot's `history`, which resets on a new mission, a plan and a completed step. Observe responses are left out; repeated responses to one action, such as move steps, are counted. A page opened mid-run starts with an empty list.
-- The view covers everything the snapshot holds plus a margin, and only grows during a session, so it does not jump as players move.
+### The world
+
+- Drawn by PixiJS, inside a `pixi-viewport`: drag to pan, wheel or pinch to zoom, between a little more than the whole world and 4x. Fit shows the whole world again.
+- The snapshot is what is drawn. Each event makes the page fetch a fresh one, at most every 250 ms. A player whose position changed slides there over 200 ms; a long move jumps.
+- The world's extent is everything the snapshot holds plus a margin, and only grows during a session, so fitting does not jump as players move.
 - Players are drawn centred on their position, terrains and buildings from their top-left corner, as the pygame renderer draws them.
+- The zoom is kept on the canvas as `data-zoom`, which the browser test reads.
+
+### The panel
+
+- With no player selected, a card per player: state, turn, mission, the active step, the latest three actions.
+- A click on a card, or on a player in the world, shows that player alone and centres the view on it: position, the whole mission tree (the path to the active step highlighted, finished steps dimmed, failures counted), the inventory, and the last 30 actions. Back, or Escape, returns to the cards.
+- Actions come from the `action` and `world_response` events, not from the snapshot's `history`, which resets on a new mission, a plan and a completed step. Observe responses are left out; repeated responses to one action, such as move steps, are counted. A page opened mid-run starts with an empty list.
+
+### The connection
+
 - When the stream drops, the page asks for `/state`; if the server is gone it says the run has ended and stops retrying.
+- Quit closes the page's own stream first, so it does not reconnect to the server it is stopping.
 
-Plain ES modules, no build step and no third-party JavaScript. Static files go out with `Cache-Control: no-cache`, so a reload shows an edit.
+### Third-party files
 
-`make e2e` drives the page in headless Chromium against a paused run started as a separate process: it checks the drawing, a step, a run and a pause, and a quit, and saves `cache/e2e/world_page.png`.
+PixiJS and `pixi-viewport` are pinned in `ui/vendor.toml` by exact version and by the integrity hash npm publishes for each tarball.
+`make vendor` downloads what is missing into `cache/vendor/` (not in git), refuses a tarball that does not match its pin, extracts only the listed files and records each file's sha256 in a lock beside it.
+`/vendor/<package>/<file>` serves a file only if it is listed and still matches the lock; a page with an unfetched cache gets `404`s naming `make vendor`.
+The page loads them through an import map in `index.html`, since `pixi-viewport` imports `"pixi.js"` by name; a unit test checks that every import map target is in the manifest.
+A release is pinned once it has been out a few weeks. The scheme is abyss's, without its plain-file pins.
+
+Otherwise the page is plain ES modules with no build step. Static files go out with `Cache-Control: no-cache`, so a reload shows an edit.
+
+### Browser test
+
+`make e2e` runs `make vendor`, then drives the page in headless Chromium against a paused run started as a separate process: the drawing, wheel zoom and fit, a step, a run and a pause, a player's detail, and a quit with no request after it. It saves `cache/e2e/world_page.png` with a detail open.
 It is not part of `make check`; run it before committing a change to the page.
 Playwright's Chromium lives in `~/.cache/ms-playwright`; on a machine without it, `uv run --no-sync playwright install chromium`.
 
@@ -45,6 +68,7 @@ Playwright's Chromium lives in `~/.cache/ms-playwright`; on a machine without it
 | `POST /control/quit` | `{"stopping": true}`, then the server stops and the run with it |
 | `GET /sprites` | the sprite URL for each player type and state |
 | `/sprites/<type>/<file>`, `/` | the sprite images, and the page |
+| `/vendor/<package>/<file>` | a third-party file from `ui/vendor.toml`, checked against its lock |
 | `GET /openapi.json` | the schema of every route and model, from FastAPI |
 
 ```bash

@@ -127,6 +127,11 @@ Load the map from data instead of the hardcoded setup in `game/main.py`.
 
 ## Code health
 
+### Vendoring shared with abyss
+
+`laife.web.vendor` is a trimmed copy of abyss's `abyss.ui.vendor` (folder 41): an npm manifest pinned by version and integrity, a hash-checked cache, a lock checked before serving.
+Two copies drift; a small shared package, used by both repos, would hold one. Its own effort across the two repos.
+
 From folder 33 unless noted; each is checked against the code there.
 
 ### Mission tree: reload and ids

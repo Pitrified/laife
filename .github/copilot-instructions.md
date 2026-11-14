@@ -108,7 +108,7 @@ What exists today and its limits:
 - `make tui` reads the newest structured log; `SimControl` pauses and steps the loop.
 - `make headless` runs the same world with no window and a scripted LLM, `TURNS` and `SEED` overridable, and writes the log `make tui` reads. It is the run an agent can do: no display, no provider, a few seconds. `docs/guides/headless.md` has what it runs.
 - `make headless SERVE=1` also serves the world on `127.0.0.1:8002` until Ctrl-C or `POST /control/quit` (`TURNS=0` for no limit, `PAUSED=1`, `PACE`); `curl` reads `/state` and `/events`, and `/` is the world page. `docs/guides/web.md` has the routes.
-- `make e2e` drives the world page in headless Chromium against a served run and saves a screenshot to `cache/e2e/`. It is not in `make check`; run it before committing a change under `ui/`, and look at the screenshot.
+- `make e2e` fetches the page's vendored JavaScript (`make vendor`, network needed once), drives the world page in headless Chromium against a served run, and saves a screenshot to `cache/e2e/`. It is not in `make check`; run it before committing a change under `ui/`, and look at the screenshot.
 - What it does not cover: the pygame window, and how a real model behaves. A change to the pygame renderer or to a prompt is still not verified by an agent alone: say so rather than calling it done.
 - A new chain, or a new output model on an existing one, needs an answer in `ScriptedChatConfig.build_answers` in `laife.llm.scripted_chat`; until it has one, the headless run fails with `UnscriptedSchemaError`.
 
@@ -206,7 +206,7 @@ Every entity and domain object that feeds into an LLM context exposes a `to_prom
 - `plans/` holds the plan folders, `plan.md` the backlog.
 - `scratch_space/` holds throwaway notebooks and scripts; ruff is lenient there.
 - `docs/` is the MkDocs site: `guides/` for concepts and tooling, `library/` for module notes.
-- `ui/` holds the browser pages, one folder each, served by `laife.web`; `tests/e2e/` drives them.
+- `ui/` holds the browser pages, one folder each, served by `laife.web`, and `ui/vendor.toml`, the third-party files they load; `tests/e2e/` drives them.
 
 ## Spellcheck
 

@@ -44,7 +44,7 @@ repos:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
         # Lock files: public integrity hashes, which read as high-entropy strings.
-        exclude: ^uv\.lock$
+        exclude: ^(uv\.lock|ui/vendor\.toml)$
   - repo: local
     hooks:
       - id: tool-pins

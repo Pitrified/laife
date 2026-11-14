@@ -38,6 +38,8 @@ e2e = [
     # The same pin as abyss: 1.63 drives the Chromium build (revision 1243)
     # already in ~/.cache/ms-playwright on g7.
     "playwright>=1.63,<1.64",
+    # Counts colours in a screenshot: a WebGL canvas cannot be read back with getImageData.
+    "pillow>=11",
 ]
 docs = [
     "mkdocs>=1.6",

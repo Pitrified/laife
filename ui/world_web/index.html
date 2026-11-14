@@ -6,6 +6,10 @@
   <title>lAIfe</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
+  <!-- pixi-viewport imports "pixi.js" by name; both resolve to the vendored files (ui/vendor.toml). -->
+  <script type="importmap">
+{"imports": {"pixi.js": "/vendor/pixi.js/dist/pixi.min.mjs", "pixi-viewport": "/vendor/pixi-viewport/dist/pixi_viewport.js"}}
+  </script>
   <script type="module" src="js/app.js"></script>
 </head>
 <body>
@@ -13,11 +17,12 @@
     <span class="title">lAIfe</span>
     <button id="pause" type="button" disabled>pause</button>
     <button id="step" type="button" disabled>step</button>
+    <button id="fit" type="button" disabled>fit</button>
     <button id="quit" type="button" disabled>quit</button>
     <span id="status">connecting</span>
   </header>
   <main>
-    <section id="world-pane"><canvas id="world"></canvas></section>
+    <section id="world-pane"></section>
     <aside id="players"></aside>
   </main>
 </body>

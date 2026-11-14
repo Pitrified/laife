@@ -12,6 +12,9 @@ Routes:
 - ``POST /control/quit``: stop the server, and with it the run.
 - ``GET /sprites``: the sprite URL for each player type and state.
 - ``/sprites/<type>/<file>``: the sprite images, from ``static/sprites/``.
+- ``/vendor/<package>/<file>``: a third-party file listed in ``ui/vendor.toml``,
+  checked against its lock on every request (:mod:`laife.web.vendor`); ``404``
+  for a file not listed or not fetched, ``500`` for one whose bytes changed.
 - ``/``: the page, from ``ui/world_web/``.
 
 Static files go out with ``Cache-Control: no-cache``: a browser keeps them
@@ -32,6 +35,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi.responses import FileResponse
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -41,11 +45,16 @@ from laife.config.sprites import STATE_FNS
 from laife.params.laife_params import get_laife_params
 from laife.web.snapshot import WorldSnapshot
 from laife.web.snapshot import take_snapshot
+from laife.web.vendor import VendorFileMissingError
+from laife.web.vendor import VendorIntegrityError
+from laife.web.vendor import load_manifest
+from laife.web.vendor import verified_path
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
     from collections.abc import Callable
     import os
+    from pathlib import Path
     from types import FrameType
 
     from starlette.responses import Response
@@ -115,22 +124,31 @@ async def event_stream(
         hub.unsubscribe(queue)
 
 
-def create_app(runner: WorldRunner, sim_control: SimControl | None, hub: EventHub) -> FastAPI:
+def create_app(
+    runner: WorldRunner,
+    sim_control: SimControl | None,
+    hub: EventHub,
+    vendor_cache: Path | None = None,
+) -> FastAPI:
     """Return the app serving *runner*, controlled by *sim_control*, streaming *hub*.
 
     ``app.state.stopping`` is set by the quit route; :func:`serve` watches it.
+    *vendor_cache* is where ``make vendor`` put the third-party files,
+    ``cache/vendor/`` by default.
     """
     app = FastAPI(title="laife world")
     app.state.stopping = asyncio.Event()
+    _add_world_routes(app, runner, sim_control, hub)
+    _add_control_routes(app, sim_control, hub)
+    # Last: their mount at "/" would otherwise answer every route above.
+    _add_file_routes(app, vendor_cache)
+    return app
 
-    def control(act: Callable[[SimControl], None]) -> ControlState:
-        if sim_control is None:
-            raise HTTPException(
-                status_code=HTTPStatus.CONFLICT,
-                detail="This run has no pause control.",
-            )
-        act(sim_control)
-        return ControlState(paused=sim_control.paused)
+
+def _add_world_routes(
+    app: FastAPI, runner: WorldRunner, sim_control: SimControl | None, hub: EventHub
+) -> None:
+    """Add ``/state`` and ``/events``."""
 
     @app.get("/state")
     async def state() -> WorldSnapshot:
@@ -144,6 +162,19 @@ def create_app(runner: WorldRunner, sim_control: SimControl | None, hub: EventHu
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache"},
         )
+
+
+def _add_control_routes(app: FastAPI, sim_control: SimControl | None, hub: EventHub) -> None:
+    """Add pause, resume, step and quit under ``/control/``."""
+
+    def control(act: Callable[[SimControl], None]) -> ControlState:
+        if sim_control is None:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail="This run has no pause control.",
+            )
+        act(sim_control)
+        return ControlState(paused=sim_control.paused)
 
     @app.post("/control/pause")
     async def pause() -> ControlState:
@@ -163,6 +194,12 @@ def create_app(runner: WorldRunner, sim_control: SimControl | None, hub: EventHu
         app.state.stopping.set()
         return StopState(stopping=True)
 
+
+def _add_file_routes(app: FastAPI, vendor_cache: Path | None) -> None:
+    """Add the sprite table, the vendored files, the sprite images and the page."""
+    manifest = load_manifest()
+    paths = get_laife_params().paths
+
     @app.get("/sprites")
     async def sprites() -> dict[str, dict[str, str]]:
         return {
@@ -170,11 +207,20 @@ def create_app(runner: WorldRunner, sim_control: SimControl | None, hub: EventHu
             for player_type, fns in STATE_FNS.items()
         }
 
-    # Mounted last: a mount at "/" would otherwise answer every route above.
-    paths = get_laife_params().paths
+    @app.get("/vendor/{package}/{member:path}")
+    async def vendor(package: str, member: str) -> FileResponse:
+        try:
+            path = verified_path(manifest.package(package), member, vendor_cache)
+        except VendorFileMissingError as error:
+            raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=str(error)) from None
+        except VendorIntegrityError as error:
+            raise HTTPException(
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(error)
+            ) from None
+        return FileResponse(path, headers={"Cache-Control": "no-cache"})
+
     app.mount("/sprites", NoCacheFiles(directory=paths.sprites_fol), name="sprite_files")
     app.mount("/", NoCacheFiles(directory=paths.ui_fol / PAGE_NAME, html=True), name="page")
-    return app
 
 
 class _WorldServer(uvicorn.Server):

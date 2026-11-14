@@ -62,14 +62,10 @@ main {
 }
 
 #world-pane {
+  position: relative;
+  overflow: hidden;
   min-width: 0;
   min-height: 0;
-}
-
-#world {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 
 #players {
@@ -91,22 +87,22 @@ main {
   border-color: var(--accent);
 }
 
-.player .head {
+.head {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.player .head img {
+.head img {
   width: 40px;
   height: 40px;
 }
 
-.player .name {
+.head .name {
   font-weight: 600;
 }
 
-.player .meta,
+.meta,
 .player .mission .status {
   color: var(--muted);
   font-size: 0.9em;
@@ -116,17 +112,17 @@ main {
   margin: 6px 0;
 }
 
-.player .actions {
+.actions {
   margin: 0;
   padding-left: 16px;
   font-size: 0.85em;
 }
 
-.player .actions .result.success {
+.actions .result.success {
   color: var(--good);
 }
 
-.player .actions .result.error {
+.actions .result.error {
   color: var(--bad);
 }
 
@@ -135,4 +131,82 @@ main {
     grid-template-columns: 1fr;
     grid-template-rows: 60vh auto;
   }
+}
+
+#world-pane canvas {
+  display: block;
+  touch-action: none;
+}
+
+.detail .back {
+  font: inherit;
+  margin-bottom: 8px;
+}
+
+.detail .head img {
+  width: 56px;
+  height: 56px;
+}
+
+.detail .section h3 {
+  margin: 12px 0 4px;
+  font-size: 0.95em;
+  color: var(--muted);
+}
+
+.tree {
+  margin: 0;
+  padding-left: 16px;
+  list-style: none;
+}
+
+.tree.root {
+  padding-left: 0;
+}
+
+.tree .node .line {
+  padding: 2px 0;
+}
+
+.tree .node.on-path > .line .objective {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tree .node.finished > .line {
+  opacity: 0.55;
+}
+
+.badge {
+  font-size: 0.8em;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--muted);
+}
+
+.badge.active {
+  color: var(--accent);
+}
+
+.badge.completed {
+  color: var(--good);
+}
+
+.badge.failed,
+.failures {
+  color: var(--bad);
+}
+
+.failures {
+  font-size: 0.8em;
+}
+
+.inventory {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.inventory .name {
+  font-weight: 600;
 }

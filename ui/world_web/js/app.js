@@ -2,16 +2,17 @@
 // snapshot and feeds the action list.
 
 import { control, fetchSprites, fetchState, openEvents } from "./api.js";
-import { ActionLog, renderPlayers } from "./players.js";
+import { ActionLog, renderPanel } from "./players.js";
 import { WorldView } from "./world.js";
 
 const REFRESH_MS = 250;
 
 const ui = {
-  canvas: document.getElementById("world"),
+  pane: document.getElementById("world-pane"),
   players: document.getElementById("players"),
   pause: document.getElementById("pause"),
   step: document.getElementById("step"),
+  fit: document.getElementById("fit"),
   quit: document.getElementById("quit"),
   status: document.getElementById("status"),
 };
@@ -31,19 +32,27 @@ function setStatus(text, isEnded = false) {
 }
 
 function render() {
-  if (snapshot === null) {
+  if (snapshot === null || world === null) {
     return;
   }
   world.update(snapshot, selected);
-  renderPlayers(ui.players, snapshot, log, sprites, selected, select);
+  renderPanel(ui.players, snapshot, log, sprites, selected, select, back);
   ui.pause.textContent = snapshot.paused ? "resume" : "pause";
   ui.pause.disabled = ended || snapshot.paused === null;
   ui.step.disabled = ended || !snapshot.paused;
   ui.quit.disabled = ended;
+  ui.fit.disabled = false;
 }
 
+// Show one player's detail and bring it into view.
 function select(name) {
-  selected = selected === name ? null : name;
+  selected = name;
+  render();
+  world.centreOn(name);
+}
+
+function back() {
+  selected = null;
   render();
 }
 
@@ -75,32 +84,7 @@ function end(reason) {
   render();
 }
 
-async function act(action) {
-  try {
-    const answer = await control(action);
-    if (action === "quit") {
-      end("run ended");
-      return;
-    }
-    snapshot = { ...snapshot, paused: answer.paused };
-    render();
-    scheduleRefresh();
-  } catch (error) {
-    setStatus(`${action} failed: ${error.message}`);
-  }
-}
-
-async function start() {
-  try {
-    sprites = await fetchSprites();
-    snapshot = await fetchState();
-  } catch (error) {
-    setStatus(`cannot reach the server: ${error.message}`, true);
-    return;
-  }
-  world = new WorldView(ui.canvas, sprites);
-  render();
-
+function connect() {
   events = openEvents({
     onEvent: (event) => {
       if (log.add(event)) {
@@ -121,21 +105,56 @@ async function start() {
       fetchState().catch(() => end("run ended: the server is gone"));
     },
   });
+}
+
+async function act(action) {
+  if (action === "quit") {
+    // Closed first: the server ends the stream as it stops, and an open
+    // EventSource would try to reconnect to it.
+    events.close();
+  }
+  try {
+    const answer = await control(action);
+    if (action === "quit") {
+      end("run ended");
+      return;
+    }
+    snapshot = { ...snapshot, paused: answer.paused };
+    render();
+    scheduleRefresh();
+  } catch (error) {
+    setStatus(`${action} failed: ${error.message}`);
+    if (action === "quit") {
+      connect();
+    }
+  }
+}
+
+async function start() {
+  try {
+    sprites = await fetchSprites();
+    snapshot = await fetchState();
+    world = await WorldView.create(ui.pane, sprites, select);
+  } catch (error) {
+    setStatus(`cannot start: ${error.message}`, true);
+    return;
+  }
+  render();
+  connect();
 
   ui.pause.addEventListener("click", () => act(snapshot.paused ? "resume" : "pause"));
   ui.step.addEventListener("click", () => act("step"));
+  ui.fit.addEventListener("click", () => world.fit());
   ui.quit.addEventListener("click", () => {
     if (window.confirm("Stop the run? It cannot be restarted from the page.")) {
       act("quit");
     }
   });
-  ui.canvas.addEventListener("click", (e) => {
-    const name = world.playerAt(e.clientX, e.clientY);
-    if (name !== null) {
-      select(name);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && selected !== null) {
+      back();
     }
   });
-  window.addEventListener("resize", () => world.draw());
 }
 
 start();
