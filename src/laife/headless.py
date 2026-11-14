@@ -113,8 +113,10 @@ async def serve_headless(
 ) -> None:
     """Play the seeded world while serving it, until the server stops.
 
-    *turns* ``None`` plays without end. The players returning does not stop
-    the server, so the final state can still be read. A player or the world
+    The server stops on ``POST /control/quit``, which returns from here, or on
+    Ctrl-C, which ends in ``KeyboardInterrupt``. *turns* ``None`` plays
+    without end. The players returning does not stop the server, so the final
+    state can still be read. A player or the world
     loop raising is raised here. Call :func:`configure_logging` first: it
     removes every log handler, the event sink included.
     """
@@ -124,7 +126,7 @@ async def serve_headless(
     runner = build_world(seed, sim_control, pace)
     hub = EventHub()
     sink_id = add_log_sink(hub)
-    server = asyncio.create_task(serve(create_app(runner, sim_control, hub), host, port))
+    server = asyncio.create_task(serve(create_app(runner, sim_control, hub), hub, host, port))
     world = asyncio.create_task(runner.simulate())
     players = asyncio.gather(*[player.play(max_turns=turns) for player in runner.players])
     pending: set[asyncio.Future[Any]] = {server, world, players}

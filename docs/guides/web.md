@@ -14,7 +14,7 @@ make headless SERVE=1 PACE=0.2         # seconds per scripted answer, 1 by defau
 make headless SERVE=1 HOST=<tailnet address> PORT=8002
 ```
 
-It listens on `127.0.0.1:8002` unless told otherwise, and stops on Ctrl-C.
+It listens on `127.0.0.1:8002` unless told otherwise, and stops on Ctrl-C or on `POST /control/quit`.
 The scripted model answers instantly, so a serving run waits `PACE` seconds before each answer; without that an endless run fills the log in seconds.
 The players finishing their turns does not stop the server: the final state stays readable.
 
@@ -25,6 +25,7 @@ The players finishing their turns does not stop the server: the final state stay
 | `GET /state` | the world now: terrains, buildings, players with position, state, turn, mission tree, inventory and latest history |
 | `GET /events` | Server-Sent Events, one per structured log record |
 | `POST /control/pause`, `/control/resume`, `/control/step` | `{"paused": bool}`; `409` when the run has no pause control |
+| `POST /control/quit` | `{"stopping": true}`, then the server stops and the run with it |
 | `GET /openapi.json` | the schema of every route and model, from FastAPI |
 
 ```bash
@@ -32,6 +33,15 @@ curl -s http://127.0.0.1:8002/state
 curl -sN http://127.0.0.1:8002/events
 curl -s -X POST http://127.0.0.1:8002/control/step
 ```
+
+## Stopping
+
+Ctrl-C and the quit route stop the same way: the hub ends every open event stream, then uvicorn exits.
+uvicorn waits for open responses before it stops, and an event stream never finishes by itself, so an open page would otherwise keep the run alive.
+Any other connection gets a few seconds before uvicorn drops it.
+The quit route makes the run return normally; Ctrl-C ends it with `KeyboardInterrupt`, which `game/headless.py` catches. Both print `stopped`.
+
+The page cannot start a run again; that stays a terminal command.
 
 ## Events
 

@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+from contextlib import suppress
 
 from laife.headless import run_headless
 from laife.headless import serve_headless
@@ -37,7 +38,8 @@ def main() -> None:
     log_file = configure_logging(level="INFO")
     if args.serve:
         print(f"serving on http://{args.host}:{args.port}, log: {log_file}")  # noqa: T201
-        try:
+        # Ctrl-C ends in KeyboardInterrupt; the quit route returns normally.
+        with suppress(KeyboardInterrupt):
             asyncio.run(
                 serve_headless(
                     turns=args.turns or None,
@@ -48,8 +50,7 @@ def main() -> None:
                     port=args.port,
                 )
             )
-        except KeyboardInterrupt:
-            print("\nstopped")  # noqa: T201
+        print("\nstopped")  # noqa: T201
         return
 
     runner = asyncio.run(run_headless(turns=args.turns, seed=args.seed))

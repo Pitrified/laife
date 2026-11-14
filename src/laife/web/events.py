@@ -45,6 +45,9 @@ class EventHub:
     is dropped: it gets ``None`` and nothing after, so a slow client loses its
     stream rather than slowing the game. It is expected to reconnect and fetch
     a fresh snapshot.
+
+    :meth:`close` ends every stream, for a server shutting down: uvicorn waits
+    for open responses before it stops, and a stream never finishes by itself.
     """
 
     def __init__(self, queue_size: int = SUBSCRIBER_QUEUE_SIZE) -> None:
@@ -52,13 +55,27 @@ class EventHub:
         self.seq = 0
         self._queue_size = queue_size
         self._subscribers: set[Subscription] = set()
+        self._closed = False
 
     def subscribe(self) -> Subscription:
-        """Return a queue that receives every event published from now on."""
+        """Return a queue that receives every event published from now on.
+
+        After :meth:`close` the queue holds only the end marker.
+        """
         # One slot over the limit, so the drop marker always fits.
         queue: Subscription = asyncio.Queue(maxsize=self._queue_size + 1)
-        self._subscribers.add(queue)
+        if self._closed:
+            queue.put_nowait(None)
+        else:
+            self._subscribers.add(queue)
         return queue
+
+    def close(self) -> None:
+        """End every open stream and every stream opened afterwards."""
+        self._closed = True
+        for queue in self._subscribers:
+            queue.put_nowait(None)
+        self._subscribers.clear()
 
     def unsubscribe(self, queue: Subscription) -> None:
         """Stop sending to *queue*; a queue already dropped is ignored."""
