@@ -1,4 +1,4 @@
-"""WorldRunner - pure simulation loop, no pygame dependency."""
+"""WorldRunner - the simulation loop, with no display."""
 
 import asyncio
 from typing import TYPE_CHECKING
@@ -44,9 +44,9 @@ if TYPE_CHECKING:
 class WorldRunner:
     """Manages game-logic simulation without any display dependency.
 
-    The runner owns authoritative entity state.  A WorldRenderer can
-    observe it to produce visuals, but is not required for the runner
-    to operate (enabling headless simulation and testing).
+    The runner owns authoritative entity state. ``laife.web`` reads it to
+    serve the world page; the runner does not need it, so a headless run
+    and the tests use the runner alone.
     """
 
     def __init__(self, chat_config: ChatConfig | None = None) -> None:
@@ -55,7 +55,7 @@ class WorldRunner:
         *chat_config* feeds the build, craft and complete judges; ``None``
         takes ``llm_services.chat.default``.
         """
-        # authoritative entity lists (no pygame data structures)
+        # authoritative entity lists
         self.players: list[Player] = []
         self.buildings: list[Building] = []
         self.terrains: list[Terrain] = []

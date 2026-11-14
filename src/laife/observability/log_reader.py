@@ -45,8 +45,13 @@ def latest_log_file(cache_dir: Path | str = DEFAULT_CACHE_DIR) -> Path | None:
     return candidates[-1] if candidates else None
 
 
-def _parse_line(line: str) -> LogRow | None:
-    """Parse one JSONL line into a `LogRow`; return None for blank/malformed lines."""
+def parse_line(line: str) -> LogRow | None:
+    """Parse one JSONL line into a `LogRow`; return None for blank/malformed lines.
+
+    The line is loguru's ``serialize=True`` output, as the file sink writes it
+    and as :mod:`laife.web.events` receives it, so the file and the stream
+    give the same rows.
+    """
     line = line.strip()
     if not line:
         return None
@@ -88,6 +93,6 @@ async def tail_jsonl(path: Path | str) -> AsyncIterator[LogRow]:
                 fh.seek(pos)
                 await asyncio.sleep(POLL_INTERVAL_SECONDS)
                 continue
-            row = _parse_line(line)
+            row = parse_line(line)
             if row is not None:
                 yield row

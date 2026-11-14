@@ -6,31 +6,22 @@ What is already built is in the `done` folders under `plans/`; `python3 scripts/
 
 ## Engine
 
-### Renderer: pygame or a web app
+### Terminal output and log shape
 
-Whether pygame stays as the renderer.
-Options: pygame as now; a text-only runner beside a renderer (`scratch_space/rebirth_/` had it); a web page reading the world state, served from g7 over the tailnet and opened from g4 or the phone, as the sibling repo abyss does.
-Also decides the Python pin: pygame 2.6 has no 3.14 wheel, and the `==3.14.*` pin uses nothing newer than 3.12 (folder 33).
-The visual wishes wait on this choice: tiled terrain and grass instead of flat colours, buildings with a garden, utensils held by the player, a window that shows more state and answers the mouse.
-The same pass trims the engine's terminal output and the logs.
-The terminal is not the main interface: the window and `make tui` are.
-Today a run prints every `alg.log` line, and the structured log has one line per move step; whether the structured log keeps its shape is reassessed with it.
+The terminal is not the main interface: the world page and `make tui` are.
+Today a run prints every `alg.log` line, and the structured log has one line per move step; whether the structured log keeps its shape is reassessed, and the world page reading events from it (folder 41) is one reason to.
 `Player` and `WorldRunner` call `alg.log` and `slog` for the same event in a few places; whether one call feeds both channels is decided with the log shape.
 
-### Renderer checks without a screen
+### Visual wishes
 
-The headless run skips `WorldRenderer`, so nothing an agent runs exercises the drawing code.
-Checks specific to the renderer: SDL's dummy video driver, or frames saved to images and compared.
-They depend on which renderer stays (item above).
+Tiled terrain and grass instead of flat colours, buildings with a garden, utensils held by the player.
+The world page draws with PixiJS (folder 41), which handles sprite sheets and tiled maps.
 
-### Runtime warnings
+### Sprite loading
 
-`SystemExit` on quit and pygame's AVX2 notice, drafted in folder `34_runtime_warnings` and parked there until the renderer is decided.
-
-### Seed for the live game
-
-`setup_world()` takes a `random.Random`; the headless run seeds it, `game/main.py` passes an unseeded one.
-A `--seed` argument or an env var would make a live run start from a known world (folder 38).
+Sprites are one PNG per player state, named in `STATE_FNS` (`src/laife/config/sprites.py`), served by `/sprites` and loaded one by one by the page.
+The usual shape is a texture atlas with a JSON descriptor, exported by a tool such as TexturePacker or Aseprite and read directly by PixiJS (`Spritesheet`); Tiled covers maps the same way.
+Assess whether to move to that format before more sprites are added.
 
 ### Recorded replay for the headless run
 
@@ -81,12 +72,37 @@ The player then moved east again to make the move "recorded".
 A second live run, on g4 after folder 40 (log `game_20261113T222654.jsonl`), repeated it: p1 took the mission "Move 20 tiles east to search for a resource to gather", moved 20 steps east, claimed it complete on turn 2 and was rejected.
 On turn 3 its reason was that "the displacement could not be verified from the observation", and it moved 20 east again "to establish a fresh, verifiable move".
 
+A third, the first live run served on the world page (2026-11-14, folder 41, log `game_20261114T115407.jsonl`): p0 took "Move one tile east to scout the nearby terrain", moved east on turn 1, and claimed it complete on turn 2 because "the history confirms that move succeeded"; the judge rejected it, and on turn 3 p0 moved again since "the available observation does not verify" the move.
+
 ### Distance in the observation is not a step count
 
 The observation gives each nearby entity a cardinal direction and its Euclidean distance (`WorldMapObservation`); an `ActionMove` counts steps, and a diagonal step is `(+1, -1)`, about 1.41 of distance.
 In the same g4 run p0 read "Alex's House is 12 tiles to the northeast", asked for 12 steps northeast, and the 8th step was blocked by the house: it aimed at the house's own position, inside its footprint.
 The world handled it correctly; on turn 2 p0 read the house as 2.2 away and moved 1 north.
 Open: whether the observation should give `(dx, dy)` in steps, or the building's edge rather than its position.
+
+### A build or craft completes the root mission
+
+`Player._update_mission_from_response` calls `self.mission.record_action_success()` on a successful build or craft: the root mission becomes `COMPLETED` even while sub-missions are pending, and the next turn generates a new mission.
+Seen in the headless run (folder 41): after the plan "Build a shed." then "Craft a hammer.", the build on turn 3 completed the whole mission and both steps were dropped.
+To check: whether the success should go to `active_focus()`, the step being worked, and the root complete only through `advance()`, as `ActionComplete` does it.
+
+### Building size units
+
+`Player.build` makes a building of `(action.size, action.size)` at the player's position, and the world is in pixels: the headless script's `size=1` builds a 1 x 1 pixel shed, hidden under the player's sprite on the page (folder 41).
+To check: what unit `ActionBuild.size` is in for the model, and whether a building type's own size should apply instead.
+
+### History resets on a new mission, a plan and a completed step
+
+`Player.history` is replaced by an empty `MissionHistory` in `_start_new_mission`, in `plan()`, and in `complete()` when a step is confirmed ("fresh slate for the new focus").
+The brain then sees nothing of what it did before the reset, and the web snapshot's history is often short or empty (folder 41).
+To check: whether the resets inside one mission (plan, completed step) are wanted, since the steps belong to the same mission, and whether something longer-lived should keep the actions across missions (see "Interaction memory" and "Player mind state").
+
+### Save and resume a world
+
+Write the whole world to disk, terrains, buildings, players with missions, history and inventory, and start a later run from it.
+Needs the mission tree reload (Code health, "Mission tree: reload and ids") and a serialisable `Player`.
+The web snapshot (folder 41) dumps most of it already, read-only.
 
 ### Players that can die
 
@@ -98,7 +114,18 @@ Load the map from data instead of the hardcoded setup in `game/main.py`.
 
 ## Code health
 
+### Vendoring shared with abyss
+
+`laife.web.vendor` is a trimmed copy of abyss's `abyss.ui.vendor` (folder 41): an npm manifest pinned by version and integrity, a hash-checked cache, a lock checked before serving.
+Two copies drift; a small shared package, used by both repos, would hold one. Its own effort across the two repos.
+
 From folder 33 unless noted; each is checked against the code there.
+
+### Mission tree: reload and ids
+
+`Mission.parent_mission` is excluded from dumps (folder 41), so a mission tree written to JSON carries the parent only through the nesting of `steps`.
+- Reload: `Mission.model_validate` rebuilds the tree with every `parent_mission` at `None`, and `advance()` then stops propagating upward. A validator that walks `steps` after loading and sets each step's parent to its container fixes it; wanted when something loads missions back.
+- Ids: a mission is identified only by its place in the tree. An id field lets the page, the log or another mission refer to one sub-mission, and lets a sub-mission dumped on its own name its parent.
 
 ### Player mind state
 

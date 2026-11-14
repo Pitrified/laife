@@ -5,8 +5,8 @@ Source: [`src/laife/config/`](https://github.com/Pitrified/laife/tree/main/src/l
 
 ## Types
 
-[`types.py`](https://github.com/Pitrified/laife/blob/main/src/laife/config/types.py) defines `Position` and `Size` as integer tuples compatible with `pygame.Rect`.
-Using these aliases keeps the logic and rendering layers speaking the same coordinate language.
+[`types.py`](https://github.com/Pitrified/laife/blob/main/src/laife/config/types.py) defines `Position` and `Size` as integer tuples in world pixels: a rectangle is its top-left corner and its size, and y grows South.
+The page draws in the same coordinates, so the logic and the view agree on where things are.
 
 [`types.py`](https://github.com/Pitrified/laife/blob/main/src/laife/config/types.py) holds only aliases; richer settings models can be added here as the project grows.
 

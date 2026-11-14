@@ -5,12 +5,13 @@ description = ""
 readme = "README.md"
 requires-python = "==3.14.*"
 dependencies = [
+    "fastapi>=0.162.7",
     "ipykernel>=6.29.5",
     "ipywidgets>=8.1.3",
     "llm-core[openai,chroma] @ git+https://github.com/Pitrified/llm-core@v0.4.0",
     "loguru>=0.7.2",
-    "pygame>=2.6.0",
     "rich>=13.9.2",
+    "uvicorn>=0.54.0",
 ]
 
 [build-system]
@@ -26,10 +27,18 @@ packages = ["src/laife"]
 [dependency-groups]
 dev = [
     { include-group = "docs" },
+    { include-group = "e2e" },
     { include-group = "lint" },
     { include-group = "notebook" },
     { include-group = "test" },
     { include-group = "tui" },
+]
+e2e = [
+    # The same pin as abyss: 1.63 drives the Chromium build (revision 1243)
+    # already in ~/.cache/ms-playwright on g7.
+    "playwright>=1.63,<1.64",
+    # Counts colours in a screenshot: a WebGL canvas cannot be read back with getImageData.
+    "pillow>=11",
 ]
 docs = [
     "mkdocs>=1.6",
@@ -59,6 +68,11 @@ test = [
 tui = [
     "textual>=0.60",
 ]
+
+[tool.pytest.ini_options]
+# Browser tests start Chromium and a game; `make e2e` runs only them.
+markers = ["e2e: drives a real browser; run with `make e2e`"]
+addopts = "-m 'not e2e'"
 
 [tool.pyright]
 venvPath = "."

@@ -1,6 +1,6 @@
 # Headless run
 
-`make headless` runs the game with no window and no provider.
+`make headless` runs the game with no provider.
 It is for development: run the engine after a change, then read what it did.
 
 ```bash
@@ -10,6 +10,8 @@ make tui                       # opens the newest log, this run's
 ```
 
 It prints each player's turn count and position, and the path of the structured log it wrote under `cache/`.
+
+`make headless SERVE=1` serves the world over HTTP while it plays and keeps serving until Ctrl-C; see [Serving the world](web.md).
 
 ## What runs
 
@@ -28,8 +30,7 @@ It subclasses llm-core's `ScriptedChatConfig` (`llm_core.testing.scripted_chat_m
 
 The default script is one action of each type, ending with `complete`, so a run of six turns per player goes through every branch of the turn loop.
 
-`WorldRenderer` is not started, and nothing on the headless path imports pygame.
-`laife.entities` holds the simulation only; the sprites and the renderer are imported from `laife.rendering`.
+`laife.entities` holds the simulation only; the page and its server are in `laife.web`, used only with `SERVE=1`.
 
 ## What it does not show
 

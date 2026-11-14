@@ -1,8 +1,10 @@
 ---
-status: draft
+status: discarded
 ---
 
 # Phase 3 - pygame avx2 warning
+
+Discarded 2026-11-14: pygame left the repo in `41_renderer_choice` phase 5. pygame is no longer a dependency, so its AVX2 notice cannot appear.
 
 ## Overview
 

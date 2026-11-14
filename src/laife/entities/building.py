@@ -1,4 +1,4 @@
-"""Building entity - pure data, no pygame dependency."""
+"""Building entity - pure data."""
 
 from typing import Self
 

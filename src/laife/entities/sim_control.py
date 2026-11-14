@@ -1,6 +1,6 @@
 """SimControl - pause / resume / single-step gating for the simulation loop.
 
-Pure asyncio, no pygame dependency (same discipline as ``WorldRunner``).
+Pure asyncio, like ``WorldRunner``.
 Players await :meth:`SimControl.wait_turn` at the top of each ``play()``
 iteration; the world runner is never gated, so a turn already in flight
 (LLM calls and world round trip included) always finishes before its
@@ -17,8 +17,8 @@ class SimControl:
     """Gate player turns so the simulation can be paused, resumed, and stepped.
 
     The trigger methods (:meth:`pause`, :meth:`resume`, :meth:`toggle`,
-    :meth:`step`) are synchronous so the pygame event pump can call them
-    directly; waiters are woken through a single pulsed ``asyncio.Event``
+    :meth:`step`) are synchronous so a caller outside a coroutine can call
+    them directly; waiters are woken through a single pulsed ``asyncio.Event``
     rather than an ``asyncio.Condition``, whose ``notify_all`` would need
     the lock held (an ``async with``) and so could not be driven from
     synchronous code.

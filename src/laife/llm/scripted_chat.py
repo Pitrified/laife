@@ -9,10 +9,16 @@ Each player builds its own chains, so each player gets its own
 one with an empty script, since they never ask for an action.
 """
 
+import asyncio
 from itertools import cycle
+from typing import Any
 
+from langchain_core.runnables import Runnable
+from langchain_core.runnables import RunnableLambda
 from llm_core.testing.scripted_chat_model import Answers
 from llm_core.testing.scripted_chat_model import ScriptedChatConfig as BaseScriptedChatConfig
+from llm_core.testing.scripted_chat_model import ScriptedChatModel
+from pydantic import BaseModel
 from pydantic import Field
 
 from laife.entities.action import ActionBuild
@@ -69,6 +75,35 @@ def default_script(other_player: str) -> list[Actions]:
     ]
 
 
+class PacedScriptedChatModel(ScriptedChatModel):
+    """llm-core's scripted model, answering async calls after *pace* seconds.
+
+    The delay is an awaited ``asyncio.sleep``: it holds the caller, as a slow
+    model would, and the rest of the game runs on. A sync ``invoke`` answers
+    at once; the game's chains are awaited.
+
+    Attributes:
+        pace: Seconds before each async answer.
+    """
+
+    pace: float
+
+    def with_structured_output(
+        self,
+        schema: type[BaseModel] | dict[str, Any],
+        *,
+        include_raw: bool = False,  # noqa: ARG002
+        **kwargs: Any,  # noqa: ARG002, ANN401
+    ) -> Runnable:
+        """Return a runnable answering for *schema*, after the pace when awaited."""
+
+        async def answer_later(_prompt: object) -> BaseModel:
+            await asyncio.sleep(self.pace)
+            return self.answer(schema)
+
+        return RunnableLambda(lambda _prompt: self.answer(schema), afunc=answer_later)
+
+
 class ScriptedChatConfig(BaseScriptedChatConfig):
     """llm-core's scripted chat config with the game's answers.
 
@@ -77,9 +112,17 @@ class ScriptedChatConfig(BaseScriptedChatConfig):
 
     Attributes:
         script: The player's actions; empty for the world's judges.
+        pace: Seconds each awaited answer takes; 0 answers at once.
     """
 
     script: list[Actions] = Field(default_factory=list)
+    pace: float = 0.0
+
+    def create_chat_model(self) -> ScriptedChatModel:
+        """Return a scripted model with fresh answers, paced when *pace* is set."""
+        if self.pace <= 0:
+            return super().create_chat_model()
+        return PacedScriptedChatModel(answers=self.build_answers(), pace=self.pace)
 
     def build_answers(self) -> Answers:
         """Return the game's answers, with a fresh cycle through the script."""

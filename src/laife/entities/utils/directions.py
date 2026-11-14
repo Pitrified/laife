@@ -47,7 +47,7 @@ def pospos2cardinal_direction(you: Position, target: Position) -> CardinalDirect
 def pospos2cardinal_degrees(you: Position, target: Position) -> float:
     """Convert two positions to cardinal coordinates.
 
-    Note that in pygame, the y-axis is flipped.
+    The y-axis grows South, as on screen, so dy is negated to get North up.
     """
     dx = target[0] - you[0]
     dy = -(target[1] - you[1])
@@ -62,7 +62,7 @@ def pospos2cardinal_degrees(you: Position, target: Position) -> float:
 def cardinal_to_delta(direction: CardinalDirection, step: int = 1) -> tuple[int, int]:
     """Return the (dx, dy) step vector for a cardinal direction.
 
-    Coordinate convention: x increases East, y increases South (pygame).
+    Coordinate convention: x increases East, y increases South, as on screen.
     `step` scales the unit vector, enabling non-unit steps.
     """
     _unit: dict[CardinalDirection, tuple[int, int]] = {

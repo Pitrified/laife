@@ -1,0 +1,212 @@
+:root {
+  --bg: #1e1f22;
+  --panel: #2a2c30;
+  --text: #e6e6e6;
+  --muted: #9a9ca3;
+  --accent: #f2c14e;
+  --bad: #e06c6c;
+  --good: #7cc47c;
+  font-family: system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--panel);
+}
+
+#controls .title {
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+#controls button {
+  font: inherit;
+  padding: 4px 12px;
+}
+
+#status {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+#status.ended {
+  color: var(--bad);
+}
+
+main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+#world-pane {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+#players {
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--panel);
+}
+
+.player {
+  padding: 8px;
+  margin-bottom: 8px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.player.selected {
+  border-color: var(--accent);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.head img {
+  width: 40px;
+  height: 40px;
+}
+
+.head .name {
+  font-weight: 600;
+}
+
+.meta,
+.player .mission .status {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.player .mission {
+  margin: 6px 0;
+}
+
+.actions {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 0.85em;
+}
+
+.actions .result.success {
+  color: var(--good);
+}
+
+.actions .result.error {
+  color: var(--bad);
+}
+
+@media (max-width: 700px) {
+  main {
+    grid-template-columns: 1fr;
+    grid-template-rows: 60vh auto;
+  }
+}
+
+#world-pane canvas {
+  display: block;
+  touch-action: none;
+}
+
+.detail .back {
+  font: inherit;
+  margin-bottom: 8px;
+}
+
+.detail .head img {
+  width: 56px;
+  height: 56px;
+}
+
+.detail .section h3 {
+  margin: 12px 0 4px;
+  font-size: 0.95em;
+  color: var(--muted);
+}
+
+.tree {
+  margin: 0;
+  padding-left: 16px;
+  list-style: none;
+}
+
+.tree.root {
+  padding-left: 0;
+}
+
+.tree .node .line {
+  padding: 2px 0;
+}
+
+.tree .node.on-path > .line .objective {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tree .node.finished > .line {
+  opacity: 0.55;
+}
+
+.badge {
+  font-size: 0.8em;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--muted);
+}
+
+.badge.active {
+  color: var(--accent);
+}
+
+.badge.completed {
+  color: var(--good);
+}
+
+.badge.failed,
+.failures {
+  color: var(--bad);
+}
+
+.failures {
+  font-size: 0.8em;
+}
+
+.inventory {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.inventory .name {
+  font-weight: 600;
+}

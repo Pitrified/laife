@@ -2,7 +2,7 @@
 
 The world model and everything in it.
 Source: [`src/laife/entities/`](https://github.com/Pitrified/laife/tree/main/src/laife/entities).
-This package is pure logic with no pygame dependency.
+This package is pure logic; nothing in it draws or serves.
 
 ## The world runner
 

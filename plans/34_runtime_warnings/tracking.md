@@ -17,8 +17,8 @@ original capture in
 | -- | ---------------------------- | ------------------------------------------------- | ------ |
 | 4  | judge after collision check  | [`04_judge_after_collision.md`](04_judge_after_collision.md) | done |
 | 2  | dependency upgrade, llm-core then laife | [`02_pydantic_v1_warning.md`](02_pydantic_v1_warning.md) | done |
-| 1  | clean shutdown on quit, parked | [`01_clean_shutdown.md`](01_clean_shutdown.md)    | draft  |
-| 3  | pygame avx2 warning, parked  | [`03_pygame_avx2_warning.md`](03_pygame_avx2_warning.md) | draft  |
+| 1  | clean shutdown on quit, parked | [`01_clean_shutdown.md`](01_clean_shutdown.md)    | discarded |
+| 3  | pygame avx2 warning, parked  | [`03_pygame_avx2_warning.md`](03_pygame_avx2_warning.md) | discarded |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
 
@@ -36,3 +36,4 @@ Append-only. Newest at the bottom.
 - 2026-11-13 : phase 4 done: collision check before the build judge; test shown failing on the old order; `make check` and `make headless` pass.
 - 2026-11-13 : phase 2: llm-core v0.3.0 made locally; laife relocked on the same stack with no code change, pydantic warning gone, test warnings 27 to 15.
 - 2026-11-13 : phase 2 done: laife pinned to llm-core v0.3.0, `make check` and `make headless` pass. Left in the folder: phases 1 and 3, parked with the renderer. `make run` on g4 is the user's.
+- 2026-11-14 : phases 1 and 3 discarded: pygame left the repo in `41_renderer_choice` phase 5, taking the window's `SystemExit` and the AVX2 notice with it; stopping a run is now one path for the quit route and Ctrl-C. With phases 2 and 4 done, the folder is done.
