@@ -15,7 +15,7 @@ Assessment, options and open questions in [`00_start.md`](00_start.md).
 | 1 | world protocol, no client | [`01_world_protocol.md`](01_world_protocol.md) | done |
 | 2 | clean stop, and a quit route | [`02_clean_stop.md`](02_clean_stop.md) | done |
 | 3 | page skeleton | [`03_page_skeleton.md`](03_page_skeleton.md) | done |
-| 4 | player detail and zoom | not written | draft |
+| 4 | PixiJS, zoom and pan, the player detail | [`04_pixi_detail.md`](04_pixi_detail.md) | in progress |
 | 5 | retire pygame | not written | draft |
 
 Status values: draft / planned / in progress / done / superseded / discarded.
@@ -38,3 +38,5 @@ Append-only. Newest at the bottom.
 - 2026-11-14 : phase 3 implemented (6f88a13): `ui/world_web/` page, `/sprites` and static mounts, `laife.config.sprites` without pygame, `make e2e` with Playwright and a screenshot in `cache/e2e/`. `make check` passes, 299 tests and the browser test deselected; `make e2e` passes in about 5 s and fails with the step button disconnected; plain `make headless` unchanged. Waiting on the user's check on g4 before the phase closes.
 - 2026-11-14 : phase 3 done: the user checked the page on g4 through an SSH tunnel to a serving run on g7; the run moved, and pause, step, resume and quit all worked.
 - 2026-11-14 : after a quit from the page on g4, the SSH tunnel logged a refused connection: the page reconnected to the server it had just stopped. Harmless; the fix (close the stream before sending quit) goes into phase 4's sub-plan.
+- 2026-11-14 : assessed the move to PixiJS for the user (the drawing is a contained rewrite; serving a library is the bigger, one-time part). The user chose PixiJS now with clean vendoring, and a detail view showing one player with its whole mission tree. Phase 4 sub-plan written; pins pixi.js 8.22.0 and pixi-viewport 6.0.3, since 8.23.0 and the 7.x line are under two weeks old. Q17-Q20 open.
+- 2026-11-14 : Q17-Q20 answered as recommended: trimmed vendoring copy with a backlog note, stream actions only, centre once on select, Pillow for the canvas check. Phase 4 planned and started.
