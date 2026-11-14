@@ -35,8 +35,8 @@ jobs:
         run: uv python install 3.14
 
       # The docs build uses griffe static analysis (paths: [src] in mkdocs.yml),
-      # so it never imports laife and needs none of the runtime deps. Syncing
-      # only the docs group avoids building pygame, which would require SDL2.
+      # so it never imports laife and needs none of the runtime deps; syncing
+      # only the docs group keeps the job small.
       - name: Install docs dependencies
         run: uv sync --only-group docs
 

@@ -1,6 +1,6 @@
 // The world in PixiJS, inside a pixi-viewport for drag, wheel zoom and pinch.
 // World coordinates are the game's pixels. Terrains and buildings are placed by
-// their top-left corner, players by their centre, as the pygame renderer places them.
+// their top-left corner, players by their centre.
 
 import { Application, Assets, Container, Graphics, Sprite, Text } from "pixi.js";
 import { Viewport } from "pixi-viewport";

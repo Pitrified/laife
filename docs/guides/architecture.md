@@ -1,18 +1,19 @@
 # Architecture
 
-`lAIfe` separates pure game logic from rendering and from the LLM reasoning.
+`lAIfe` separates pure game logic from the view and from the LLM reasoning.
 Everything runs as concurrent asyncio tasks coordinated through queues.
 
 ## The three concurrent tasks
 
-[`game/main.py`](https://github.com/Pitrified/laife/blob/main/game/main.py) starts three kinds of coroutine with `asyncio.gather`:
+[`game/main.py`](https://github.com/Pitrified/laife/blob/main/game/main.py) builds the world and hands it to `serve_run` in [`laife.web.run`](../library/web.md), which runs three kinds of coroutine in one loop:
 
 - the world simulation loop, one `WorldRunner.simulate`;
-- the renderer, one `WorldRenderer.render`;
+- the HTTP server that serves the world page, one uvicorn server;
 - one `Player.play` per player.
 
+The headless run hands its scripted world to the same `serve_run`.
 The world and the players never call each other directly.
-They communicate over asyncio queues, which keeps the logic side free of pygame and lets players run independently.
+They communicate over asyncio queues, which keeps the logic side free of the view and lets players run independently.
 
 ## The world is the authority
 
@@ -31,10 +32,11 @@ Its decision making is delegated to its brain, which owns the LLM chains in [the
 it picks the next action, breaks a hard mission into sub-missions, proposes a new mission, and answers messages from other players.
 The player turns the chosen action into a world request and applies the response to its own state and mission history.
 
-## Rendering observes, never mutates
+## The page observes, and only pauses
 
-The [`WorldRenderer`](../library/rendering.md) reads the runner's state and draws it with pygame.
-It is a view layer: it observes the world but does not change it, so the simulation behaves the same with or without a window.
+The server in [`laife.web`](../library/web.md) reads the runner's state into a snapshot and streams the structured log as events; the world page in `ui/world_web/` draws them in a browser.
+It observes the world and does not change it. Its only controls are pause, resume, step and quit, which act on the turn gate and the server, not on the world's state.
+See [Serving the world](../guides/web.md).
 
 ## Memory and grounding
 

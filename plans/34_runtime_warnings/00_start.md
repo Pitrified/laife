@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 priority: 0
 description: |
   Noise and waste a run shows: the pydantic V1 warning, fixed by a dependency upgrade through llm-core, and the build judge paid before the free collision check.
@@ -104,3 +104,7 @@ Taken with the user.
 ## State 2026-11-13
 
 Phases 4 and 2 are done. What is left, phases 1 and 3, is parked with the renderer question, so the folder goes back to `draft` until that is decided.
+
+## State 2026-11-14
+
+Phases 1 and 3 are discarded: pygame left the repo in `41_renderer_choice` phase 5. The folder is done.

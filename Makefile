@@ -16,6 +16,9 @@ HOST ?= 127.0.0.1
 PORT ?= 8002
 PACE ?=
 PAUSED ?=
+# The live game's own cap and seed, so a headless default never becomes a live one.
+LIVE_TURNS ?= 3
+LIVE_SEED ?=
 
 help:  ## Show this help (list targets and their descriptions)
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -36,12 +39,13 @@ hooks:  ## Install the pre-commit git hooks, once per clone
 # RUN #
 #######
 
-run:  ## Run the game
-	$(UV_RUN) game/main.py
+run:  ## Play the live game (calls the provider) on the page, paused; LIVE_TURNS=3 (0 no limit) LIVE_SEED HOST PORT; PAUSED=0 starts running
+	$(UV_RUN) game/main.py --turns $(LIVE_TURNS) --host $(HOST) --port $(PORT) \
+		$(if $(LIVE_SEED),--seed $(LIVE_SEED)) $(if $(filter 0,$(PAUSED)),--no-paused)
 
 headless:  ## Run with no window and a scripted LLM; TURNS=6 SEED=0; SERVE=1 serves it (HOST PORT PACE PAUSED=1)
 	$(UV_RUN) game/headless.py --turns $(TURNS) --seed $(SEED) \
-		$(if $(SERVE),--serve --host $(HOST) --port $(PORT) $(if $(PACE),--pace $(PACE)) $(if $(PAUSED),--paused))
+		$(if $(SERVE),--serve --host $(HOST) --port $(PORT) $(if $(PACE),--pace $(PACE)) $(if $(filter 1,$(PAUSED)),--paused))
 
 tui:  ## Run the observability TUI (tails the newest cache/game_*.jsonl)
 	$(UV_RUN) python -m laife.observability.tui

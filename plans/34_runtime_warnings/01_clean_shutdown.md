@@ -1,8 +1,10 @@
 ---
-status: draft
+status: discarded
 ---
 
 # Phase 1 - clean shutdown on quit
+
+Discarded 2026-11-14: pygame left the repo in `41_renderer_choice` phase 5. Quitting is now `POST /control/quit` or Ctrl-C through one stop path (folder 41 phases 2 and 5); there is no window and no `sys.exit()` in a task.
 
 ## Overview
 

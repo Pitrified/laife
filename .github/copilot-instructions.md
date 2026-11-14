@@ -2,7 +2,7 @@
 
 ## Project overview
 
-lAIfe is an LLM-driven life-simulation game built on Pygame + asyncio. Players are autonomous AI agents that perceive the world, plan missions, and issue actions; the game engine validates and executes those actions. Python 3.14, managed with **uv**.
+lAIfe is an LLM-driven life-simulation game built on asyncio, watched and controlled from a browser page. Players are autonomous AI agents that perceive the world, plan missions, and issue actions; the game engine validates and executes those actions. Python 3.14, managed with **uv**.
 
 The LLM plumbing (provider configs, structured chains, prompt loading, vector stores) lives in the sibling package [`llm-core`](https://github.com/Pitrified/llm-core), pinned by git tag in `pyproject.toml`.
 Before writing a utility of that kind here, look in `llm_core` first; if it is general, it belongs there.
@@ -104,12 +104,12 @@ Unit tests passing is not evidence that the game works. While planning and while
 
 What exists today and its limits:
 
-- `make run` opens the pygame window and calls the configured LLM provider for every player turn. It needs a display and real credentials, so it costs money and is run by or with the user.
+- `make run` plays the live game, served on the world page like the headless one: every player turn calls the configured LLM provider, so it costs money and is run by or with the user. It starts paused and stops after `LIVE_TURNS` turns per player (3 by default).
 - `make tui` reads the newest structured log; `SimControl` pauses and steps the loop.
-- `make headless` runs the same world with no window and a scripted LLM, `TURNS` and `SEED` overridable, and writes the log `make tui` reads. It is the run an agent can do: no display, no provider, a few seconds. `docs/guides/headless.md` has what it runs.
+- `make headless` runs the same world with a scripted LLM, `TURNS` and `SEED` overridable, and writes the log `make tui` reads. It is the run an agent can do: no display, no provider, a few seconds. `docs/guides/headless.md` has what it runs.
 - `make headless SERVE=1` also serves the world on `127.0.0.1:8002` until Ctrl-C or `POST /control/quit` (`TURNS=0` for no limit, `PAUSED=1`, `PACE`); `curl` reads `/state` and `/events`, and `/` is the world page. `docs/guides/web.md` has the routes.
 - `make e2e` fetches the page's vendored JavaScript (`make vendor`, network needed once), drives the world page in headless Chromium against a served run, and saves a screenshot to `cache/e2e/`. It is not in `make check`; run it before committing a change under `ui/`, and look at the screenshot.
-- What it does not cover: the pygame window, and how a real model behaves. A change to the pygame renderer or to a prompt is still not verified by an agent alone: say so rather than calling it done.
+- What it does not cover: how a real model behaves. A change to a prompt is still not verified by an agent alone: say so rather than calling it done.
 - A new chain, or a new output model on an existing one, needs an answer in `ScriptedChatConfig.build_answers` in `laife.llm.scripted_chat`; until it has one, the headless run fails with `UnscriptedSchemaError`.
 
 ## Unattended work
@@ -147,15 +147,14 @@ import platform
 platform.node().lower().startswith("pmn-14g4")  # g4, else g7
 ```
 
-- **g7** is the dev box: unattended agent sessions, sometimes used with a UI. Agent sessions have no `DISPLAY`. uv's managed Python 3.14 is the interpreter, because the system one lacks the headers pygame needs to build (pygame 2.6 has no 3.14 wheel).
+- **g7** is the dev box: unattended agent sessions, sometimes used with a UI. Agent sessions have no `DISPLAY`. uv's managed Python 3.14 is the interpreter.
 - **g4** is the laptop a person sits at.
 
 ## Architecture layers
 
 | Layer         | Path                                    | Role                                                                                                                                              |
 | ------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Game entry    | `game/main.py`                          | Pygame loop + asyncio bridge; spawns `WorldRunner.simulate()` and `Player.play()` as concurrent tasks, then drives the Pygame event loop          |
-| Rendering     | `src/laife/rendering/world_renderer.py` | `WorldRenderer` reads `WorldRunner` state and converts it into Pygame sprites/window; display dependency is isolated here, `WorldRunner` has none |
+| Game entry    | `game/main.py`                          | Builds the live world and hands it to `laife.web.run.serve_run`, which runs the world, the players and the page's server as concurrent tasks     |
 | Simulation    | `src/laife/entities/world_runner.py`    | Authoritative state, processes `WReq` messages                                                                                                    |
 | Entities      | `src/laife/entities/`                   | `Player`, `Building`, `Utensil`, `Terrain`                                                                                                        |
 | AI brain      | `src/laife/llm/player_brain.py`         | `PlayerBrain` owns the player's chains; `next_action()` → `BaseAction`                                                                            |

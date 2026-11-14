@@ -1,4 +1,4 @@
-"""Player entity - agent logic and state, no pygame dependency."""
+"""Player entity - agent logic and state."""
 
 import asyncio
 from enum import StrEnum
@@ -67,7 +67,7 @@ class PlayerState(StrEnum):
 
 
 class Player:
-    """Pure agent: state, logic, and world communication - no pygame."""
+    """Pure agent: state, logic, and world communication."""
 
     def __init__(
         self,

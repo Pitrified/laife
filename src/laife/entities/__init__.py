@@ -1,7 +1,7 @@
 """Entities package - public API.
 
-The simulation only: nothing here imports pygame, so a headless run does not
-load it. The sprites and the renderer are in ``laife.rendering``.
+The simulation only: nothing here draws or serves; the world page reads it
+through ``laife.web``.
 """
 
 from llm_core.vectorstores.vectorable import Vectorable

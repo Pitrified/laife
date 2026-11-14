@@ -1,4 +1,4 @@
-"""Terrain entity - pure data, no pygame dependency."""
+"""Terrain entity - pure data."""
 
 from enum import StrEnum
 from typing import Self

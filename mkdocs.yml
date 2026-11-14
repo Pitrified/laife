@@ -94,7 +94,6 @@ nav:
       - entities: library/entities.md
       - llm: library/llm.md
       - prompts: library/prompts.md
-      - rendering: library/rendering.md
       - web: library/web.md
       - params: library/params.md
       - config: library/config.md

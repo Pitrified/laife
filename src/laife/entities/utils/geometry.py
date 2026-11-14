@@ -1,4 +1,4 @@
-"""Pure geometry utilities - no pygame dependency."""
+"""Geometry on the world's integer pixel grid."""
 
 from typing import TYPE_CHECKING
 
@@ -15,8 +15,7 @@ def aabb_collides(
 ) -> bool:
     """Return True when two axis-aligned rectangles overlap.
 
-    Positions are (left, top) and sizes are (width, height),
-    matching pygame's convention of rect.topleft / rect.size.
+    Positions are (left, top) and sizes are (width, height), in world pixels.
     """
     ax1, ay1 = pos_a
     ax2, ay2 = ax1 + size_a[0], ay1 + size_a[1]

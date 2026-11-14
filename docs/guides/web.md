@@ -28,7 +28,7 @@ From g4, with the run on g7: `ssh -L 8002:127.0.0.1:8002 g7`, then `http://local
 - Drawn by PixiJS, inside a `pixi-viewport`: drag to pan, wheel or pinch to zoom, between a little more than the whole world and 4x. Fit shows the whole world again.
 - The snapshot is what is drawn. Each event makes the page fetch a fresh one, at most every 250 ms. A player whose position changed slides there over 200 ms; a long move jumps.
 - The world's extent is everything the snapshot holds plus a margin, and only grows during a session, so fitting does not jump as players move.
-- Players are drawn centred on their position, terrains and buildings from their top-left corner, as the pygame renderer draws them.
+- Players are drawn centred on their position, terrains and buildings from their top-left corner.
 - The zoom is kept on the canvas as `data-zoom`, which the browser test reads.
 
 ### The panel

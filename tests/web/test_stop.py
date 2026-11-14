@@ -1,6 +1,7 @@
 """Stopping a serving run while a client holds the event stream open."""
 
 import asyncio
+import json
 import signal
 import time
 from typing import TYPE_CHECKING
@@ -11,6 +12,7 @@ import pytest
 from laife.entities.sim_control import SimControl
 from laife.headless import build_world
 from laife.headless import serve_headless
+from laife.meta.log_events import EVT_SIM_CONTROL
 from laife.meta.logger import configure_logging
 from laife.meta.logger import restore_default_logging
 from laife.web.events import EventHub
@@ -75,8 +77,8 @@ def test_quit_route_closes_streams_and_asks_to_stop() -> None:
 
 
 def test_quit_with_stream_open_stops_the_run(tmp_path: Path) -> None:
-    """With a client on /events, POST /control/quit makes serve_headless return."""
-    configure_logging(log_file=tmp_path / "game.jsonl", enqueue=False)
+    """With a client on /events, POST /control/quit makes the run return; the log says so."""
+    log_file = configure_logging(log_file=tmp_path / "game.jsonl", enqueue=False)
     port = free_port()
 
     async def scenario() -> None:
@@ -94,6 +96,10 @@ def test_quit_with_stream_open_stops_the_run(tmp_path: Path) -> None:
         asyncio.run(scenario())
     finally:
         restore_default_logging()
+
+    records = [json.loads(line)["record"]["extra"] for line in log_file.read_text().splitlines()]
+    states = [r["state"] for r in records if r.get("event") == EVT_SIM_CONTROL]
+    assert states[-2:] == ["quit", "stopped"]
 
 
 @pytest.mark.parametrize("how", ["sigint", "quit"])

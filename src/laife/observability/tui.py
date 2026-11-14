@@ -1,7 +1,7 @@
 """Textual TUI that tails a laife structured log for live inspection.
 
 A separate, decoupled process: it only ever reads ``cache/game_*.jsonl``
-through :mod:`laife.observability.log_reader`. No pygame, no game-loop
+through :mod:`laife.observability.log_reader`, with no game-loop
 coupling. Run with ``make tui`` or ``uv run python -m laife.observability.tui``.
 """
 

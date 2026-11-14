@@ -1,7 +1,7 @@
 # Getting started
 
 How to set up `lAIfe` locally and run it.
-This page summarizes the setup; [CONTRIBUTING](https://github.com/Pitrified/laife/blob/main/CONTRIBUTING.md) owns the full instructions and the system packages needed for pygame.
+This page summarizes the setup; [CONTRIBUTING](https://github.com/Pitrified/laife/blob/main/CONTRIBUTING.md) owns the full instructions.
 
 ## Install
 
@@ -11,8 +11,6 @@ The project uses `uv` for dependency management and targets Python 3.14.
 uv sync --all-extras --all-groups
 ```
 
-Pygame needs SDL2 development libraries on the host.
-If `uv sync` fails on the SDL2 build, install them as described in [CONTRIBUTING](https://github.com/Pitrified/laife/blob/main/CONTRIBUTING.md).
 
 ## Credentials
 
@@ -23,15 +21,15 @@ They are loaded by `load_env` in [`src/laife/params/load_env.py`](https://github
 ## Run the game
 
 ```bash
-uv run python game/main.py
+make vendor   # once: the page's third-party JavaScript
+make run      # 3 turns per player, served on http://127.0.0.1:8002, paused
 ```
 
-A pygame window opens with the world, the players, and the buildings.
-Press `q` to quit.
+Open the page and press resume: every player turn calls the provider and spends credit, so the run starts paused and stops after `LIVE_TURNS` turns per player (`LIVE_TURNS=0` for no limit).
+Quit from the page, or Ctrl-C.
 The entry point [`game/main.py`](https://github.com/Pitrified/laife/blob/main/game/main.py) starts the pieces; the starting world is built in [`world_setup.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_setup.py). See [the architecture guide](architecture.md) for what each piece does.
 
-To run with no window and no provider, see [Headless run](headless.md).
-To watch it in a browser: `make vendor` once, then `make headless SERVE=1` and open `http://127.0.0.1:8002`; see [Serving the world](web.md).
+To run with no provider, see [Headless run](headless.md); `make headless SERVE=1` serves it on the same page. See [Serving the world](web.md) for the page and its options.
 
 ## Checks
 
@@ -50,7 +48,7 @@ Run `make help` to list every target.
 
 ```bash
 make sync          # install all dependencies (extras and groups)
-make run           # run the game
+make run           # play the live game on the page (calls the provider)
 make test          # run tests
 make vendor        # fetch the page's third-party JavaScript into cache/vendor/
 make e2e           # browser tests of the world page (not part of make check)

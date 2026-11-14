@@ -72,7 +72,7 @@ See [Mission](#mission).
 
 ## Terrain
 
-A region of the map with a type, such as forest, lake, or fertile land, used for prompt context and rendering.
+A region of the map with a type, such as forest, lake, or fertile land, used for prompt context and drawn on the world page.
 See [the entities package](../library/entities.md).
 
 ## Utensil

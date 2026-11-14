@@ -1,8 +1,7 @@
 """Which sprite file shows a player of each type in each state.
 
-Files are under ``static/sprites/<player type>/``. The pygame loader and the
-web server's ``/sprites`` route both read this table, so it imports nothing
-from pygame.
+Files are under ``static/sprites/<player type>/``; the web server's
+``/sprites`` route reads this table and hands it to the page.
 """
 
 INU_STATE_FNS = {

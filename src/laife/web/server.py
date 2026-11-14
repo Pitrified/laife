@@ -42,6 +42,8 @@ from pydantic import BaseModel
 import uvicorn
 
 from laife.config.sprites import STATE_FNS
+from laife.meta.log_events import EVT_SIM_CONTROL
+from laife.meta.logger import slog
 from laife.params.laife_params import get_laife_params
 from laife.web.snapshot import WorldSnapshot
 from laife.web.snapshot import take_snapshot
@@ -190,6 +192,7 @@ def _add_control_routes(app: FastAPI, sim_control: SimControl | None, hub: Event
 
     @app.post("/control/quit")
     async def quit_run() -> StopState:
+        slog.bind(event=EVT_SIM_CONTROL, state="quit").info(EVT_SIM_CONTROL)
         hub.close()
         app.state.stopping.set()
         return StopState(stopping=True)

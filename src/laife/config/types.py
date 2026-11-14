@@ -1,8 +1,7 @@
 """Type aliases."""
 
-# Position and Size are compatible with pygame.Rect.
-# https://www.pygame.org/docs/ref/rect.html
-# Rect((left, top), (width, height)) -> Rect
+# World pixels. A rectangle is a Position (its top-left corner) and a Size;
+# y grows South. A player's position is its centre when drawn.
 
 Left = int
 Top = int
