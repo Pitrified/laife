@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pygame
 
 from laife.config.constants import SPRITES_FOL
+from laife.config.sprites import STATE_FNS
 
 if TYPE_CHECKING:
     from pygame.surface import Surface
@@ -26,16 +27,6 @@ INU_SPRITE_SHEET_COORDS = {
 
 SPRITES_SHEET_COORDS = {
     "inu": INU_SPRITE_SHEET_COORDS,
-}
-
-INU_STATE_FNS = {
-    "idle": "inu_idle_00.png",
-    "thinking": "inu_basic_02.png",
-    "moving": "inu_idle_back_00.png",
-}
-
-STATE_FNS = {
-    "inu": INU_STATE_FNS,
 }
 
 

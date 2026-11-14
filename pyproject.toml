@@ -28,10 +28,16 @@ packages = ["src/laife"]
 [dependency-groups]
 dev = [
     { include-group = "docs" },
+    { include-group = "e2e" },
     { include-group = "lint" },
     { include-group = "notebook" },
     { include-group = "test" },
     { include-group = "tui" },
+]
+e2e = [
+    # The same pin as abyss: 1.63 drives the Chromium build (revision 1243)
+    # already in ~/.cache/ms-playwright on g7.
+    "playwright>=1.63,<1.64",
 ]
 docs = [
     "mkdocs>=1.6",
@@ -61,6 +67,11 @@ test = [
 tui = [
     "textual>=0.60",
 ]
+
+[tool.pytest.ini_options]
+# Browser tests start Chromium and a game; `make e2e` runs only them.
+markers = ["e2e: drives a real browser; run with `make e2e`"]
+addopts = "-m 'not e2e'"
 
 [tool.pyright]
 venvPath = "."

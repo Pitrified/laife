@@ -31,6 +31,7 @@ Press `q` to quit.
 The entry point [`game/main.py`](https://github.com/Pitrified/laife/blob/main/game/main.py) starts the pieces; the starting world is built in [`world_setup.py`](https://github.com/Pitrified/laife/blob/main/src/laife/entities/world_setup.py). See [the architecture guide](architecture.md) for what each piece does.
 
 To run with no window and no provider, see [Headless run](headless.md).
+To watch it in a browser, `make headless SERVE=1` and open `http://127.0.0.1:8002`; see [Serving the world](web.md).
 
 ## Checks
 
@@ -51,6 +52,7 @@ Run `make help` to list every target.
 make sync          # install all dependencies (extras and groups)
 make run           # run the game
 make test          # run tests
+make e2e           # browser tests of the world page (not part of make check)
 make lint          # lint with ruff
 make format        # format with ruff
 make typecheck     # type-check with pyright

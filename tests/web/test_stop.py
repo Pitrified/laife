@@ -1,12 +1,9 @@
 """Stopping a serving run while a client holds the event stream open."""
 
 import asyncio
-from pathlib import Path
 import signal
-import socket
-import subprocess
-import sys
 import time
+from typing import TYPE_CHECKING
 
 import httpx
 import pytest
@@ -18,19 +15,15 @@ from laife.meta.logger import configure_logging
 from laife.meta.logger import restore_default_logging
 from laife.web.events import EventHub
 from laife.web.server import create_app
+from tests.serving import STARTUP_SECONDS
+from tests.serving import free_port
+from tests.serving import start_serving
 
-HEADLESS_SCRIPT = Path(__file__).parents[2] / "game" / "headless.py"
+if TYPE_CHECKING:
+    from pathlib import Path
+
 STOP_SECONDS = 10
 """How long a stop may take before the test calls it a hang."""
-STARTUP_SECONDS = 30
-"""How long a server may take to answer its first request; a subprocess imports everything."""
-
-
-def free_port() -> int:
-    """Return a port that was free a moment ago on localhost."""
-    with socket.socket() as sock:
-        sock.bind(("127.0.0.1", 0))
-        return sock.getsockname()[1]
 
 
 async def wait_until_up(client: httpx.AsyncClient) -> None:
@@ -107,13 +100,7 @@ def test_quit_with_stream_open_stops_the_run(tmp_path: Path) -> None:
 def test_stop_with_stream_open_ends_the_process(tmp_path: Path, how: str) -> None:
     """Ctrl-C or the quit route, with a client on /events: the process exits cleanly and quickly."""
     port = free_port()
-    proc = subprocess.Popen(  # noqa: S603
-        [sys.executable, str(HEADLESS_SCRIPT), "--serve", "--turns", "0", "--port", str(port)],
-        cwd=tmp_path,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
+    proc = start_serving(tmp_path, port)
 
     async def open_stream_and_stop() -> None:
         async with httpx.AsyncClient(base_url=f"http://127.0.0.1:{port}") as client:

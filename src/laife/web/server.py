@@ -10,6 +10,12 @@ Routes:
   run's :class:`SimControl` and return whether it is paused; ``409`` when the
   run has none.
 - ``POST /control/quit``: stop the server, and with it the run.
+- ``GET /sprites``: the sprite URL for each player type and state.
+- ``/sprites/<type>/<file>``: the sprite images, from ``static/sprites/``.
+- ``/``: the page, from ``ui/world_web/``.
+
+Static files go out with ``Cache-Control: no-cache``: a browser keeps them
+but asks again on every load, so an edited page shows on the next reload.
 
 Stopping goes one way, whether by the quit route or by Ctrl-C: the hub ends
 every event stream, then uvicorn is told to exit. uvicorn waits for open
@@ -27,22 +33,31 @@ from typing import TYPE_CHECKING
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 
+from laife.config.sprites import STATE_FNS
+from laife.params.laife_params import get_laife_params
 from laife.web.snapshot import WorldSnapshot
 from laife.web.snapshot import take_snapshot
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
     from collections.abc import Callable
+    import os
     from types import FrameType
+
+    from starlette.responses import Response
+    from starlette.types import Scope
 
     from laife.entities.sim_control import SimControl
     from laife.entities.world_runner import WorldRunner
     from laife.web.events import EventHub
     from laife.web.events import Subscription
 
+PAGE_NAME = "world_web"
+"""The page's folder under ``ui/``."""
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8002
 HEARTBEAT_SECONDS = 15.0
@@ -64,6 +79,22 @@ class StopState(BaseModel):
     """The answer to a quit: the server is stopping."""
 
     stopping: bool
+
+
+class NoCacheFiles(StaticFiles):
+    """Static files sent with ``Cache-Control: no-cache``."""
+
+    def file_response(
+        self,
+        full_path: str | os.PathLike[str],
+        stat_result: os.stat_result,
+        scope: Scope,
+        status_code: int = 200,
+    ) -> Response:
+        """Return the file's response with the cache header set."""
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
 
 async def event_stream(
@@ -132,6 +163,17 @@ def create_app(runner: WorldRunner, sim_control: SimControl | None, hub: EventHu
         app.state.stopping.set()
         return StopState(stopping=True)
 
+    @app.get("/sprites")
+    async def sprites() -> dict[str, dict[str, str]]:
+        return {
+            player_type: {state: f"/sprites/{player_type}/{fn}" for state, fn in fns.items()}
+            for player_type, fns in STATE_FNS.items()
+        }
+
+    # Mounted last: a mount at "/" would otherwise answer every route above.
+    paths = get_laife_params().paths
+    app.mount("/sprites", NoCacheFiles(directory=paths.sprites_fol), name="sprite_files")
+    app.mount("/", NoCacheFiles(directory=paths.ui_fol / PAGE_NAME, html=True), name="page")
     return app
 
 

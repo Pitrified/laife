@@ -1,4 +1,4 @@
-.PHONY: help sync hooks run headless tui lint format typecheck test plans prose docs-check check nbstrip docs dev-llm-core undev
+.PHONY: help sync hooks run headless tui e2e lint format typecheck test plans prose docs-check check nbstrip docs dev-llm-core undev
 
 MAKEFLAGS += --no-print-directory
 .DEFAULT_GOAL := help
@@ -45,6 +45,9 @@ headless:  ## Run with no window and a scripted LLM; TURNS=6 SEED=0; SERVE=1 ser
 
 tui:  ## Run the observability TUI (tails the newest cache/game_*.jsonl)
 	$(UV_RUN) python -m laife.observability.tui
+
+e2e:  ## Browser tests of the world page, Chromium against a served headless run (not part of check)
+	$(UV_RUN) pytest -m e2e tests/e2e $(ARGS)
 
 #########
 # CHECK #

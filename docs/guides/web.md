@@ -18,6 +18,23 @@ It listens on `127.0.0.1:8002` unless told otherwise, and stops on Ctrl-C or on 
 The scripted model answers instantly, so a serving run waits `PACE` seconds before each answer; without that an endless run fills the log in seconds.
 The players finishing their turns does not stop the server: the final state stays readable.
 
+## The page
+
+`/` is the world page, from `ui/world_web/`: the world on a canvas on the left, a card per player on the right, and pause or resume, step and quit at the top.
+From g4, with the run on g7: `ssh -L 8002:127.0.0.1:8002 g7`, then `http://localhost:8002`.
+
+- The snapshot is what is drawn. Each event makes the page fetch a fresh one, at most every 250 ms.
+- A card's latest actions come from the `action` and `world_response` events, not from the snapshot's `history`, which resets on a new mission, a plan and a completed step. Observe responses are left out; repeated responses to one action, such as move steps, are counted. A page opened mid-run starts with an empty list.
+- The view covers everything the snapshot holds plus a margin, and only grows during a session, so it does not jump as players move.
+- Players are drawn centred on their position, terrains and buildings from their top-left corner, as the pygame renderer draws them.
+- When the stream drops, the page asks for `/state`; if the server is gone it says the run has ended and stops retrying.
+
+Plain ES modules, no build step and no third-party JavaScript. Static files go out with `Cache-Control: no-cache`, so a reload shows an edit.
+
+`make e2e` drives the page in headless Chromium against a paused run started as a separate process: it checks the drawing, a step, a run and a pause, and a quit, and saves `cache/e2e/world_page.png`.
+It is not part of `make check`; run it before committing a change to the page.
+Playwright's Chromium lives in `~/.cache/ms-playwright`; on a machine without it, `uv run --no-sync playwright install chromium`.
+
 ## Routes
 
 | Route | Answer |
@@ -26,6 +43,8 @@ The players finishing their turns does not stop the server: the final state stay
 | `GET /events` | Server-Sent Events, one per structured log record |
 | `POST /control/pause`, `/control/resume`, `/control/step` | `{"paused": bool}`; `409` when the run has no pause control |
 | `POST /control/quit` | `{"stopping": true}`, then the server stops and the run with it |
+| `GET /sprites` | the sprite URL for each player type and state |
+| `/sprites/<type>/<file>`, `/` | the sprite images, and the page |
 | `GET /openapi.json` | the schema of every route and model, from FastAPI |
 
 ```bash
